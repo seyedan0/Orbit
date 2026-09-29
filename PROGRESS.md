@@ -17,7 +17,8 @@
 
 ## کارهای در حال انجام
 
-- [ ] PR از `feature/web-inbox-task-creation` به `develop`
+- [ ] بازبینی و merge نهایی PR از `feature/web-inbox-task-creation` به `develop` (PR باز شده؛ merge توسط مالک انجام می‌شود)
+- [ ] P2-WEB-003: بازسازی feature-oriented ساختار Web (بعد از merge؛ branch: `refactor/web-feature-structure`)
 - [ ] بررسی دستی در مرورگر
 - [ ] تنظیم ESLint و افزودن به CI
 
@@ -120,7 +121,23 @@
   - `git diff --check` بدون خطا
   - بررسی دستی در مرورگر انجام نشده
 
+### 2026-09-30 | همگام‌سازی branch با develop و آماده‌سازی PR
+
+- **عامل:** Claude Sonnet 4.6 (Zed Agent)
+- **Branch:** `feature/web-inbox-task-creation` (branch کانونی؛ `feature/web-foundation` عمداً merge نمی‌شود چون پیاده‌سازی IndexedDB تکراری دارد)
+- **هدف:** همگام‌سازی با `origin/develop` پیش از PR
+- **نتیجه همگام‌سازی:** `git merge origin/develop` پاسخ «Already up to date» داد. `origin/develop` (`076c47c`) جد مستقیم branch است و branch دقیقاً یک commit جلوتر است (`12d118d`). commit merge ساخته نشد و تعارضی وجود نداشت.
+- **بررسی محتوا:** P2-WEB-002 کامل در `12d118d` است: قرارداد `AtomicTaskStore`، `listTasks`، `saveTaskWithMutation`، `IndexedDbLocalStore`، `createTask`، `InboxPage` و چهار فایل تست.
+- **commitها:** پایه develop = `076c47c`؛ کار P2-WEB-002 = `12d118d`
+- **اعتبارسنجی (روی همین branch):** `npm ci` موفق؛ `npm run typecheck` موفق؛ `npm run test` و `npm run test --workspace @orbit/web` هر دو ۵۳ تست در ۴ فایل موفق؛ `npm run build --workspace @orbit/web` موفق (۴۹ ماژول، JS ‏272 kB / gzip ‏86.9 kB)؛ `npm audit` صفر آسیب‌پذیری؛ `git diff --check` بدون خطا
+- **فایل‌ها:** فقط `PROGRESS.md`
+- **گام بعدی:** merge شدن PR، سپس ساخت `refactor/web-feature-structure` از develop به‌روز و شروع P2-WEB-003
+
 ## محدودیت‌های باقی‌مانده
+
+- **اسناد فقط روی `feature/web-foundation`:** `docs/git-workflow.md`، `CONTRIBUTING.md`، قالب‌های issue/PR و ADR-006 روی این branch وجود ندارند و چون آن branch merge نمی‌شود، باید در یک PR جداگانه‌ی docs (مثلاً `docs/*` با cherry-pick فقط اسناد) به develop منتقل شوند. تا آن زمان `docs/git-workflow.md` روی develop وجود ندارد.
+- **تاریخچه `PROGRESS.md`:** ورودی‌های P1-WEB-001 و تاریخچه‌ی تفصیلی قبلی در این branch خلاصه شده‌اند؛ متن کامل روی `feature/web-foundation` باقی است.
+- **commit محلی `a903efa`:** روی `feature/web-foundation` (push نشده) پیاده‌سازی IndexedDB دوم دارد؛ حذف یا نگه‌داشتن آن با مالک پروژه است.
 
 - **بررسی دستی مرورگر:** InboxPage در مرورگر واقعی تست نشده.
 - **ESLint:** lint در مخزن نیست؛ CI فاقد مرحله lint است.
