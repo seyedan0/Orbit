@@ -6,7 +6,7 @@
 
 - **مرحله:** فاز ۲، هسته دامنه و storage محلی Web
 - **آخرین به‌روزرسانی:** 2026-09-30
-- **آخرین عامل:** Claude Sonnet 4.6 (Zed Agent)
+- **آخرین عامل:** Antigravity
 - **درصد تقریبی پیشرفت:** 38%
 - **Branch فعال:** `feature/web-inbox-task-creation`
 - **Branchهای پایه:** `main`، `develop`
@@ -17,7 +17,7 @@
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی و merge نهایی PR از `feature/web-inbox-task-creation` به `develop` (PR باز شده؛ merge توسط مالک انجام می‌شود)
+- [ ] بازبینی و merge نهایی PR از `feature/web-inbox-task-creation` به `develop` (PR شماره ۱ باز شده؛ منتظر ادغام مالک)
 - [ ] P2-WEB-003: بازسازی feature-oriented ساختار Web (بعد از merge؛ branch: `refactor/web-feature-structure`)
 - [ ] بررسی دستی در مرورگر
 - [ ] تنظیم ESLint و افزودن به CI
@@ -132,6 +132,32 @@
 - **اعتبارسنجی (روی همین branch):** `npm ci` موفق؛ `npm run typecheck` موفق؛ `npm run test` و `npm run test --workspace @orbit/web` هر دو ۵۳ تست در ۴ فایل موفق؛ `npm run build --workspace @orbit/web` موفق (۴۹ ماژول، JS ‏272 kB / gzip ‏86.9 kB)؛ `npm audit` صفر آسیب‌پذیری؛ `git diff --check` بدون خطا
 - **فایل‌ها:** فقط `PROGRESS.md`
 - **گام بعدی:** merge شدن PR، سپس ساخت `refactor/web-feature-structure` از develop به‌روز و شروع P2-WEB-003
+
+### 2026-09-30 | بازبینی و اعتبارسنجی همگام‌سازی با develop و وضعیت PR
+
+- **عامل:** Antigravity
+- **Branch:** `feature/web-inbox-task-creation` (شاخه کانونی؛ عدم ادغام `feature/web-foundation` به دلیل پیاده‌سازی تکراری IndexedDB)
+- **هدف:** اجرای همگام‌سازی و اعتبارسنجی با `origin/develop` پیش از اقدام به PR و آماده‌سازی refactor فاز ۲
+- **نتیجه همگام‌سازی و حل تعارض:** `origin/develop` با شناسه `076c47cd1db29af0a0cf03636b9a05261721bcac` جد مستقیم شاخه `feature/web-inbox-task-creation` است. دستور `git merge origin/develop` وضعیت «Already up to date» داد و هیچ تعارضی وجود نداشت (صفر تعارض). مستندات مشترک، قرارداد `AtomicTaskStore`، `IndexedDbLocalStore`، `listTasks`، سرویس `createTask`، `InboxPage` و تمام تست‌ها کاملاً حفظ شده‌اند.
+- **تایید P2-WEB-002:** تایید شد که P2-WEB-002 به طور کامل در `feature/web-inbox-task-creation` قرار دارد.
+- **شناسه‌های دقیق Commitها:**
+  - پایه `origin/develop`: `076c47cd1db29af0a0cf03636b9a05261721bcac`
+  - پیاده‌سازی P2-WEB-002: `12d118d62a3081b612992bd5944f3fe60db1e382`
+  - بررسی پیشین شاخه: `1a4bdeb18391a4d3dad0bc6fb79e4a3ce9b25e22`
+- **اعتبارسنجی کامل:**
+  - `npm ci`: موفق (۹۴ بسته، صفر آسیب‌پذیری)
+  - `npm run typecheck`: موفق بدون هیچ خطایی (هسته monorepo و `@orbit/web`)
+  - `npm run test`: موفق؛ ۵۳ تست در ۴ فایل (`local-session.test.ts`, `memory-local-store.test.ts`, `task-service.test.ts`, `indexeddb-local-store.test.ts`)
+  - `npm run test --workspace @orbit/web`: موفق؛ ۵۳ تست پاس شد
+  - `npm run build --workspace @orbit/web`: موفق؛ ۴۹ ماژول بیلد شدند (HTML: 0.40 kB, CSS: 1.66 kB, JS: 272.09 kB / gzip: 86.90 kB)
+  - `git diff --check`: بدون خروجی و خطا
+- **محدودیت‌های باقی‌مانده:**
+  - تست دستی در مرورگر هنوز انجام نشده است
+  - پیکربندی ESLint هنوز در پروژه انجام نشده و در CI نیست
+  - شناسه `INBOX_PROJECT_ID = 'inbox'` موقت بوده و تا فاز ۳ (سیستم حساب کاربری) جایگزین خواهد شد
+  - مستندات اختصاصی `feature/web-foundation` (`docs/git-workflow.md`، `CONTRIBUTING.md` و ADR-006) در PR جداگانه مستندات منتقل خواهند شد
+- **وضعیت PR:** Pull Request شماره ۱ با عنوان `feat(web): add local-first inbox task creation` برای ادغام `feature/web-inbox-task-creation` به `develop` در گیت‌هاب باز است.
+- **گام بعدی:** منتظر تایید و ادغام PR شماره ۱ در `develop` توسط کاربر/مالک مخزن، سپس ساخت شاخه `refactor/web-feature-structure` از `develop` به‌روزرسانی‌شده و شروع بازسازی ساختار Web (P2-WEB-003).
 
 ## محدودیت‌های باقی‌مانده
 
