@@ -16,3 +16,13 @@ export type {
 
 export { FakeSyncTransport } from './fake-sync-transport.js';
 export type { FakeSyncTransportOptions } from './fake-sync-transport.js';
+
+export {
+  HttpSyncError,
+  HttpSyncTransport,
+  isRetryableHttpStatus
+} from './http-sync-transport.js';
+export type {
+  HttpFetcher,
+  HttpSyncTransportOptions
+} from './http-sync-transport.js';

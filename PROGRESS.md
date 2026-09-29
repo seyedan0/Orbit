@@ -7,17 +7,17 @@
 - **مرحله:** فاز ۳، sync و حساب کاربری
 - **آخرین به‌روزرسانی:** 2026-09-30
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 70%
-- **Branch فعال:** `feature/sync-runtime-fake-transport`
+- **درصد تقریبی پیشرفت:** 75%
+- **Branch فعال:** `feature/web-http-sync-transport`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-طراحی و پیاده‌سازی اولین برش عمودی موتور همگام‌سازی (`SyncRuntime`) مستقل از React و IndexedDB با استفاده از قراردادهای موجود `LocalStore` و `SyncTransport`، پیاده‌سازی `FakeSyncTransport` قطعی، حفظ ترتیب FIFO و idempotency، پشتیبانی از pull/push، به‌روزرسانی وضعیت جهش‌ها (SUCCEEDED، PENDING برای خطای موقت، FAILED برای رد دائمی) و جلوگیری از retry خودکار موارد rejected.
+پیاده‌سازی `HttpSyncTransport` در `packages/sync-engine` منطبق بر اینترفیس `SyncTransport` با استفاده از `fetch` استاندارد، پشتیبانی از URL پایه، هدرهای سفارشی (مانند توکن احراز هویت)، نگاشت خطاهای HTTP (خطاهای 4xx غیرقابل تلاش مجدد به جز 429، و خطاهای 5xx و 429 قابل تلاش مجدد)، مدیریت timeout شبکه، پیاده‌سازی `SyncCoordinator`، `SyncProvider` و هوک `useSyncStatus` در Web، و افزودن نشانگر وضعیت همگام‌سازی و دکمه دستی به `AppShell`.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی و PR شاخه `feature/sync-runtime-fake-transport` به `develop`
+- [ ] بازبینی و PR شاخه `feature/web-http-sync-transport` به `develop`
 - [ ] شروع گام‌های بعدی فاز ۳ (احراز هویت و APIهای سینک سرور)
 
 ## کارهای انجام‌شده
@@ -50,6 +50,8 @@
 - [x] **P2-WEB-005:** پیاده‌سازی حذف نرم و بازیابی تسک (`delete/restore`) در دامنه و رابط کاربری Inbox
 - [x] ادغام PR شماره ۵ و ۶ (`feature/web-task-delete-restore`) در `develop`
 - [x] **P3-WEB-001:** طراحی و پیاده‌سازی اولین برش عمودی sync runtime با fake transport قطعی
+- [x] ادغام PR شماره ۷ (`feature/sync-runtime-fake-transport`) در `develop`
+- [x] **P3-WEB-002:** پیاده‌سازی HttpSyncTransport در sync-engine و ادغام نشانگر وضعیت و کلید دستی در Web UI
 
 ## فعالیت AIها
 
@@ -435,10 +437,57 @@
   - احراز هویت سرور و پایگاه داده PostgreSQL هنوز پیاده‌سازی نشده‌اند (مربوط به گام‌های بعدی فاز ۳).
   - `INBOX_PROJECT_ID = 'inbox'` موقت تا راه‌اندازی ماژول کاربر و حساب کاربری.
 - **وضعیت PR:**
-  - آماده ایجاد PR برای شاخه `feature/sync-runtime-fake-transport` به `develop`.
+  - ادغام‌شده در `develop` (PR شماره ۷).
+- **گام بعدی (Handoff):**
+  - پیاده‌سازی HttpSyncTransport و اتصال نشانگر همگام‌سازی در Web UI (انجام‌شده در P3-WEB-002)
+
+### 2026-09-30 | P3-WEB-002 | پیاده‌سازی HttpSyncTransport و نشانگر وضعیت در Web UI
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی `HttpSyncTransport` در موتور همگام‌سازی (`sync-engine`) منطبق بر قرارداد `SyncTransport` و اتصال وضعیت و کلید دستی همگام‌سازی به رابط کاربری Web (`AppShell`).
+- **انجام‌شده:**
+  - پیاده‌سازی کلاس `HttpSyncTransport` در `packages/sync-engine/src/http-sync-transport.ts`:
+    - پیاده‌سازی متدهای `pull` و `push` با استفاده از `fetch` استاندارد.
+    - قابلیت پیکربندی `baseUrl`، `fetcher` سفارشی (جهت آزمون و انطباق‌پذیری)، و هدرهای دلخواه (مانند توکن احراز هویت bearer).
+    - مدیریت خطاهای پروتکل HTTP: کدهای وضعیت 5xx و 429 به عنوان خطای قابل تکرار (`isRetryable: true`) و کدهای 4xx (مانند 400, 401, 403, 409) به عنوان خطای غیرقابل تکرار (`isRetryable: false`).
+    - پشتیبانی از timeout شبکه با `AbortController` و مدیریت شکست اتصال فیزیکی.
+    - تعریف و صدور کلاس خطای استاندارد `HttpSyncError` و تابع کمکی `isRetryableHttpStatus`.
+  - صادر کردن `HttpSyncTransport` و ابزارهای مرتبط از `packages/sync-engine/src/index.ts`.
+  - پیاده‌سازی لایه مدیریت وضعیت همگام‌سازی در `apps/web/src/core/sync/sync-context.tsx`:
+    - ایجاد کلاس مستقل `SyncCoordinator` برای مدیریت وضعیت همگام‌سازی (`IDLE` | `SYNCING` | `ERROR` | `OFFLINE`) با استفاده از الگوی اشتراک (Subscription) و `useSyncExternalStore`.
+    - پیاده‌سازی `SyncProvider` و هوک `useSyncStatus` برای ارائه وضعیت همگام‌سازی و تابع `triggerSync()`.
+    - پایش تغییرات وضعیت آنلاین/آفلاین شبکه از طریق رویدادهای `online`/`offline` مرورگر.
+  - اتصال `SyncProvider` در درخت کامپوننت‌های ریشه وب در `apps/web/src/app/App.tsx`.
+  - ادغام نشانگر وضعیت (Sync Badge) و دکمه دستی «همگام‌سازی» در `apps/web/src/layout/AppShell.tsx` همراه با استایل‌های واکنش‌گرا و وضعیت‌های مختلف در `AppShell.module.css`.
+  - نگارش مجموعه آزمون‌های جامع:
+    - ۱۲ تست در `apps/web/src/core/sync/http-sync-transport.test.ts` شامل نگاشت push/pull، نرمال‌سازی URL، بررسی هدرها، کدهای وضعیت 4xx و 5xx/429، و مدیریت قطعی شبکه.
+    - ۸ تست در `apps/web/src/core/sync/sync-context.test.tsx` شامل چرخه کامل `SyncCoordinator`، `SyncProvider`، هوک `useSyncStatus`، و سناریوهای آنلاین/آفلاین/خطا.
+    - تست یکپارچگی رندر `apps/web/src/layout/AppShell.test.tsx` برای بررسی حضور نشانگر وضعیت و کلید همگام‌سازی.
+- **فایل‌های تغییرکرده/ایجاده‌شده:**
+  - `packages/sync-engine/src/http-sync-transport.ts`
+  - `packages/sync-engine/src/index.ts`
+  - `apps/web/src/core/sync/sync-context.tsx`
+  - `apps/web/src/app/App.tsx`
+  - `apps/web/src/layout/AppShell.tsx`
+  - `apps/web/src/layout/AppShell.module.css`
+  - `apps/web/src/test-setup.ts`
+  - `apps/web/src/core/sync/http-sync-transport.test.ts`
+  - `apps/web/src/core/sync/sync-context.test.tsx`
+  - `apps/web/src/layout/AppShell.test.tsx`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npm ci`: موفق
+  - `npm run lint`: موفق با ۰ خطا و ۰ هشدار
+  - `npm run typecheck`: موفق با ۰ خطا
+  - `npm run test`: موفق؛ تمام ۱۲۶ تست در ۹ فایل آزمون پاس شدند (۱۰۵ تست قبلی + ۲۱ تست جدید)
+  - `npm run build`: موفق؛ کامپایل موفقیت‌آمیز تمام پکیج‌ها و اپلیکیشن وب
+  - `git diff --check`: بدون خطای فاصله‌گذاری
+- **وضعیت PR:**
+  - آماده ایجاد PR برای شاخه `feature/web-http-sync-transport` به `develop`.
 - **گام بعدی (Handoff):**
   - ادغام PR در `develop`
-  - آغاز طراحی احراز هویت و APIهای سینک سرور در فاز ۳
+  - پیاده‌سازی مدل داده و ماژول احراز هویت / Sync API در `apps/server` (NestJS/PostgreSQL)
 
 ## محدودیت‌های باقی‌مانده
 
