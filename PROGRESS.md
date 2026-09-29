@@ -4,23 +4,23 @@
 
 ## وضعیت کلی
 
-- **مرحله:** فاز ۲، هسته دامنه و storage محلی Web
+- **مرحله:** فاز ۲، بازسازی ساختار ماژولار Web (Feature-oriented)
 - **آخرین به‌روزرسانی:** 2026-09-30
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 38%
-- **Branch فعال:** `feature/web-inbox-task-creation`
+- **درصد تقریبی پیشرفت:** 42%
+- **Branch فعال:** `refactor/web-feature-structure`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-پیاده‌سازی vertical slice اول: ایجاد task در Inbox با IndexedDB به‌عنوان storage دائم و domain service مستقل از زیرساخت.
+بازسازی و تفکیک ساختار پروژه Web (`apps/web/src`) از ساختار صفحه‌محور به ساختار ماژولار و مبتنی بر قابلیت (Feature-oriented) شامل تفکیک core، layout و features (تسک‌ها، احراز هویت و تنظیمات) بدون هیچ‌گونه تغییر رفتاری در محصول.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی و merge نهایی PR از `feature/web-inbox-task-creation` به `develop` (PR شماره ۱ باز شده؛ منتظر ادغام مالک)
-- [ ] P2-WEB-003: بازسازی feature-oriented ساختار Web (بعد از merge؛ branch: `refactor/web-feature-structure`)
+- [ ] بازبینی و PR شاخه `refactor/web-feature-structure` به `develop`
 - [ ] بررسی دستی در مرورگر
-- [ ] تنظیم ESLint و افزودن به CI
+- [ ] افزودن ESLint و گام lint در CI
+- [ ] پیاده‌سازی تکمیل و بازگشایی تسک (complete/reopen)
 
 ## کارهای انجام‌شده
 
@@ -41,6 +41,8 @@
 - [x] ثبت Web به‌عنوان اولین کلاینت و مرجع رفتاری محصول
 - [x] ایجاد اسکلت `apps/web` با routing، auth boundary محلی و adapter حافظه‌ای
 - [x] **P2-WEB-002:** اتصال IndexedDB و اولین vertical slice ایجاد task در Inbox
+- [x] ادغام PR شماره ۱ (`feature/web-inbox-task-creation`) در `develop`
+- [x] **P2-WEB-003:** بازسازی ساختار Web به صورت feature-oriented بدون تغییر رفتار
 
 ## فعالیت AIها
 
@@ -158,6 +160,58 @@
   - مستندات اختصاصی `feature/web-foundation` (`docs/git-workflow.md`، `CONTRIBUTING.md` و ADR-006) در PR جداگانه مستندات منتقل خواهند شد
 - **وضعیت PR:** Pull Request شماره ۱ با عنوان `feat(web): add local-first inbox task creation` برای ادغام `feature/web-inbox-task-creation` به `develop` در گیت‌هاب باز است.
 - **گام بعدی:** منتظر تایید و ادغام PR شماره ۱ در `develop` توسط کاربر/مالک مخزن، سپس ساخت شاخه `refactor/web-feature-structure` از `develop` به‌روزرسانی‌شده و شروع بازسازی ساختار Web (P2-WEB-003).
+
+### 2026-09-30 | P2-WEB-003 | بازسازی ساختار Web به صورت Feature-oriented
+
+- **عامل:** Antigravity
+- **Task ID:** P2-WEB-003
+- **Branch:** `refactor/web-feature-structure`
+- **هدف:** بازآرایی ساختار `apps/web/src` از ساختار یکپارچه/صفحه‌محور (`pages.tsx`) به معماری تمیز و مبتنی بر قابلیت (Feature-oriented) با حفظ ۱۰۰٪ رفتار قبلی.
+- **انجام‌شده:**
+  - تایید ادغام کامل PR شماره ۱ (`feature/web-inbox-task-creation`) در `develop`
+  - ساخت و آماده‌سازی شاخه `refactor/web-feature-structure` از آخرین نسخه `develop`
+  - انتقال زیرساخت‌های متقاطع (`auth` و `storage`) به `apps/web/src/core/`
+  - انتقال `AppShell.tsx` به `apps/web/src/layout/AppShell.tsx` و ایجاد استایل‌های تفکیک‌شده `AppShell.module.css`
+  - انتقال استایل‌های مشترک و reset کلی به `apps/web/src/styles/globals.css` و به‌روزرسانی `main.tsx`
+  - ایجاد کامپوننت‌های مستقل دامنه تسک در `apps/web/src/features/tasks/components/`:
+    - `TaskForm.tsx` (فرم ورود تسک، مدیریت خطا و وضعیت)
+    - `TaskItem.tsx` (نمایش هر آیتم تسک)
+    - `TaskList.tsx` (لیست تسک‌ها)
+    - `EmptyState.tsx` (پیام حالت خالی)
+  - ایجاد صفحه اینباکس ماژولار `apps/web/src/features/tasks/pages/InboxPage.tsx`
+  - انتقال سرویس و تست‌های تسک به `apps/web/src/features/tasks/services/`
+  - ایجاد صفحات مستقل `features/auth/pages/SignInPage.tsx` و `features/settings/pages/SettingsPage.tsx`
+  - ایجاد کامپوننت روتینگ `app/routes.tsx` و صفحه `app/NotFoundPage.tsx`
+  - ساده‌سازی `app/App.tsx` و محدود کردن آن به Providerها و ترکیب Routeها
+  - حذف کامل فایل تک‌فایلی `pages.tsx`
+- **فایل‌های تغییرکرده/ایجاده‌شده:**
+  - `apps/web/src/core/auth/` (`local-session.ts`, `local-session.test.ts`, `session-context.tsx`)
+  - `apps/web/src/core/storage/` (`indexeddb-local-store.ts`, `indexeddb-local-store.test.ts`, `memory-local-store.ts`, `memory-local-store.test.ts`, `store-context.tsx`)
+  - `apps/web/src/features/tasks/` (`services/task-service.ts`, `services/task-service.test.ts`, `components/TaskForm.tsx`, `components/TaskItem.tsx`, `components/TaskList.tsx`, `components/EmptyState.tsx`, `pages/InboxPage.tsx`)
+  - `apps/web/src/features/auth/pages/SignInPage.tsx`
+  - `apps/web/src/features/settings/pages/SettingsPage.tsx`
+  - `apps/web/src/layout/` (`AppShell.tsx`, `AppShell.module.css`)
+  - `apps/web/src/styles/globals.css`
+  - `apps/web/src/app/` (`App.tsx`, `routes.tsx`, `NotFoundPage.tsx`)
+  - `apps/web/src/main.tsx`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npm ci`: موفق (۰ آسیب‌پذیری)
+  - `npm run typecheck`: موفق بدون هیچ خطایی
+  - `npm run test`: موفق؛ ۵۳ تست در ۴ فایل پاس شد
+  - `npm run test --workspace @orbit/web`: موفق؛ ۵۳ تست پاس شد
+  - `npm run build --workspace @orbit/web`: موفق؛ ۵۸ ماژول بیلد شدند (HTML: 0.40 kB, CSS: 1.69 kB, JS: 272.48 kB / gzip: 87.06 kB)
+  - `git diff --check`: کاملاً پاک و بدون خطای فاصله‌گذاری
+  - **نتیجه بررسی دستی مرورگر:** به دلیل خطای Playwright در دانلود درایور ویندوز در محیط ایجنت (`404` در دانلود درایور از CDN رسمی)، ساب‌ایجنت مرورگر نتوانست اجرا شود. تمام رفتارهای دامنه و ذخیره‌سازی توسط تست‌های خودکار تایید شده‌اند و بررسی دستی روی مرورگر واقعی توسط کاربر توصیه می‌شود.
+- **محدودیت‌های باقی‌مانده:**
+  - بررسی دستی در مرورگر فیزیکی
+  - نبود ESLint در مخزن و CI
+  - `INBOX_PROJECT_ID = 'inbox'` موقت تا فاز ۳
+  - انتقال اسناد (`docs/git-workflow.md`, `CONTRIBUTING.md` و ADR-006) در PR مستقل
+- **گام بعدی (Handoff):**
+  - ایجاد Pull Request از `refactor/web-feature-structure` به `develop`
+  - افزودن ESLint و CI lint step
+  - شروع پیاده‌سازی complete/reopen و delete/restore task
 
 ## محدودیت‌های باقی‌مانده
 
