@@ -4,21 +4,21 @@
 
 ## وضعیت کلی
 
-- **مرحله:** فاز ۲، هسته دامنه و storage محلی Web
+- **مرحله:** فاز ۳، sync و حساب کاربری
 - **آخرین به‌روزرسانی:** 2026-09-30
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 65%
-- **Branch فعال:** `feature/web-task-delete-restore`
+- **درصد تقریبی پیشرفت:** 70%
+- **Branch فعال:** `feature/sync-runtime-fake-transport`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-پیاده‌سازی حذف نرم (`soft delete`) و بازیابی تسک (`restore`) در کلاینت Web و Inbox با ذخیره‌سازی اتمیک، حذف از نمای اصلی Inbox، حفظ فیزیکی رکوردها در IndexedDB، ایجاد جهش UPDATE برای هماهنگی با پروتکل سینک، و بازگشت امن در صورت خطا (Rollback).
+طراحی و پیاده‌سازی اولین برش عمودی موتور همگام‌سازی (`SyncRuntime`) مستقل از React و IndexedDB با استفاده از قراردادهای موجود `LocalStore` و `SyncTransport`، پیاده‌سازی `FakeSyncTransport` قطعی، حفظ ترتیب FIFO و idempotency، پشتیبانی از pull/push، به‌روزرسانی وضعیت جهش‌ها (SUCCEEDED، PENDING برای خطای موقت، FAILED برای رد دائمی) و جلوگیری از retry خودکار موارد rejected.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی و PR شاخه `feature/web-task-delete-restore` به `develop`
-- [ ] بررسی دستی در مرورگر
+- [ ] بازبینی و PR شاخه `feature/sync-runtime-fake-transport` به `develop`
+- [ ] شروع گام‌های بعدی فاز ۳ (احراز هویت و APIهای سینک سرور)
 
 ## کارهای انجام‌شده
 
@@ -48,6 +48,8 @@
 - [x] **P2-WEB-004:** پیاده‌سازی رفتار تکمیل و بازگشایی تسک (`complete/reopen`) در دامنه، کنترل‌های UI و اعتبارسنجی اتمیک
 - [x] ادغام PR شماره ۴ (`feature/web-task-completion`) در `develop`
 - [x] **P2-WEB-005:** پیاده‌سازی حذف نرم و بازیابی تسک (`delete/restore`) در دامنه و رابط کاربری Inbox
+- [x] ادغام PR شماره ۵ و ۶ (`feature/web-task-delete-restore`) در `develop`
+- [x] **P3-WEB-001:** طراحی و پیاده‌سازی اولین برش عمودی sync runtime با fake transport قطعی
 
 ## فعالیت AIها
 
@@ -374,10 +376,69 @@
   - بررسی دستی در مرورگر فیزیکی توسط کاربر
   - `INBOX_PROJECT_ID = 'inbox'` موقت تا فاز ۳ (حساب کاربری)
 - **وضعیت PR:**
-  - Pull Request شماره ۵ با عنوان `feat(web): add task delete and restore` برای شاخه `feature/web-task-delete-restore` به `develop` در گیت‌هاب باز است (آدرس: https://github.com/seyedan0/Orbit/pull/5).
+  - Pull Request شماره ۵ و شماره ۶ برای شاخه `feature/web-task-delete-restore` با موفقیت در شاخه `develop` ادغام شدند (کامیت ادغام: `03f01d5`).
 - **گام بعدی (Handoff):**
-  - ادغام PR شماره ۵ در `develop`
-  - ورود به فاز ۳ (پایه‌گذاری sync و حساب کاربری: مدل داده سرور، صف جهش‌ها و sync engine)
+  - ادغام کامل شد؛ آغاز فاز ۳ با تسک P3-WEB-001 (پیاده‌سازی sync runtime با fake transport).
+
+### 2026-09-30 | P3-WEB-001 | پیاده‌سازی اولین برش عمودی SyncRuntime با Fake Transport
+
+- **عامل:** Antigravity
+- **Task ID:** P3-WEB-001
+- **Branch:** `feature/sync-runtime-fake-transport`
+- **هدف:** طراحی و پیاده‌سازی سرویس زمان اجرای همگام‌سازی (`SyncRuntime`) مستقل از React و IndexedDB بر اساس قراردادهای `LocalStore` و `SyncTransport`، پیاده‌سازی `FakeSyncTransport` قطعی برای آزمون‌ها، حفظ ترتیب FIFO و idempotency، پشتیبانی از pull/push، و مدیریت چرخه‌حیات وضعیت‌های جهش (SUCCEEDED، PENDING با backoff، و FAILED برای خطاهای غیرقابل بازگشت بدون retry خودکار).
+- **انجام‌شده:**
+  - ارتقای قرارداد `LocalStore` در `packages/sync-engine/src/ports.ts` با پشتیبانی از پارامتر اختیاری `status?: QueueStatus` در `markMutationFailed` جهت پشتیبانی از خطاهای دائمی.
+  - به‌روزرسانی آداپترهای ذخیره‌سازی محلی `MemoryLocalStore` و `IndexedDbLocalStore` برای اعمال پارامتر `status` (پیش‌فرض `'PENDING'` و قابلیت ثبت وضعیت `'FAILED'`) به همراه متد کمکی `getMutation(id)` برای بررسی مستقیم در تست‌ها.
+  - طراحی و پیاده‌سازی سرویس `SyncRuntime` در `packages/sync-engine/src/sync-runtime.ts`:
+    - کاملاً مستقل از React و دیتابیس‌های خاص (IndexedDB).
+    - `pullOnce`: دریافت تغییرات سرور، ذخیره تک‌تک تغییرات در `LocalStore`، و اعمال/ثبت کرسر جدید (`saveCursor`) صرفاً پس از ذخیره‌سازی موفقیت‌آمیز تمام تغییرات (جلوگیری قطعی از advance شدن کرسر در صورت بروز خطا در ذخیره‌سازی).
+    - `pushOnce`: استخراج جهش‌های صف در صف FIFO بر اساس زمان ایجاد، ارسال به transport، علامت‌گذاری وضعیت‌های موفق (`APPLIED`، `ALREADY_APPLIED`، `CONFLICT_MERGED`) به `SUCCEEDED`، محاسبه exponential backoff و بازگرداندن خطاهای موقت سرور (`RETRYABLE_ERROR`) به وضعیت `PENDING` با `nextAttemptAt` در آینده، و علامت‌گذاری جهش‌های ردشده (`REJECTED`) به `FAILED` تا هرگز به صورت خودکار مجدداً ارسال نشوند.
+    - `syncOnce`: اجرای زنجیره‌ای pull و سپس push به عنوان یک چرخه همگام‌سازی کامل.
+  - طراحی و پیاده‌سازی ترنسپورت قطعی `FakeSyncTransport` در `packages/sync-engine/src/fake-sync-transport.ts`:
+    - شبیه‌سازی کامل حافظه سرور، صف وقایع و تولید کرسرهای ترتیبی قطعی (`c_1`, `c_2`, ...).
+    - ره‌گیری و لاگ تمام دسته‌های ارسالی (`pushedBatches`) جهت اعتبارسنجی ترتیب FIFO.
+    - پشتیبانی از idempotency key و بازگردانی پاسخ `ALREADY_APPLIED`.
+    - قابلیت اعمال خطاهای اجباری وضعیت (`forcedPushStatuses`) و شبیه‌سازی خطای شبکه در push و pull.
+  - صادر کردن (Export) کلاس‌ها و تایپ‌های جدید از `packages/sync-engine/src/index.ts`.
+  - نگارش مجموعه آزمون‌های جامع در `apps/web/src/core/sync/sync-runtime.test.ts` (شامل ۱۱ تست جدید):
+    - ذخیره‌سازی تغییرات و کرسر در عملیات pull.
+    - عدم پیشروی کرسر در صورت شکست ذخیره‌سازی داده‌های pull.
+    - ارسال دسته‌ای جهش‌ها در push با حفظ اکید ترتیب زمانی FIFO.
+    - تغییر وضعیت جهش موفق به `SUCCEEDED`.
+    - بازگشت جهش دارای خطای موقت (`RETRYABLE_ERROR`) به `PENDING` همراه با تنظیم زمان تلاش بعدی در آینده.
+    - تغییر وضعیت جهش ردشده (`REJECTED`) به `FAILED` و عدم retry خودکار آن در فراخوانی‌های بعدی push.
+    - اثبات idempotency در ارسال مجدد جهش تکراری با کلید یکسان.
+    - اجرای صحیح چرخه کامل `syncOnce`.
+    - بازگردانی تمام جهش‌ها به وضعیت `PENDING` در صورت بروز خطای سطح شبکه در transport.
+    - آزمون‌های یکپارچگی اختصاصی با `IndexedDbLocalStore` برای تایید استقلال کامل runtime از نوع پیاده‌سازی storage.
+  - نتایج اعتبارسنجی: تمام ۱۰۵ تست پروژه (۹۴ تست پیشین + ۱۱ تست جدید) با موفقیت پاس شدند.
+- **فایل‌های تغییرکرده/ایجاده‌شده:**
+  - `packages/sync-engine/src/ports.ts`
+  - `packages/sync-engine/src/sync-runtime.ts`
+  - `packages/sync-engine/src/fake-sync-transport.ts`
+  - `packages/sync-engine/src/index.ts`
+  - `apps/web/src/core/storage/memory-local-store.ts`
+  - `apps/web/src/core/storage/indexeddb-local-store.ts`
+  - `apps/web/src/core/sync/sync-runtime.test.ts`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npm ci`: موفق
+  - `npm run lint`: موفق با ۰ خطا و ۰ هشدار
+  - `npm run typecheck`: موفق با ۰ خطا
+  - `npm run test`: موفق؛ تمام ۱۰۵ تست در ۶ فایل تست پاس شدند
+  - `npm run build --workspace @orbit/web`: موفق بدون خطا
+  - `npm run build`: موفق؛ تمامی پکیج‌ها و اپلیکیشن‌ها بیلد شدند
+  - `git diff --check`: بدون خطای فاصله‌گذاری
+- **محدودیت‌های باقی‌مانده:**
+  - فراخوانی‌های شبکه واقعی (HTTP/WebSocket) هنوز متصل نشده‌اند (مربوط به گام‌های بعدی فاز ۳).
+  - احراز هویت سرور و پایگاه داده PostgreSQL هنوز پیاده‌سازی نشده‌اند (مربوط به گام‌های بعدی فاز ۳).
+  - `INBOX_PROJECT_ID = 'inbox'` موقت تا راه‌اندازی ماژول کاربر و حساب کاربری.
+- **وضعیت PR:**
+  - آماده ایجاد PR برای شاخه `feature/sync-runtime-fake-transport` به `develop`.
+- **گام بعدی (Handoff):**
+  - ادغام PR در `develop`
+  - آغاز طراحی احراز هویت و APIهای سینک سرور در فاز ۳
 
 ## محدودیت‌های باقی‌مانده
 

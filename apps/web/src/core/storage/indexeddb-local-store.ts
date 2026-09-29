@@ -1,4 +1,4 @@
-import type { SyncQueueEntry, TaskEntity } from '@orbit/shared-types';
+import type { QueueStatus, SyncQueueEntry, TaskEntity } from '@orbit/shared-types';
 import type { AtomicTaskStore } from '@orbit/sync-engine';
 import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
 
@@ -142,18 +142,24 @@ export class IndexedDbLocalStore implements AtomicTaskStore {
   async markMutationFailed(
     id: string,
     error: string,
-    nextAttemptAt: string
+    nextAttemptAt: string,
+    status: QueueStatus = 'PENDING'
   ): Promise<void> {
     const db = await this.getDb();
     const entry = await db.get('mutations', id);
     if (entry === undefined) return;
     await db.put('mutations', {
       ...entry,
-      status: 'PENDING',
+      status,
       attemptCount: entry.attemptCount + 1,
       nextAttemptAt,
       lastError: error
     });
+  }
+
+  async getMutation(id: string): Promise<SyncQueueEntry | undefined> {
+    const db = await this.getDb();
+    return db.get('mutations', id);
   }
 
   async getCursor(): Promise<string | undefined> {

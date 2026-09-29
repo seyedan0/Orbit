@@ -5,3 +5,14 @@ export type {
   PushResultStatus,
   SyncTransport
 } from './ports.js';
+
+export { SyncRuntime } from './sync-runtime.js';
+export type {
+  PullRunResult,
+  PushRunResult,
+  SyncRunResult,
+  SyncRuntimeOptions
+} from './sync-runtime.js';
+
+export { FakeSyncTransport } from './fake-sync-transport.js';
+export type { FakeSyncTransportOptions } from './fake-sync-transport.js';
