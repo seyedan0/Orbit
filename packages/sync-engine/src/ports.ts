@@ -5,6 +5,12 @@ import type {
   TaskEntity
 } from '@orbit/shared-types';
 
+/**
+ * Low-level local persistence port. Adapters must keep stored state isolated
+ * from callers (clone in/out) and never treat it as transactional across
+ * methods; use {@link AtomicTaskStore} where entity + mutation consistency
+ * is required.
+ */
 export interface LocalStore {
   getTask(id: string): Promise<TaskEntity | undefined>;
   saveTask(task: TaskEntity): Promise<void>;
@@ -14,6 +20,20 @@ export interface LocalStore {
   markMutationFailed(id: string, error: string, nextAttemptAt: string): Promise<void>;
   getCursor(): Promise<string | undefined>;
   saveCursor(cursor: string): Promise<void>;
+  listTasks(projectId: string): Promise<TaskEntity[]>;
+}
+
+/**
+ * Local store that can persist an entity and its mutation in one atomic
+ * transaction: either both records survive a crash, or neither does.
+ * Required by docs/architecture.md (atomic entity + mutation registration).
+ *
+ * Idempotency rule: if an entry with the same `idempotencyKey` already
+ * exists, the mutation part is skipped silently and the task part is still
+ * written, so retrying a save stays safe.
+ */
+export interface AtomicTaskStore extends LocalStore {
+  saveTaskWithMutation(task: TaskEntity, mutation: SyncQueueEntry): Promise<void>;
 }
 
 export interface SyncTransport {
