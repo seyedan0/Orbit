@@ -80,4 +80,47 @@ describe('TaskItem', () => {
     expect(onToggle).toHaveBeenCalledTimes(1);
     expect(onToggle).toHaveBeenCalledWith(task);
   });
+
+  it('renders a delete button when task is not deleted and triggers onDelete', () => {
+    const onDelete = vi.fn();
+    const task = makeTask({ kind: 'TASK' });
+    const html = renderToStaticMarkup(<TaskItem task={task} onDelete={onDelete} />);
+
+    expect(html).toContain('btn-delete');
+    expect(html).toContain('حذف');
+    expect(html).not.toContain('btn-restore');
+
+    // Test callback
+    const element = TaskItem({ task, onDelete });
+    const children = (element.props as { children: React.ReactNode[] }).children;
+    const deleteBtn = children[2] as React.ReactElement<{ onClick: () => void }>;
+    expect(deleteBtn.type).toBe('button');
+    deleteBtn.props.onClick();
+    expect(onDelete).toHaveBeenCalledTimes(1);
+    expect(onDelete).toHaveBeenCalledWith(task);
+  });
+
+  it('renders a restore button when task is soft-deleted and triggers onRestore', () => {
+    const onRestore = vi.fn();
+    const task = makeTask({
+      kind: 'TASK',
+      deletedAt: '2026-09-30T15:00:00.000Z'
+    });
+    const html = renderToStaticMarkup(<TaskItem task={task} onRestore={onRestore} />);
+
+    expect(html).toContain('btn-restore');
+    expect(html).toContain('بازیابی');
+    expect(html).not.toContain('btn-delete');
+    // Checkbox is not shown for deleted task
+    expect(html).not.toContain('type="checkbox"');
+
+    // Test callback
+    const element = TaskItem({ task, onRestore });
+    const children = (element.props as { children: React.ReactNode[] }).children;
+    const restoreBtn = children[2] as React.ReactElement<{ onClick: () => void }>;
+    expect(restoreBtn.type).toBe('button');
+    restoreBtn.props.onClick();
+    expect(onRestore).toHaveBeenCalledTimes(1);
+    expect(onRestore).toHaveBeenCalledWith(task);
+  });
 });

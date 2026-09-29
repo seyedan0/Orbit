@@ -249,3 +249,131 @@ export async function reopenTask(
   await deps.store.saveTaskWithMutation(updatedTask, mutation);
   return updatedTask;
 }
+
+export interface DeleteTaskDeps extends TaskServiceDeps {
+  idempotencyKey?: string;
+}
+
+export interface RestoreTaskDeps extends TaskServiceDeps {
+  idempotencyKey?: string;
+}
+
+/**
+ * Soft deletes a task (TASK, NOTE, CHECKLIST) atomically:
+ * 1. Verifies that the task exists in storage.
+ * 2. Idempotent: If already deleted (deletedAt != null), returns task as-is without extra mutation.
+ * 3. Sets deletedAt and updatedAt to the current timestamp.
+ * 4. Sets localStatus to 'DELETED'.
+ * 5. Creates a partial UPDATE mutation for sync with fieldTimestamps.deletedAt.
+ * 6. Persists the task and mutation atomically using saveTaskWithMutation.
+ * 7. Does NOT physically remove the task from storage.
+ */
+export async function deleteTask(
+  taskId: string,
+  deps: DeleteTaskDeps
+): Promise<TaskEntity> {
+  const task = await deps.store.getTask(taskId);
+  if (!task) {
+    throw new TaskNotFoundError(taskId);
+  }
+  if (task.deletedAt != null) {
+    return task;
+  }
+
+  const now = deps.now ?? (() => new Date());
+  const timestamp = now().toISOString();
+  const newId = deps.newId ?? (() => crypto.randomUUID());
+  const mutationId = newId();
+  const idempotencyKey = deps.idempotencyKey ?? mutationId;
+
+  const updatedTask: TaskEntity = {
+    ...task,
+    deletedAt: timestamp,
+    updatedAt: timestamp,
+    localStatus: 'DELETED'
+  };
+
+  const mutation: SyncQueueEntry = {
+    id: mutationId,
+    idempotencyKey,
+    entityType: 'TASK',
+    entityId: task.id,
+    operation: 'UPDATE',
+    baseVersion: task.version,
+    payloadType: 'PARTIAL',
+    payload: {
+      deletedAt: timestamp
+    },
+    fieldTimestamps: {
+      deletedAt: timestamp
+    },
+    createdAt: timestamp,
+    status: 'PENDING',
+    attemptCount: 0,
+    nextAttemptAt: timestamp
+  };
+
+  await deps.store.saveTaskWithMutation(updatedTask, mutation);
+  return updatedTask;
+}
+
+/**
+ * Restores a soft-deleted task (TASK, NOTE, CHECKLIST) atomically:
+ * 1. Verifies that the task exists in storage.
+ * 2. Idempotent: If already active (deletedAt == null), returns task as-is without extra mutation.
+ * 3. Sets deletedAt to null and updates updatedAt to the current timestamp.
+ * 4. Sets localStatus to 'CREATED' (if version === 0) or 'UPDATED'.
+ * 5. Creates a partial UPDATE mutation for sync setting deletedAt: null with fieldTimestamps.deletedAt.
+ * 6. Persists the task and mutation atomically using saveTaskWithMutation.
+ * 7. Restored task reappears in listTasks.
+ */
+export async function restoreTask(
+  taskId: string,
+  deps: RestoreTaskDeps
+): Promise<TaskEntity> {
+  const task = await deps.store.getTask(taskId);
+  if (!task) {
+    throw new TaskNotFoundError(taskId);
+  }
+  if (task.deletedAt == null) {
+    return task;
+  }
+
+  const now = deps.now ?? (() => new Date());
+  const timestamp = now().toISOString();
+  const newId = deps.newId ?? (() => crypto.randomUUID());
+  const mutationId = newId();
+  const idempotencyKey = deps.idempotencyKey ?? mutationId;
+
+  const nextLocalStatus = task.version === 0 ? 'CREATED' : 'UPDATED';
+
+  const updatedTask: TaskEntity = {
+    ...task,
+    deletedAt: null,
+    updatedAt: timestamp,
+    localStatus: nextLocalStatus
+  };
+
+  const mutation: SyncQueueEntry = {
+    id: mutationId,
+    idempotencyKey,
+    entityType: 'TASK',
+    entityId: task.id,
+    operation: 'UPDATE',
+    baseVersion: task.version,
+    payloadType: 'PARTIAL',
+    payload: {
+      deletedAt: null
+    },
+    fieldTimestamps: {
+      deletedAt: timestamp
+    },
+    createdAt: timestamp,
+    status: 'PENDING',
+    attemptCount: 0,
+    nextAttemptAt: timestamp
+  };
+
+  await deps.store.saveTaskWithMutation(updatedTask, mutation);
+  return updatedTask;
+}
