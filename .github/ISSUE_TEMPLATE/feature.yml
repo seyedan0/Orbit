@@ -1,0 +1,39 @@
+name: Feature
+description: تعریف قابلیت یا vertical slice جدید
+title: "feat: "
+labels:
+  - feature
+body:
+  - type: input
+    id: stage
+    attributes:
+      label: Stage
+      description: شماره فاز مطابق docs/project-plan.md
+    validations:
+      required: true
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User story
+      description: به‌عنوان چه کاربری، چه چیزی و چرا می‌خواهم؟
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: معیارهای قابل تست را بنویسید.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and dependencies
+      description: فایل‌ها، پکیج‌ها، APIها و وابستگی‌ها
+    validations:
+      required: true
+  - type: textarea
+    id: offline
+    attributes:
+      label: Offline, sync and privacy behavior
+      description: رفتار local-first، سینک و داده تحلیلی
