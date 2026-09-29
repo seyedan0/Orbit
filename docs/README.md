@@ -13,6 +13,8 @@
 - [testing.md](testing.md): راهبرد تست و دروازه‌های کیفیت
 - [operations.md](operations.md): محیط‌ها، استقرار، مشاهده‌پذیری و بازیابی
 - [roadmap.md](roadmap.md): فازها و backlog محصول
+- [project-plan.md](project-plan.md): برنامه کامل از کشف محصول تا انتشار production
+- [feature-catalog.md](feature-catalog.md): کاتالوگ قابلیت‌های task manager، Pomodoro، عادت و تحلیل
 - [glossary.md](glossary.md): واژه‌های مشترک دامنه و سینک
 - [api/README.md](api/README.md): قرارداد HTTP API
 

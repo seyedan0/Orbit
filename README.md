@@ -13,6 +13,8 @@
 - [راهنمای مستندات](docs/README.md)
 - [چشم‌انداز و دامنه](docs/vision.md)
 - [تصمیم‌های معماری](docs/decisions.md)
+- [برنامه کامل پروژه](docs/project-plan.md)
+- [کاتالوگ قابلیت‌ها](docs/feature-catalog.md)
 
 ## قرارداد همکاری AIها
 

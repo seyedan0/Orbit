@@ -12,18 +12,25 @@
 
 ```mermaid
 flowchart LR
+    Web[Web: React] --> LocalW[IndexedDB Adapter]
     Desktop[Desktop: Tauri + React] --> LocalD[Local Store]
     Mobile[Mobile: React Native] --> LocalM[Local Store]
+    Web --> Engine[Sync Engine]
     LocalD --> Engine[Sync Engine]
     LocalM --> Engine
     Engine --> API[NestJS Sync API]
     API --> DB[(PostgreSQL)]
     Shared[Shared Types] -. قرارداد .-> Desktop
+    Shared -. قرارداد .-> Web
     Shared -. قرارداد .-> Mobile
     Shared -. قرارداد .-> API
 ```
 
 ## 3. اجزای سیستم
+
+### `apps/web`
+
+اولین کلاینت قابل استفاده و مرجع رفتاری محصول. UI، navigation، auth boundary و تجربه task/Pomodoro ابتدا در Web اعتبارسنجی می‌شوند. storage مرورگر از طریق adapter مستقل به sync engine متصل می‌شود و domain نباید مستقیماً به IndexedDB وابسته باشد.
 
 ### `apps/desktop`
 
@@ -47,7 +54,7 @@ NestJS مسئول احراز هویت آینده، اعتبارسنجی payload�
 
 ### `packages/ui-system`
 
-کامپوننت‌های مشترک UI بعد از تثبیت domain ساخته می‌شوند و نباید منطق سینک را در خود نگه دارند.
+کامپوننت‌های مشترک UI ابتدا برای Web ساخته و پس از تثبیت به Desktop/Mobile منتقل می‌شوند. این package نباید منطق سینک را در خود نگه دارد.
 
 ## 4. جریان تغییر محلی
 

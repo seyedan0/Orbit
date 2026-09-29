@@ -1,49 +1,24 @@
-# نقشه راه
+# نقشه راه خلاصه
 
-## فاز صفر: قرارداد و مستندات
+برنامه اجرایی کامل، معیارهای عبور و مسئولیت Agentها در [project-plan.md](project-plan.md) قرار دارد. فهرست تمام قابلیت‌ها و مرحله ورود آن‌ها در [feature-catalog.md](feature-catalog.md) نگهداری می‌شود.
 
-- [x] تعریف محدوده MVP
-- [x] تعریف اصول معماری
-- [x] تعریف مدل داده و پروتکل سینک
-- [x] تعریف راهبرد امنیت، تست و عملیات
-- [ ] بازبینی و تایید مالک محصول
+## وضعیت فازها
 
-## فاز یک: monorepo حداقلی
+| فاز | موضوع                         | وضعیت               |
+| --- | ----------------------------- | ------------------- |
+| 0   | کشف محصول و تصمیم‌های پایه    | تکمیل مستندات اولیه |
+| 1   | قراردادها، monorepo و Web     | در حال انجام        |
+| 2   | هسته دامنه و storage محلی Web | بعدی                |
+| 3   | sync و حساب کاربری            | برنامه‌ریزی‌شده     |
+| 4   | مدیریت زمان و تقویم           | برنامه‌ریزی‌شده     |
+| 5   | سازمان‌دهی و جست‌وجو          | برنامه‌ریزی‌شده     |
+| 6   | Focus و Pomodoro              | برنامه‌ریزی‌شده     |
+| 7   | عادت‌ها و روتین‌ها            | برنامه‌ریزی‌شده     |
+| 8   | تحلیل‌ها و گزارش‌ها           | برنامه‌ریزی‌شده     |
+| 9   | همکاری و اشتراک‌گذاری         | برنامه‌ریزی‌شده     |
+| 10  | یکپارچه‌سازی و اتوماسیون      | برنامه‌ریزی‌شده     |
+| 11  | انتشار و کیفیت production     | برنامه‌ریزی‌شده     |
 
-- [ ] package manager و workspace
-- [ ] TypeScript پایه و quality scripts
-- [ ] `packages/shared-types`
-- [ ] interfaceهای storage و transport
-- [ ] اسکلت server، desktop و mobile
+## قانون تغییر وضعیت
 
-## فاز دو: هسته local-first
-
-- [ ] انتخاب SQLite یا WatermelonDB
-- [ ] schema و migration محلی
-- [ ] `sync_queue` و `sync_cursor`
-- [ ] queue state machine و retry
-- [ ] تست unit و integration
-
-## فاز سه: سرور سینک
-
-- [ ] PostgreSQL schema
-- [ ] API push/pull
-- [ ] idempotency
-- [ ] field-level conflict resolution
-- [ ] health check و observability
-
-## فاز چهار: تجربه محصول
-
-- [ ] Inbox، List و Folder
-- [ ] مدیریت TASK، NOTE و CHECKLIST
-- [ ] اولویت و تاریخ
-- [ ] UI مشترک و accessibility
-- [ ] تست end-to-end روی سه پلتفرم
-
-## بعد از MVP
-
-- [ ] TickTick MCP و CLI
-- [ ] CalDAV
-- [ ] x-callback-url و URL Scheme
-- [ ] recurrence پیشرفته
-- [ ] attachment و قابلیت‌های اشتراکی
+تغییر وضعیت فقط پس از برآورده‌شدن دروازه خروج همان فاز و ثبت نتیجه در `PROGRESS.md` مجاز است.

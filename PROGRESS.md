@@ -4,20 +4,21 @@
 
 ## وضعیت کلی
 
-- **مرحله:** فاز یک، monorepo و قراردادهای هسته
+- **مرحله:** فاز یک، monorepo و Web-first foundation
 - **آخرین به‌روزرسانی:** 2026-09-29
 - **آخرین عامل:** GitHub Copilot
-- **درصد تقریبی پیشرفت:** 25%
+- **درصد تقریبی پیشرفت:** 26%
 
 ## هدف فعلی
 
-تثبیت سند مهندسی MVP و آماده‌سازی قراردادهای لازم برای شروع monorepo و هسته سینک.
+تبدیل Orbit به یک محصول کامل شبیه TickTick با مسیر اجرایی مشخص از هسته local-first تا Pomodoro، عادت‌ها، تحلیل‌ها و انتشار production.
 
 ## کارهای در حال انجام
 
 - [ ] بازبینی و تایید سند مهندسی MVP
 - [ ] انتخاب دیتابیس محلی بین SQLite و WatermelonDB
 - [ ] پیاده‌سازی اولین vertical slice سینک
+- [ ] ایجاد اسکلت `apps/web` و اتصال آن به قراردادهای مشترک
 
 ## کارهای انجام‌شده
 
@@ -33,6 +34,9 @@
 - [x] ایجاد قراردادهای اولیه `shared-types`
 - [x] ایجاد interfaceهای storage و transport در `sync-engine`
 - [x] ایجاد اسکلت مستنداتی سه اپلیکیشن
+- [x] ایجاد برنامه جامع اجرای پروژه از فاز ۰ تا انتشار
+- [x] ایجاد کاتالوگ قابلیت‌های task، تقویم، Pomodoro، عادت و تحلیل
+- [x] ثبت Web به‌عنوان اولین کلاینت و مرجع رفتاری محصول
 
 ## فعالیت AIها
 
@@ -61,6 +65,24 @@
 - **فایل‌ها:** `package.json`، `tsconfig.json`، `tsconfig.base.json`، `packages/shared-types/`، `packages/sync-engine/` و `apps/*/README.md`
 - **اعتبارسنجی:** `npm install` موفق، `npm run typecheck` موفق، audit با صفر آسیب‌پذیری گزارش‌شده
 - **گام بعدی:** طراحی schema محلی و انتخاب SQLite یا WatermelonDB، سپس پیاده‌سازی queue واقعی
+
+### 2026-09-29 | برنامه جامع محصول و قابلیت‌ها
+
+- **عامل:** GitHub Copilot
+- **هدف:** مشخص‌کردن مسیر کامل پروژه و جلوگیری از فراموش‌شدن قابلیت‌های محصولی مهم
+- **انجام‌شده:** ایجاد برنامه فازبندی‌شده از کشف محصول تا production و کاتالوگ قابلیت‌های کامل شامل تقویم، reminder، recurrence، Focus/Pomodoro، habit، analytics، collaboration و integration
+- **فایل‌ها:** `docs/project-plan.md`، `docs/feature-catalog.md`، `docs/roadmap.md` و پیوندهای README
+- **اعتبارسنجی:** بررسی وجود دروازه خروج برای هر فاز و ثبت مرحله ورود برای قابلیت‌های Pomodoro و تحلیل‌ها
+- **گام بعدی:** بازبینی مالک محصول، سپس schema محلی فاز ۲ و تصمیم دیتابیس
+
+### 2026-09-29 | تغییر اولویت به Web-first
+
+- **عامل:** GitHub Copilot
+- **هدف:** تنظیم مسیر توسعه بر اساس اولویت نسخه تحت وب
+- **انجام‌شده:** اضافه‌کردن Web به معماری، تغییر ترتیب توسعه به Web سپس Desktop و Android، و ثبت ADR-005
+- **فایل‌ها:** `docs/project-plan.md`، `docs/architecture.md`، `docs/feature-catalog.md`، `docs/roadmap.md`، `docs/decisions.md`
+- **اعتبارسنجی:** بررسی سازگاری مرحله‌بندی و ثبت معیار خروج Web در برنامه
+- **گام بعدی:** ایجاد اسکلت `apps/web` و تعریف adapter storage مرورگر
 
 ## تصمیم‌های مهم
 
