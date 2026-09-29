@@ -7,20 +7,19 @@
 - **مرحله:** فاز ۲، هسته دامنه و storage محلی Web
 - **آخرین به‌روزرسانی:** 2026-09-30
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 45%
-- **Branch فعال:** `chore/web-eslint-and-docs`
+- **درصد تقریبی پیشرفت:** 55%
+- **Branch فعال:** `feature/web-task-completion`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-افزودن ابزار ESLint به کلاینت Web، اتصال آن به جریان‌های اعتبارسنجی ریشه و CI، و همگام‌سازی مستندات گیت، راهنمای مشارکت و قالب‌های پروژه.
+پیاده‌سازی رفتارهای تکمیل و بازگشایی تسک (`complete/reopen`) در کلاینت Web و Inbox با ذخیره‌سازی اتمیک، به‌روزرسانی بلافاصله UI، بازگشت امن در صورت خطا و ایجاد mutation همگام‌سازی.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی و PR شاخه `chore/web-eslint-and-docs` به `develop`
+- [ ] بازبینی و PR شاخه `feature/web-task-completion` به `develop`
+- [ ] پیاده‌سازی حذف و بازیابی تسک (delete/restore / soft delete)
 - [ ] بررسی دستی در مرورگر
-- [ ] پیاده‌سازی تکمیل و بازگشایی تسک (complete/reopen)
-- [ ] پیاده‌سازی حذف و بازیابی تسک (delete/restore)
 
 ## کارهای انجام‌شده
 
@@ -45,7 +44,9 @@
 - [x] **P2-WEB-003:** بازسازی ساختار Web به صورت feature-oriented بدون تغییر رفتار
 - [x] ادغام PR شماره ۲ (`refactor/web-feature-structure`) در `develop`
 - [x] افزودن ESLint با کانفیگ Flat به `apps/web` و افزودن به CI
+- [x] ادغام PR شماره ۳ (`chore/web-eslint-and-docs`) در `develop`
 - [x] همگام‌سازی مستندات پروژه (`docs/git-workflow.md`، `CONTRIBUTING.md`، قالب‌ها و ADRها)
+- [x] **P2-WEB-004:** پیاده‌سازی رفتار تکمیل و بازگشایی تسک (`complete/reopen`) در دامنه، کنترل‌های UI و اعتبارسنجی اتمیک
 
 ## فعالیت AIها
 
@@ -254,18 +255,75 @@
   - بررسی دستی در مرورگر فیزیکی (ایجاد، رفرش، تنظیمات و خروج)
   - `INBOX_PROJECT_ID = 'inbox'` موقت تا فاز ۳ (حساب کاربری)
 - **گام بعدی (Handoff):**
-  - باز کردن PR شاخه `chore/web-eslint-and-docs` به `develop`
-  - پس از مرج، شروع پیاده‌سازی تکمیل/بازگشایی تسک (complete/reopen) و سپس حذف نرم (soft delete)
+  - ادغام PR شماره ۳ (`chore/web-eslint-and-docs`) در `develop`
+  - شروع پیاده‌سازی P2-WEB-004 (تکمیل و بازگشایی تسک)
+
+### 2026-09-30 | P2-WEB-004 | پیاده‌سازی رفتار تکمیل و بازگشایی تسک‌ها در Inbox Web
+
+- **عامل:** Antigravity
+- **Task ID:** P2-WEB-004
+- **Branch:** `feature/web-task-completion`
+- **هدف:** پیاده‌سازی کامل رفتار تکمیل (`completeTask`) و بازگشایی (`reopenTask`) برای موجودیت‌های نوع `TASK` در کلاینت Web و Inbox با ذخیره‌سازی اتمیک، ثبت جهش‌های UPDATE در صف همگام‌سازی، تفکیک رفتاری از نوع `NOTE` و به‌روزرسانی آنی و بازگشت‌پذیر رابط کاربری.
+- **انجام‌شده:**
+  - ارتقای مدل داده با افزودن فیلد اختیاری `completedAt?: string | null` و تابع کمکی `isTaskCompleted` به `packages/shared-types` و مستندات `docs/data-model.md`
+  - توسعه سرویس‌های دامنه `completeTask` و `reopenTask` در `apps/web/src/features/tasks/services/task-service.ts`:
+    - بررسی نوع موجودیت و ممانعت از تکمیل یادداشت‌ها (`InvalidTaskKindError`)
+    - حفظ رفتار idempotent (در صورت فراخوانی مکرر، تسک موجود بدون تولید جهش اضافی یا تغییر زمان بازگردانده می‌شود)
+    - تنظیم فیلد `completedAt` به صورت اتمیک و به‌روزرسانی `updatedAt`
+    - ایجاد جهش جزئی `UPDATE` با `fieldTimestamps` برای سازگاری با حل تعارض LWW در پروتکل سینک
+    - حفظ وضعیت `localStatus` (در صورتی که محلی ایجاد شده باشد `CREATED` باقی می‌ماند و در صورت سینک بودن به `UPDATED` تغییر می‌کند)
+    - ذخیره‌سازی اتمیک با `saveTaskWithMutation` در `AtomicTaskStore`
+  - ارتقای کامپوننت `TaskItem`:
+    - افزودن کنترل چک‌باکس با دسترس‌پذیری (`aria-label`) و تست‌پذیری (`data-testid`)
+    - عدم رندر چک‌باکس برای موجودیت‌های نوع `NOTE`
+    - افزودن کلاس و استایل‌های بصری برای تسک‌های تکمیل‌شده (خط روی عنوان و شفافیت مناسب)
+  - ارتقای کامپوننت `TaskList` و اتصال پروپ‌های کنترلی
+  - ارتقای صفحه `InboxPage`:
+    - به‌روزرسانی آنی UI (Optimistic Update)
+    - فراخوانی سرویس دامنه بدون تماس مستقیم با IndexedDB
+    - بازگردانی وضعیت به نسخه پیشین (Rollback) در صورت شکست ذخیره‌سازی برای جلوگیری از ناهمگونی رابط کاربری
+  - افزودن استایل‌های وضعیت تکمیل به `apps/web/src/styles/globals.css`
+  - نگارش تست‌های جامع:
+    - ۳۵ تست در `task-service.test.ts` (شامل پوشش کامل complete، reopen، جهش UPDATE، idempotency، رد NOTE، عدم تغییر وضعیت در خطای دیتابیس)
+    - تست بقای داده پس از رفرش شبیه‌سازی‌شده مرورگر در `indexeddb-local-store.test.ts`
+    - ۵ تست کامپوننت `TaskItem.test.tsx` برای بررسی رندر چک‌باکس، رد NOTE و فعال‌سازی callback
+- **فایل‌های تغییرکرده/ایجاده‌شده:**
+  - `packages/shared-types/src/task.ts`، `packages/shared-types/src/index.ts`
+  - `docs/data-model.md`
+  - `apps/web/src/features/tasks/services/task-service.ts`
+  - `apps/web/src/features/tasks/services/task-service.test.ts`
+  - `apps/web/src/features/tasks/components/TaskItem.tsx`
+  - `apps/web/src/features/tasks/components/TaskItem.test.tsx`
+  - `apps/web/src/features/tasks/components/TaskList.tsx`
+  - `apps/web/src/features/tasks/pages/InboxPage.tsx`
+  - `apps/web/src/core/storage/indexeddb-local-store.test.ts`
+  - `apps/web/src/styles/globals.css`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npm run lint`: موفق با ۰ خطا و ۰ هشدار
+  - `npm run typecheck`: موفق با ۰ خطا
+  - `npm run test`: موفق؛ تمام ۷۵ تست در ۵ فایل تست پاس شدند (۵۳ تست قبلی + ۲۲ تست جدید)
+  - `npm run build --workspace @orbit/web`: موفق (۵۸ ماژول بیلد شدند)
+  - `git diff --check`: بدون خطای فاصله‌گذاری
+  - **بررسی مرورگر:** اجرای ساب‌ایجنت مرورگر به دلیل خطای شبکه در دریافت درایور ویندوز Playwright (پاسخ ۴۰۴ از CDN رسمی) در دسترس نبود؛ تمام سناریوهای پایداری پس از رفرش، رفتار کنترلی کامپوننت و اتمیسیتی توسط تست‌های خودکار در سطح IndexedDB و سرویس اعتبارسنجی شده‌اند.
+- **محدودیت‌های باقی‌مانده:**
+  - بررسی دستی در مرورگر فیزیکی توسط کاربر
+  - حذف نرم (soft delete) و بازیابی تسک (در مرحله بعدی فاز ۲)
+  - `INBOX_PROJECT_ID = 'inbox'` موقت تا فاز ۳ (حساب کاربری)
+- **وضعیت PR:**
+  - Pull Request شماره ۴ با عنوان `feat(web): add task completion controls` برای شاخه `feature/web-task-completion` به `develop` در گیت‌هاب باز است و گام‌های CI گیت‌هاب با موفقیت پاس شده‌اند.
+- **گام بعدی (Handoff):**
+  - ادغام PR شماره ۴ در `develop` توسط کاربر/مالک مخزن
+  - پس از ادغام، شروع پیاده‌سازی حذف نرم و بازیابی تسک (`delete/restore`) در دامنه و رابط کاربری
 
 ## محدودیت‌های باقی‌مانده
 
 - **بررسی دستی مرورگر:** InboxPage در مرورگر واقعی تست نشده.
 - **`INBOX_PROJECT_ID = 'inbox'`:** placeholder تا فاز ۳ (حساب کاربری). پس از account system باید به list ID واقعی کاربر تغییر کند.
 - **`MemoryLocalStore` اتمیکیتی واقعی:** JS single-thread آن را ایمن می‌کند اما تراکنش واقعی ندارد. فقط برای تست است.
-- **تکمیل/حذف task:** هنوز پیاده‌سازی نشده (فاز ۲، بعدی).
+- **حذف نرم (soft delete) و بازیابی task:** هنوز پیاده‌سازی نشده (فاز ۲، تسک بعدی).
 - **allowScripts (esbuild):** npm هشدار postinstall می‌دهد؛ build موفق است ولی سیاست تایید اسکریپت نیاز به تصمیم دارد.
 - **port gap:** `LocalStore` هنوز برای sync engine نیاز به `saveTaskWithMutation` atomic دارد که با `AtomicTaskStore` جداگانه حل شد.
-- **allowScripts (esbuild):** npm هشدار postinstall می‌دهد؛ build موفق است ولی سیاست تایید اسکریپت نیاز به تصمیم دارد.
 
 ## تصمیم‌های مهم
 

@@ -2,8 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { MemoryLocalStore } from '../../../core/storage/memory-local-store';
 import {
   INBOX_PROJECT_ID,
+  InvalidTaskKindError,
+  TaskNotFoundError,
   TaskValidationError,
   createTask,
+  completeTask,
+  reopenTask,
   type CreateTaskInput
 } from './task-service';
 
@@ -175,5 +179,315 @@ describe('createTask', () => {
     }
     expect(await store.listTasks(INBOX_PROJECT_ID)).toEqual([]);
     expect(await store.listPendingMutations(10)).toEqual([]);
+  });
+});
+
+describe('completeTask', () => {
+  const COMPLETE_TIME = '2020-01-01T12:00:00.000Z';
+  const MUT_COMPLETE_ID = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+
+  it('completes an uncompleted TASK item', async () => {
+    const { task, store } = await create({ title: 'Task to complete' });
+    const updated = await completeTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(COMPLETE_TIME),
+      newId: () => MUT_COMPLETE_ID
+    });
+
+    expect(updated.completedAt).toBe(COMPLETE_TIME);
+    expect(updated.updatedAt).toBe(COMPLETE_TIME);
+    expect(updated.createdAt).toBe(FIXED_TIME);
+  });
+
+  it('persists the completed task in the store', async () => {
+    const { task, store } = await create({ title: 'Task to complete' });
+    await completeTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(COMPLETE_TIME),
+      newId: () => MUT_COMPLETE_ID
+    });
+
+    const stored = await store.getTask(task.id);
+    expect(stored?.completedAt).toBe(COMPLETE_TIME);
+    expect(stored?.updatedAt).toBe(COMPLETE_TIME);
+  });
+
+  it('generates exactly one UPDATE mutation for the completion', async () => {
+    const { task, store } = await create({ title: 'Task' });
+    await completeTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(COMPLETE_TIME),
+      newId: () => MUT_COMPLETE_ID
+    });
+
+    const pending = await store.listPendingMutations(10);
+    // 1 CREATE + 1 UPDATE = 2 total
+    expect(pending.length).toBe(2);
+
+    const updateMut = pending.find((m) => m.operation === 'UPDATE');
+    expect(updateMut).toBeDefined();
+    expect(updateMut?.entityId).toBe(task.id);
+    expect(updateMut?.entityType).toBe('TASK');
+    expect(updateMut?.payloadType).toBe('PARTIAL');
+    expect(updateMut?.payload).toEqual({ completedAt: COMPLETE_TIME });
+    expect(updateMut?.fieldTimestamps).toEqual({ completedAt: COMPLETE_TIME });
+    expect(updateMut?.createdAt).toBe(COMPLETE_TIME);
+  });
+
+  it('maintains localStatus as CREATED if task was CREATED', async () => {
+    const { task, store } = await create({ title: 'Local task' });
+    expect(task.localStatus).toBe('CREATED');
+
+    const completed = await completeTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(COMPLETE_TIME)
+    });
+    expect(completed.localStatus).toBe('CREATED');
+  });
+
+  it('sets localStatus to UPDATED if task was SYNCED', async () => {
+    const { task, store } = await create({ title: 'Synced task' });
+    // Simulate synced state
+    await store.saveTask({ ...task, localStatus: 'SYNCED', version: 1 });
+
+    const completed = await completeTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(COMPLETE_TIME)
+    });
+    expect(completed.localStatus).toBe('UPDATED');
+  });
+
+  it('is idempotent: calling completeTask on an already completed task does nothing', async () => {
+    const { task, store } = await create({ title: 'Already completed' });
+    const first = await completeTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(COMPLETE_TIME),
+      newId: () => MUT_COMPLETE_ID
+    });
+
+    const SECOND_TIME = '2020-01-01T13:00:00.000Z';
+    const second = await completeTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(SECOND_TIME),
+      newId: () => 'different-mut-id'
+    });
+
+    expect(second.completedAt).toBe(COMPLETE_TIME);
+    expect(second.updatedAt).toBe(COMPLETE_TIME);
+    expect(second).toEqual(first);
+
+    // No extra mutation should have been created
+    const pending = await store.listPendingMutations(10);
+    expect(pending.length).toBe(2); // 1 CREATE + 1 UPDATE
+  });
+
+  it('a simulated retry with the same idempotencyKey does not duplicate mutation', async () => {
+    const { task, store } = await create({ title: 'Task' });
+    const fixedMutId = 'mut-complete-fixed';
+
+    await completeTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(COMPLETE_TIME),
+      newId: () => fixedMutId,
+      idempotencyKey: 'same-complete-key'
+    });
+
+    // Re-save directly or retry
+    const pendingBefore = await store.listPendingMutations(10);
+    expect(pendingBefore.length).toBe(2);
+
+    // Call again with same key
+    await completeTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(COMPLETE_TIME),
+      newId: () => fixedMutId,
+      idempotencyKey: 'same-complete-key'
+    });
+
+    const pendingAfter = await store.listPendingMutations(10);
+    expect(pendingAfter.length).toBe(2);
+  });
+
+  it('NOTE cannot be completed as a TASK and throws InvalidTaskKindError', async () => {
+    const store = makeStore();
+    const noteId = 'note-id-123';
+    await store.saveTask({
+      id: noteId,
+      projectId: INBOX_PROJECT_ID,
+      userId: 'user-1',
+      title: 'A note',
+      kind: 'NOTE',
+      priority: 0,
+      isAllDay: false,
+      timeZone: 'UTC',
+      reminders: [],
+      items: [],
+      version: 0,
+      localStatus: 'CREATED',
+      createdAt: FIXED_TIME,
+      updatedAt: FIXED_TIME
+    });
+
+    await expect(
+      completeTask(noteId, { store, userId: 'user-1' })
+    ).rejects.toThrow(InvalidTaskKindError);
+
+    // Ensure store was not modified
+    const noteInStore = await store.getTask(noteId);
+    expect(noteInStore?.completedAt).toBeUndefined();
+  });
+
+  it('throws TaskNotFoundError for a non-existent task id', async () => {
+    const store = makeStore();
+    await expect(
+      completeTask('non-existent-id', { store, userId: 'user-1' })
+    ).rejects.toThrow(TaskNotFoundError);
+  });
+
+  it('failed storage does not leave inconsistent state', async () => {
+    const { task, store } = await create({ title: 'Task' });
+    const failingStore = {
+      ...store,
+      getTask: store.getTask.bind(store),
+      saveTaskWithMutation: async () => {
+        throw new Error('IndexedDB storage failure');
+      }
+    };
+
+    await expect(
+      completeTask(task.id, {
+        store: failingStore as unknown as typeof store,
+        userId: 'user-1'
+      })
+    ).rejects.toThrow('IndexedDB storage failure');
+
+    // The original task in store is still uncompleted
+    const untouched = await store.getTask(task.id);
+    expect(untouched?.completedAt).toBeNull();
+    // Only 1 CREATE mutation exists, no orphan UPDATE mutation
+    const pending = await store.listPendingMutations(10);
+    expect(pending.length).toBe(1);
+    expect(pending[0]?.operation).toBe('CREATE');
+  });
+});
+
+describe('reopenTask', () => {
+  const COMPLETE_TIME = '2020-01-01T12:00:00.000Z';
+  const REOPEN_TIME = '2020-01-01T14:00:00.000Z';
+  const MUT_COMPLETE_ID = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+  const MUT_REOPEN_ID = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+
+  async function createAndComplete() {
+    const { task, store } = await create({ title: 'Task to complete & reopen' });
+    const completed = await completeTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(COMPLETE_TIME),
+      newId: () => MUT_COMPLETE_ID
+    });
+    return { task: completed, store };
+  }
+
+  it('reopens a completed TASK item and sets completedAt to null', async () => {
+    const { task, store } = await createAndComplete();
+    const reopened = await reopenTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(REOPEN_TIME),
+      newId: () => MUT_REOPEN_ID
+    });
+
+    expect(reopened.completedAt).toBeNull();
+    expect(reopened.updatedAt).toBe(REOPEN_TIME);
+  });
+
+  it('persists the reopened task in the store', async () => {
+    const { task, store } = await createAndComplete();
+    await reopenTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(REOPEN_TIME),
+      newId: () => MUT_REOPEN_ID
+    });
+
+    const stored = await store.getTask(task.id);
+    expect(stored?.completedAt).toBeNull();
+    expect(stored?.updatedAt).toBe(REOPEN_TIME);
+  });
+
+  it('generates an UPDATE mutation setting completedAt to null with current field timestamp', async () => {
+    const { task, store } = await createAndComplete();
+    await reopenTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(REOPEN_TIME),
+      newId: () => MUT_REOPEN_ID
+    });
+
+    const pending = await store.listPendingMutations(10);
+    // 1 CREATE + 1 UPDATE (complete) + 1 UPDATE (reopen) = 3 total
+    expect(pending.length).toBe(3);
+
+    const reopenMut = pending.find((m) => m.id === MUT_REOPEN_ID);
+    expect(reopenMut).toBeDefined();
+    expect(reopenMut?.operation).toBe('UPDATE');
+    expect(reopenMut?.payload).toEqual({ completedAt: null });
+    expect(reopenMut?.fieldTimestamps).toEqual({ completedAt: REOPEN_TIME });
+    expect(reopenMut?.createdAt).toBe(REOPEN_TIME);
+  });
+
+  it('is idempotent: calling reopenTask on an already open task does nothing', async () => {
+    const { task, store } = await create({ title: 'Already open' });
+    const reopened = await reopenTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(REOPEN_TIME)
+    });
+
+    expect(reopened.completedAt).toBeNull();
+    expect(reopened.updatedAt).toBe(FIXED_TIME); // unchanged
+    const pending = await store.listPendingMutations(10);
+    expect(pending.length).toBe(1); // Only the initial CREATE
+  });
+
+  it('NOTE cannot be reopened as a TASK and throws InvalidTaskKindError', async () => {
+    const store = makeStore();
+    const noteId = 'note-id-456';
+    await store.saveTask({
+      id: noteId,
+      projectId: INBOX_PROJECT_ID,
+      userId: 'user-1',
+      title: 'A note',
+      kind: 'NOTE',
+      priority: 0,
+      isAllDay: false,
+      timeZone: 'UTC',
+      reminders: [],
+      items: [],
+      version: 0,
+      localStatus: 'CREATED',
+      createdAt: FIXED_TIME,
+      updatedAt: FIXED_TIME
+    });
+
+    await expect(
+      reopenTask(noteId, { store, userId: 'user-1' })
+    ).rejects.toThrow(InvalidTaskKindError);
+  });
+
+  it('throws TaskNotFoundError for a non-existent task id', async () => {
+    const store = makeStore();
+    await expect(
+      reopenTask('non-existent-id', { store, userId: 'user-1' })
+    ).rejects.toThrow(TaskNotFoundError);
   });
 });

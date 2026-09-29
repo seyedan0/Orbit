@@ -29,6 +29,24 @@ export class TaskValidationError extends Error {
   }
 }
 
+export class TaskNotFoundError extends Error {
+  constructor(id: string) {
+    super(`تسک با شناسه ${id} یافت نشد`);
+    this.name = 'TaskNotFoundError';
+  }
+}
+
+export class InvalidTaskKindError extends Error {
+  constructor(message = 'تنها موجودیت‌های نوع TASK قابل تکمیل یا بازگشایی هستند') {
+    super(message);
+    this.name = 'InvalidTaskKindError';
+  }
+}
+
+export interface CompleteTaskDeps extends TaskServiceDeps {
+  idempotencyKey?: string;
+}
+
 /**
  * Creates a TASK in the Inbox atomically: saves the TaskEntity and its
  * CREATE mutation in a single `saveTaskWithMutation` call so that a crash
@@ -69,7 +87,8 @@ export async function createTask(
     version: 0,
     localStatus: 'CREATED',
     createdAt: timestamp,
-    updatedAt: timestamp
+    updatedAt: timestamp,
+    completedAt: null
   };
 
   // fieldTimestamps enable field-level LWW conflict resolution (sync-protocol.md §7).
@@ -99,4 +118,134 @@ export async function createTask(
 
   await deps.store.saveTaskWithMutation(task, mutation);
   return task;
+}
+
+/**
+ * Completes a TASK item atomically:
+ * 1. Verifies that the task exists and is of kind TASK (NOTE cannot be completed as a TASK).
+ * 2. Idempotent: If already completed, returns the task without modifying storage or adding mutations.
+ * 3. Sets completedAt and updates updatedAt to the current timestamp.
+ * 4. Sets localStatus to CREATED (if originally CREATED) or UPDATED (if SYNCED).
+ * 5. Creates a partial UPDATE mutation for sync with field-level timestamps.
+ * 6. Persists the task and mutation atomically in the local store.
+ */
+export async function completeTask(
+  taskId: string,
+  deps: CompleteTaskDeps
+): Promise<TaskEntity> {
+  const task = await deps.store.getTask(taskId);
+  if (!task) {
+    throw new TaskNotFoundError(taskId);
+  }
+  if (task.kind !== 'TASK') {
+    throw new InvalidTaskKindError(
+      `تنها موجودیت‌های نوع TASK قابل تکمیل هستند (نوع فعلی: ${task.kind})`
+    );
+  }
+  if (task.completedAt != null) {
+    return task;
+  }
+
+  const now = deps.now ?? (() => new Date());
+  const timestamp = now().toISOString();
+  const newId = deps.newId ?? (() => crypto.randomUUID());
+  const mutationId = newId();
+  const idempotencyKey = deps.idempotencyKey ?? mutationId;
+
+  const nextLocalStatus = task.localStatus === 'CREATED' ? 'CREATED' : 'UPDATED';
+
+  const updatedTask: TaskEntity = {
+    ...task,
+    completedAt: timestamp,
+    updatedAt: timestamp,
+    localStatus: nextLocalStatus
+  };
+
+  const mutation: SyncQueueEntry = {
+    id: mutationId,
+    idempotencyKey,
+    entityType: 'TASK',
+    entityId: task.id,
+    operation: 'UPDATE',
+    baseVersion: task.version,
+    payloadType: 'PARTIAL',
+    payload: {
+      completedAt: timestamp
+    },
+    fieldTimestamps: {
+      completedAt: timestamp
+    },
+    createdAt: timestamp,
+    status: 'PENDING',
+    attemptCount: 0,
+    nextAttemptAt: timestamp
+  };
+
+  await deps.store.saveTaskWithMutation(updatedTask, mutation);
+  return updatedTask;
+}
+
+/**
+ * Reopens a completed TASK item atomically:
+ * 1. Verifies that the task exists and is of kind TASK.
+ * 2. Idempotent: If already open (completedAt == null), returns the task without modifying storage.
+ * 3. Sets completedAt to null and updates updatedAt to current timestamp.
+ * 4. Sets localStatus to CREATED or UPDATED.
+ * 5. Creates a partial UPDATE mutation setting completedAt: null with current field timestamp.
+ * 6. Persists the task and mutation atomically in the local store.
+ */
+export async function reopenTask(
+  taskId: string,
+  deps: CompleteTaskDeps
+): Promise<TaskEntity> {
+  const task = await deps.store.getTask(taskId);
+  if (!task) {
+    throw new TaskNotFoundError(taskId);
+  }
+  if (task.kind !== 'TASK') {
+    throw new InvalidTaskKindError(
+      `تنها موجودیت‌های نوع TASK قابل بازگشایی هستند (نوع فعلی: ${task.kind})`
+    );
+  }
+  if (task.completedAt == null) {
+    return task;
+  }
+
+  const now = deps.now ?? (() => new Date());
+  const timestamp = now().toISOString();
+  const newId = deps.newId ?? (() => crypto.randomUUID());
+  const mutationId = newId();
+  const idempotencyKey = deps.idempotencyKey ?? mutationId;
+
+  const nextLocalStatus = task.localStatus === 'CREATED' ? 'CREATED' : 'UPDATED';
+
+  const updatedTask: TaskEntity = {
+    ...task,
+    completedAt: null,
+    updatedAt: timestamp,
+    localStatus: nextLocalStatus
+  };
+
+  const mutation: SyncQueueEntry = {
+    id: mutationId,
+    idempotencyKey,
+    entityType: 'TASK',
+    entityId: task.id,
+    operation: 'UPDATE',
+    baseVersion: task.version,
+    payloadType: 'PARTIAL',
+    payload: {
+      completedAt: null
+    },
+    fieldTimestamps: {
+      completedAt: timestamp
+    },
+    createdAt: timestamp,
+    status: 'PENDING',
+    attemptCount: 0,
+    nextAttemptAt: timestamp
+  };
+
+  await deps.store.saveTaskWithMutation(updatedTask, mutation);
+  return updatedTask;
 }
