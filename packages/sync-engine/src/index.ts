@@ -1,4 +1,5 @@
 export type {
+  AtomicTaskStore,
   LocalStore,
   PushResult,
   PushResultStatus,
