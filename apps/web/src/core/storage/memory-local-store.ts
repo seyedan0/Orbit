@@ -1,4 +1,4 @@
-import type { SyncQueueEntry, TaskEntity } from '@orbit/shared-types';
+import type { QueueStatus, SyncQueueEntry, TaskEntity } from '@orbit/shared-types';
 import type { AtomicTaskStore } from '@orbit/sync-engine';
 
 /**
@@ -81,17 +81,23 @@ export class MemoryLocalStore implements AtomicTaskStore {
   async markMutationFailed(
     id: string,
     error: string,
-    nextAttemptAt: string
+    nextAttemptAt: string,
+    status: QueueStatus = 'PENDING'
   ): Promise<void> {
     const entry = this.queue.get(id);
     if (entry === undefined) return;
     this.queue.set(id, {
       ...entry,
-      status: 'PENDING',
+      status,
       attemptCount: entry.attemptCount + 1,
       nextAttemptAt,
       lastError: error
     });
+  }
+
+  async getMutation(id: string): Promise<SyncQueueEntry | undefined> {
+    const entry = this.queue.get(id);
+    return entry === undefined ? undefined : structuredClone(entry);
   }
 
   async getCursor(): Promise<string | undefined> {

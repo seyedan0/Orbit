@@ -1,6 +1,7 @@
 import type {
   MutationPayload,
   PullResponse,
+  QueueStatus,
   SyncQueueEntry,
   TaskEntity
 } from '@orbit/shared-types';
@@ -17,7 +18,12 @@ export interface LocalStore {
   enqueueMutation(mutation: SyncQueueEntry): Promise<void>;
   listPendingMutations(limit: number): Promise<SyncQueueEntry[]>;
   markMutationSucceeded(id: string): Promise<void>;
-  markMutationFailed(id: string, error: string, nextAttemptAt: string): Promise<void>;
+  markMutationFailed(
+    id: string,
+    error: string,
+    nextAttemptAt: string,
+    status?: QueueStatus
+  ): Promise<void>;
   getCursor(): Promise<string | undefined>;
   saveCursor(cursor: string): Promise<void>;
   listTasks(projectId: string): Promise<TaskEntity[]>;
