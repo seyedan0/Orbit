@@ -1,0 +1,37 @@
+name: Bug report
+description: گزارش باگ قابل بازتولید
+title: "fix: "
+labels:
+  - bug
+body:
+  - type: input
+    id: stage
+    attributes:
+      label: Stage
+      description: فاز مرتبط در docs/project-plan.md
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: مراحل دقیق بازتولید
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: پلتفرم، نسخه و branch

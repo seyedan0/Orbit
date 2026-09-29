@@ -65,3 +65,23 @@
 - **دلیل:** Web سریع‌تر قابل انتشار و آزمایش است و برای اعتبارسنجی UX، task flow، Pomodoro و analytics بازخورد زودتری می‌دهد.
 - **پیامدها:** storage مرورگر و محدودیت‌های Web باید زود طراحی شوند؛ قابلیت‌های native مانند widget و notification کامل به فازهای بعد منتقل می‌شوند.
 - **جایگزین‌ها:** شروع هم‌زمان سه اپ یا شروع با Desktop به‌عنوان کلاینت اصلی.
+
+## ADR-006: پشته Web شامل Vite، React و React Router است
+
+- **تاریخ:** 2026-09-29
+- **وضعیت:** پذیرفته‌شده
+- **زمینه:** فاز ۱ به اسکلت Web قابل اجرا با routing، layout و auth boundary نیاز دارد و معماری React را برای Web و Desktop (Tauri) پیش‌بینی کرده است.
+- **تصمیم:** `apps/web` با Vite، React 19، React Router و Vitest ساخته شود. auth boundary فعلاً یک نشست محلی موقت است و storage ابتدا adapter حافظه‌ای و سپس IndexedDB برای پورت `AtomicTaskStore` است.
+- **دلیل:** Vite برای SPA local-first کافی و سبک است و اشتراک کد React با Tauri را ساده نگه می‌دارد.
+- **پیامدها:** نشست محلی موقت است و در فاز ۳ جایگزین می‌شود؛ SSR در محدوده نیست. `vitest` باید روی نسخه ۵ یا بالاتر بماند.
+- **جایگزین‌ها:** Next.js (SSR غیرضروری برای local-first)، Remix، یا شروع بدون Vite.
+
+## ADR-007: storage پایدار Web با IndexedDB و قرارداد AtomicTaskStore
+
+- **تاریخ:** 2026-09-30
+- **وضعیت:** پذیرفته‌شده
+- **زمینه:** فاز ۲ به storage پایدار Web نیاز دارد؛ پورت اولیه `LocalStore` عملیات اتمیک «ذخیره entity + ثبت mutation» را در یک تراکنش بیان نمی‌کرد، در حالی که معماری ثبت هم‌زمان و اتمیک entity و mutation را الزامی می‌داند.
+- **تصمیم:** پورت `AtomicTaskStore` با متد `saveTaskWithMutation` به `sync-engine` اضافه شود و در `apps/web` با استفاده از `idb` از طریق `IndexedDbLocalStore` پیاده‌سازی شود؛ ثبت task و mutation در یک تراکنش اتمیک IndexedDB انجام می‌شود و در صورت تکرار `idempotencyKey`، ثبت mutation رد شده اما task ذخیره می‌شود.
+- **دلیل:** IndexedDB استاندارد پایدار و transactional در مرورگرهاست و `idb` تایپ‌های مناسب بر روی آن ارائه می‌دهد بدون اینکه منطق دامنه به IndexedDB وابسته شود.
+- **پیامدها:** داده‌ها پس از رفرش مرورگر باقی می‌مانند. کلاینت‌های آینده (Desktop با SQLite و Android) قرارداد مشترک `AtomicTaskStore` را پیاده خواهند کرد.
+- **جایگزین‌ها:** localStorage (فاقد تراکنش و ظرفیت کم)، OPFS/WASM SQLite (پیچیدگی غیرضروری برای این فاز).

@@ -4,23 +4,23 @@
 
 ## وضعیت کلی
 
-- **مرحله:** فاز ۲، بازسازی ساختار ماژولار Web (Feature-oriented)
+- **مرحله:** فاز ۲، هسته دامنه و storage محلی Web
 - **آخرین به‌روزرسانی:** 2026-09-30
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 42%
-- **Branch فعال:** `refactor/web-feature-structure`
+- **درصد تقریبی پیشرفت:** 45%
+- **Branch فعال:** `chore/web-eslint-and-docs`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-بازسازی و تفکیک ساختار پروژه Web (`apps/web/src`) از ساختار صفحه‌محور به ساختار ماژولار و مبتنی بر قابلیت (Feature-oriented) شامل تفکیک core، layout و features (تسک‌ها، احراز هویت و تنظیمات) بدون هیچ‌گونه تغییر رفتاری در محصول.
+افزودن ابزار ESLint به کلاینت Web، اتصال آن به جریان‌های اعتبارسنجی ریشه و CI، و همگام‌سازی مستندات گیت، راهنمای مشارکت و قالب‌های پروژه.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی و PR شاخه `refactor/web-feature-structure` به `develop`
+- [ ] بازبینی و PR شاخه `chore/web-eslint-and-docs` به `develop`
 - [ ] بررسی دستی در مرورگر
-- [ ] افزودن ESLint و گام lint در CI
 - [ ] پیاده‌سازی تکمیل و بازگشایی تسک (complete/reopen)
+- [ ] پیاده‌سازی حذف و بازیابی تسک (delete/restore)
 
 ## کارهای انجام‌شده
 
@@ -43,6 +43,9 @@
 - [x] **P2-WEB-002:** اتصال IndexedDB و اولین vertical slice ایجاد task در Inbox
 - [x] ادغام PR شماره ۱ (`feature/web-inbox-task-creation`) در `develop`
 - [x] **P2-WEB-003:** بازسازی ساختار Web به صورت feature-oriented بدون تغییر رفتار
+- [x] ادغام PR شماره ۲ (`refactor/web-feature-structure`) در `develop`
+- [x] افزودن ESLint با کانفیگ Flat به `apps/web` و افزودن به CI
+- [x] همگام‌سازی مستندات پروژه (`docs/git-workflow.md`، `CONTRIBUTING.md`، قالب‌ها و ADRها)
 
 ## فعالیت AIها
 
@@ -213,17 +216,54 @@
   - افزودن ESLint و CI lint step
   - شروع پیاده‌سازی complete/reopen و delete/restore task
 
+### 2026-09-30 | افزودن ESLint به Web و همگام‌سازی مستندات پروژه
+
+- **عامل:** Antigravity
+- **Branch:** `chore/web-eslint-and-docs`
+- **هدف:** راه‌اندازی ESLint با کانفیگ Flat برای `apps/web`، اضافه کردن گام lint به CI و اعتبارسنجی ریشه، و انتقال فایل‌های مدیریت پروژه (`docs/git-workflow.md`، `CONTRIBUTING.md`، قالب‌های Issue و PR) و ثبت ADR-006 و ADR-007.
+- **انجام‌شده:**
+  - نصب پکیج‌های `eslint`، `@eslint/js` و `typescript-eslint` در `apps/web`
+  - ایجاد کانفیگ Flat در `apps/web/eslint.config.js` با قوانین سبک و هوشمند TypeScript (`@typescript-eslint/no-unused-vars` با ignore پیشوند `_`)
+  - افزودن اسکریپت `"lint": "eslint ."` به `apps/web/package.json`
+  - اتصال دستور ریشه `"lint": "npm run lint --workspaces --if-present"` به ورک‌اسپیس‌ها
+  - افزودن گام Lint به اکشن GitHub Actions در `.github/workflows/ci.yml`
+  - انتقال و ایجاد فایل‌های مدیریت پروژه بدون کد تکراری IndexedDB:
+    - `docs/git-workflow.md` (راهنمای شاخه‌ها، کامیت‌های استاندارد و فرآیند انتشار)
+    - `CONTRIBUTING.md` (راهنمای مشارکت‌کنندگان و چک‌لیست قبل از شروع کار)
+    - `.github/PULL_REQUEST_TEMPLATE.md` (قالب استاندارد Pull Request)
+    - `.github/ISSUE_TEMPLATE/bug.yml` و `.github/ISSUE_TEMPLATE/feature.yml`
+  - ثبت تصمیم‌های معماری در `docs/decisions.md`:
+    - `ADR-006`: پشته Web شامل Vite، React و React Router
+    - `ADR-007`: پیاده‌سازی storage پایدار با IndexedDB و قرارداد `AtomicTaskStore`
+  - به‌روزرسانی فاز فعلی در `docs/project-plan.md` و `docs/roadmap.md` به فاز ۲
+- **فایل‌های تغییرکرده/ایجاده‌شده:**
+  - `apps/web/package.json`، `apps/web/eslint.config.js`، `package-lock.json`
+  - `.github/workflows/ci.yml`
+  - `docs/git-workflow.md`، `CONTRIBUTING.md`
+  - `.github/PULL_REQUEST_TEMPLATE.md`، `.github/ISSUE_TEMPLATE/bug.yml`، `.github/ISSUE_TEMPLATE/feature.yml`
+  - `docs/decisions.md`، `docs/project-plan.md`، `docs/roadmap.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npm ci`: موفق (۰ آسیب‌پذیری)
+  - `npm run lint`: موفق با ۰ خطا و ۰ هشدار
+  - `npm run typecheck`: موفق بدون هیچ خطایی
+  - `npm run test`: موفق؛ ۵۳ تست پاس شد
+  - `npm run build`: موفق؛ تمامی ورک‌اسپیس‌ها با موفقیت بیلد شدند
+  - `git diff --check`: بدون خطای فاصله‌گذاری
+- **محدودیت‌های باقی‌مانده:**
+  - بررسی دستی در مرورگر فیزیکی (ایجاد، رفرش، تنظیمات و خروج)
+  - `INBOX_PROJECT_ID = 'inbox'` موقت تا فاز ۳ (حساب کاربری)
+- **گام بعدی (Handoff):**
+  - باز کردن PR شاخه `chore/web-eslint-and-docs` به `develop`
+  - پس از مرج، شروع پیاده‌سازی تکمیل/بازگشایی تسک (complete/reopen) و سپس حذف نرم (soft delete)
+
 ## محدودیت‌های باقی‌مانده
 
-- **اسناد فقط روی `feature/web-foundation`:** `docs/git-workflow.md`، `CONTRIBUTING.md`، قالب‌های issue/PR و ADR-006 روی این branch وجود ندارند و چون آن branch merge نمی‌شود، باید در یک PR جداگانه‌ی docs (مثلاً `docs/*` با cherry-pick فقط اسناد) به develop منتقل شوند. تا آن زمان `docs/git-workflow.md` روی develop وجود ندارد.
-- **تاریخچه `PROGRESS.md`:** ورودی‌های P1-WEB-001 و تاریخچه‌ی تفصیلی قبلی در این branch خلاصه شده‌اند؛ متن کامل روی `feature/web-foundation` باقی است.
-- **commit محلی `a903efa`:** روی `feature/web-foundation` (push نشده) پیاده‌سازی IndexedDB دوم دارد؛ حذف یا نگه‌داشتن آن با مالک پروژه است.
-
 - **بررسی دستی مرورگر:** InboxPage در مرورگر واقعی تست نشده.
-- **ESLint:** lint در مخزن نیست؛ CI فاقد مرحله lint است.
 - **`INBOX_PROJECT_ID = 'inbox'`:** placeholder تا فاز ۳ (حساب کاربری). پس از account system باید به list ID واقعی کاربر تغییر کند.
 - **`MemoryLocalStore` اتمیکیتی واقعی:** JS single-thread آن را ایمن می‌کند اما تراکنش واقعی ندارد. فقط برای تست است.
 - **تکمیل/حذف task:** هنوز پیاده‌سازی نشده (فاز ۲، بعدی).
+- **allowScripts (esbuild):** npm هشدار postinstall می‌دهد؛ build موفق است ولی سیاست تایید اسکریپت نیاز به تصمیم دارد.
 - **port gap:** `LocalStore` هنوز برای sync engine نیاز به `saveTaskWithMutation` atomic دارد که با `AtomicTaskStore` جداگانه حل شد.
 - **allowScripts (esbuild):** npm هشدار postinstall می‌دهد؛ build موفق است ولی سیاست تایید اسکریپت نیاز به تصمیم دارد.
 
