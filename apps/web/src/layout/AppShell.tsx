@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { useSession } from '../auth/session-context';
+import { useSession } from '../core/auth/session-context';
+import styles from './AppShell.module.css';
 
 const NAV_ITEMS = [
   { to: '/inbox', label: 'صندوق ورودی' },
@@ -10,9 +11,9 @@ export function AppShell() {
   const { signOut } = useSession();
 
   return (
-    <div className="shell">
-      <aside className="shell__sidebar">
-        <h1 className="shell__brand">Orbit</h1>
+    <div className={styles.shell}>
+      <aside className={styles.sidebar}>
+        <h1 className={styles.brand}>Orbit</h1>
         <nav aria-label="ناوبری اصلی">
           <ul>
             {NAV_ITEMS.map((item) => (
@@ -26,7 +27,7 @@ export function AppShell() {
           خروج
         </button>
       </aside>
-      <main className="shell__content">
+      <main className={styles.content}>
         <Outlet />
       </main>
     </div>

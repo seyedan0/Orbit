@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MemoryLocalStore } from '../storage/memory-local-store';
+import { MemoryLocalStore } from '../../../core/storage/memory-local-store';
 import {
   INBOX_PROJECT_ID,
   TaskValidationError,
