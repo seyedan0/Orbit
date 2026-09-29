@@ -211,4 +211,87 @@ describe('IndexedDbLocalStore', () => {
     await store.saveCursor('cursor-v2');
     expect(await store.getCursor()).toBe('cursor-v2');
   });
+
+  // ---- persistence after refresh ----
+
+  it('persists completed task and UPDATE mutation across a simulated page refresh', async () => {
+    const dbName = uniqueDb();
+    const store1 = new IndexedDbLocalStore(dbName);
+
+    const task = makeTask({ title: 'Task to complete across refresh' });
+    const createMut = makeMutation(task);
+    await store1.saveTaskWithMutation(task, createMut);
+
+    const completedTimestamp = '2026-09-30T10:00:00.000Z';
+    const completedTask: TaskEntity = {
+      ...task,
+      completedAt: completedTimestamp,
+      updatedAt: completedTimestamp,
+      localStatus: 'CREATED'
+    };
+
+    const updateMut: SyncQueueEntry = {
+      id: crypto.randomUUID(),
+      idempotencyKey: crypto.randomUUID(),
+      entityType: 'TASK',
+      entityId: task.id,
+      operation: 'UPDATE',
+      baseVersion: 0,
+      payloadType: 'PARTIAL',
+      payload: { completedAt: completedTimestamp },
+      fieldTimestamps: { completedAt: completedTimestamp },
+      createdAt: completedTimestamp,
+      status: 'PENDING',
+      attemptCount: 0,
+      nextAttemptAt: PAST
+    };
+
+    await store1.saveTaskWithMutation(completedTask, updateMut);
+
+    // Simulate page refresh: create completely new store instance targeting the same DB
+    const store2 = new IndexedDbLocalStore(dbName);
+    const loadedTask = await store2.getTask(task.id);
+
+    expect(loadedTask).toBeDefined();
+    expect(loadedTask?.completedAt).toBe(completedTimestamp);
+    expect(loadedTask?.updatedAt).toBe(completedTimestamp);
+
+    const list = await store2.listTasks('inbox');
+    expect(list.some((t) => t.id === task.id && t.completedAt === completedTimestamp)).toBe(true);
+
+    const pending = await store2.listPendingMutations(10);
+    expect(pending.length).toBe(2);
+    expect(pending.some((m) => m.operation === 'UPDATE' && (m.payload as { completedAt?: string }).completedAt === completedTimestamp)).toBe(true);
+
+    // Now reopen across refresh
+    const reopenedTimestamp = '2026-09-30T11:00:00.000Z';
+    const reopenedTask: TaskEntity = {
+      ...completedTask,
+      completedAt: null,
+      updatedAt: reopenedTimestamp
+    };
+    const reopenMut: SyncQueueEntry = {
+      id: crypto.randomUUID(),
+      idempotencyKey: crypto.randomUUID(),
+      entityType: 'TASK',
+      entityId: task.id,
+      operation: 'UPDATE',
+      baseVersion: 0,
+      payloadType: 'PARTIAL',
+      payload: { completedAt: null },
+      fieldTimestamps: { completedAt: reopenedTimestamp },
+      createdAt: reopenedTimestamp,
+      status: 'PENDING',
+      attemptCount: 0,
+      nextAttemptAt: PAST
+    };
+
+    await store2.saveTaskWithMutation(reopenedTask, reopenMut);
+
+    // Simulate second refresh
+    const store3 = new IndexedDbLocalStore(dbName);
+    const finalTask = await store3.getTask(task.id);
+    expect(finalTask?.completedAt).toBeNull();
+    expect(finalTask?.updatedAt).toBe(reopenedTimestamp);
+  });
 });

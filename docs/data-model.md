@@ -42,6 +42,7 @@ export interface TaskEntity {
   localStatus: LocalStatus;
   createdAt: string;
   updatedAt: string;
+  completedAt?: string | null;
   deletedAt?: string | null;
 }
 ```
@@ -61,6 +62,7 @@ export interface TaskEntity {
 - `dueDate` نمی‌تواند از نظر زمانی قبل از `startDate` باشد، مگر اینکه policy اصلاح خودکار تصویب شود.
 - `timeZone` باید نام معتبر IANA باشد.
 - `items.order` در یک task باید قابل مرتب‌سازی و بدون وابستگی به ترتیب آرایه باشد.
+- `completedAt` برای تسک‌های تکمیل‌شده حاوی زمان ISO 8601 است و برای تسک‌های باز null یا غایب است؛ موجودیت‌های `NOTE` فاقد این فیلد هستند.
 - `deletedAt` برای رکورد `DELETED` الزامی و برای رکورد فعال null/غایب است.
 - `updatedAt` باید برابر یا بعد از `createdAt` باشد.
 

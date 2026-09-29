@@ -29,5 +29,10 @@ export interface TaskEntity {
   localStatus: LocalStatus;
   createdAt: string;
   updatedAt: string;
+  completedAt?: string | null;
   deletedAt?: string | null;
+}
+
+export function isTaskCompleted(task: Pick<TaskEntity, 'completedAt'>): boolean {
+  return task.completedAt != null;
 }

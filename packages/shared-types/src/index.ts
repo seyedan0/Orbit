@@ -5,6 +5,7 @@ export type {
   TaskKind,
   TaskPriority
 } from './task.js';
+export { isTaskCompleted } from './task.js';
 export type {
   EntityType,
   FieldTimestampMap,
