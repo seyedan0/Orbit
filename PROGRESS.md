@@ -374,10 +374,10 @@
   - بررسی دستی در مرورگر فیزیکی توسط کاربر
   - `INBOX_PROJECT_ID = 'inbox'` موقت تا فاز ۳ (حساب کاربری)
 - **وضعیت PR:**
-  - آماده ایجاد PR برای شاخه `feature/web-task-delete-restore` به `develop`.
+  - Pull Request شماره ۵ با عنوان `feat(web): add task delete and restore` برای شاخه `feature/web-task-delete-restore` به `develop` در گیت‌هاب باز است (آدرس: https://github.com/seyedan0/Orbit/pull/5).
 - **گام بعدی (Handoff):**
-  - ادغام PR در `develop`
-  - برنامه‌ریزی گام بعدی فاز ۲
+  - ادغام PR شماره ۵ در `develop`
+  - ورود به فاز ۳ (پایه‌گذاری sync و حساب کاربری: مدل داده سرور، صف جهش‌ها و sync engine)
 
 ## محدودیت‌های باقی‌مانده
 
