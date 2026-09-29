@@ -8,6 +8,8 @@ import {
   createTask,
   completeTask,
   reopenTask,
+  deleteTask,
+  restoreTask,
   type CreateTaskInput
 } from './task-service';
 
@@ -489,5 +491,307 @@ describe('reopenTask', () => {
     await expect(
       reopenTask('non-existent-id', { store, userId: 'user-1' })
     ).rejects.toThrow(TaskNotFoundError);
+  });
+});
+
+describe('deleteTask (soft delete)', () => {
+  const DELETE_TIME = '2020-01-01T15:00:00.000Z';
+  const MUT_DELETE_ID = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
+
+  it('soft-deletes a task by setting deletedAt and localStatus to DELETED', async () => {
+    const { task, store } = await create({ title: 'Task to delete' });
+    const deleted = await deleteTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(DELETE_TIME),
+      newId: () => MUT_DELETE_ID
+    });
+
+    expect(deleted.deletedAt).toBe(DELETE_TIME);
+    expect(deleted.updatedAt).toBe(DELETE_TIME);
+    expect(deleted.localStatus).toBe('DELETED');
+  });
+
+  it('does NOT physically remove the task from storage (remains retrievable via getTask)', async () => {
+    const { task, store } = await create({ title: 'Soft delete persistence' });
+    await deleteTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(DELETE_TIME),
+      newId: () => MUT_DELETE_ID
+    });
+
+    const stored = await store.getTask(task.id);
+    expect(stored).toBeDefined();
+    expect(stored?.id).toBe(task.id);
+    expect(stored?.deletedAt).toBe(DELETE_TIME);
+  });
+
+  it('excludes soft-deleted task from normal listTasks', async () => {
+    const { task, store } = await create({ title: 'Task to hide' });
+    expect((await store.listTasks(INBOX_PROJECT_ID)).length).toBe(1);
+
+    await deleteTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(DELETE_TIME),
+      newId: () => MUT_DELETE_ID
+    });
+
+    const activeList = await store.listTasks(INBOX_PROJECT_ID);
+    expect(activeList.length).toBe(0);
+
+    const fullList = await store.listTasks(INBOX_PROJECT_ID, { includeDeleted: true });
+    expect(fullList.length).toBe(1);
+    expect(fullList[0]?.id).toBe(task.id);
+  });
+
+  it('generates an UPDATE mutation for soft delete', async () => {
+    const { task, store } = await create({ title: 'Mutation check' });
+    await deleteTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(DELETE_TIME),
+      newId: () => MUT_DELETE_ID
+    });
+
+    const pending = await store.listPendingMutations(10);
+    expect(pending.length).toBe(2); // 1 CREATE + 1 UPDATE
+
+    const deleteMut = pending.find((m) => m.id === MUT_DELETE_ID);
+    expect(deleteMut).toBeDefined();
+    expect(deleteMut?.operation).toBe('UPDATE');
+    expect(deleteMut?.payloadType).toBe('PARTIAL');
+    expect(deleteMut?.payload).toEqual({ deletedAt: DELETE_TIME });
+    expect(deleteMut?.fieldTimestamps).toEqual({ deletedAt: DELETE_TIME });
+    expect(deleteMut?.createdAt).toBe(DELETE_TIME);
+  });
+
+  it('is idempotent: calling deleteTask on an already deleted task does nothing', async () => {
+    const { task, store } = await create({ title: 'Already deleted' });
+    const first = await deleteTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(DELETE_TIME),
+      newId: () => MUT_DELETE_ID
+    });
+
+    const SECOND_DELETE = '2020-01-01T16:00:00.000Z';
+    const second = await deleteTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(SECOND_DELETE),
+      newId: () => 'another-mut-id'
+    });
+
+    expect(second.deletedAt).toBe(DELETE_TIME);
+    expect(second.updatedAt).toBe(DELETE_TIME);
+    expect(second).toEqual(first);
+
+    // No extra mutation created
+    const pending = await store.listPendingMutations(10);
+    expect(pending.length).toBe(2);
+  });
+
+  it('soft-deletes a NOTE entity (preserves NOTE semantics)', async () => {
+    const store = makeStore();
+    const noteId = 'note-del-1';
+    await store.saveTask({
+      id: noteId,
+      projectId: INBOX_PROJECT_ID,
+      userId: 'user-1',
+      title: 'A note to delete',
+      kind: 'NOTE',
+      priority: 0,
+      isAllDay: false,
+      timeZone: 'UTC',
+      reminders: [],
+      items: [],
+      version: 0,
+      localStatus: 'CREATED',
+      createdAt: FIXED_TIME,
+      updatedAt: FIXED_TIME
+    });
+
+    const deleted = await deleteTask(noteId, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(DELETE_TIME)
+    });
+    expect(deleted.kind).toBe('NOTE');
+    expect(deleted.deletedAt).toBe(DELETE_TIME);
+    expect(await store.listTasks(INBOX_PROJECT_ID)).toEqual([]);
+  });
+
+  it('throws TaskNotFoundError for a non-existent task id', async () => {
+    const store = makeStore();
+    await expect(
+      deleteTask('non-existent-id', { store, userId: 'user-1' })
+    ).rejects.toThrow(TaskNotFoundError);
+  });
+
+  it('rollback after storage failure: leaves task active if storage throws', async () => {
+    const { task, store } = await create({ title: 'Failing delete' });
+    const failingStore = {
+      ...store,
+      getTask: store.getTask.bind(store),
+      saveTaskWithMutation: async () => {
+        throw new Error('Storage write failed');
+      }
+    };
+
+    await expect(
+      deleteTask(task.id, {
+        store: failingStore as unknown as typeof store,
+        userId: 'user-1'
+      })
+    ).rejects.toThrow('Storage write failed');
+
+    // Task remains untouched in store
+    const stored = await store.getTask(task.id);
+    expect(stored?.deletedAt).toBeUndefined();
+    expect(await store.listTasks(INBOX_PROJECT_ID)).toHaveLength(1);
+  });
+});
+
+describe('restoreTask', () => {
+  const DELETE_TIME = '2020-01-01T15:00:00.000Z';
+  const RESTORE_TIME = '2020-01-01T17:00:00.000Z';
+  const MUT_RESTORE_ID = 'ffffffff-ffff-4fff-8fff-ffffffffffff';
+
+  async function createAndDelete() {
+    const { task, store } = await create({ title: 'Task to restore' });
+    const deleted = await deleteTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(DELETE_TIME)
+    });
+    return { task: deleted, store };
+  }
+
+  it('restores a soft-deleted task: sets deletedAt to null and updates updatedAt', async () => {
+    const { task, store } = await createAndDelete();
+    const restored = await restoreTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(RESTORE_TIME),
+      newId: () => MUT_RESTORE_ID
+    });
+
+    expect(restored.deletedAt).toBeNull();
+    expect(restored.updatedAt).toBe(RESTORE_TIME);
+  });
+
+  it('restored task reappears in listTasks', async () => {
+    const { task, store } = await createAndDelete();
+    expect((await store.listTasks(INBOX_PROJECT_ID)).length).toBe(0);
+
+    await restoreTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(RESTORE_TIME),
+      newId: () => MUT_RESTORE_ID
+    });
+
+    const activeList = await store.listTasks(INBOX_PROJECT_ID);
+    expect(activeList.length).toBe(1);
+    expect(activeList[0]?.id).toBe(task.id);
+    expect(activeList[0]?.deletedAt).toBeNull();
+  });
+
+  it('generates an UPDATE mutation setting deletedAt to null', async () => {
+    const { task, store } = await createAndDelete();
+    await restoreTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(RESTORE_TIME),
+      newId: () => MUT_RESTORE_ID
+    });
+
+    const pending = await store.listPendingMutations(10);
+    // 1 CREATE + 1 UPDATE (delete) + 1 UPDATE (restore) = 3 total
+    expect(pending.length).toBe(3);
+
+    const restoreMut = pending.find((m) => m.id === MUT_RESTORE_ID);
+    expect(restoreMut).toBeDefined();
+    expect(restoreMut?.operation).toBe('UPDATE');
+    expect(restoreMut?.payload).toEqual({ deletedAt: null });
+    expect(restoreMut?.fieldTimestamps).toEqual({ deletedAt: RESTORE_TIME });
+    expect(restoreMut?.createdAt).toBe(RESTORE_TIME);
+  });
+
+  it('is idempotent: calling restoreTask on an already active task does nothing', async () => {
+    const { task, store } = await create({ title: 'Active task' });
+    const restored = await restoreTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(RESTORE_TIME)
+    });
+
+    expect(restored.deletedAt).toBeUndefined();
+    expect(restored.updatedAt).toBe(FIXED_TIME); // unchanged
+    const pending = await store.listPendingMutations(10);
+    expect(pending.length).toBe(1); // Only initial CREATE
+  });
+
+  it('restores a NOTE entity (preserves NOTE semantics)', async () => {
+    const store = makeStore();
+    const noteId = 'note-res-1';
+    await store.saveTask({
+      id: noteId,
+      projectId: INBOX_PROJECT_ID,
+      userId: 'user-1',
+      title: 'A restored note',
+      kind: 'NOTE',
+      priority: 0,
+      isAllDay: false,
+      timeZone: 'UTC',
+      reminders: [],
+      items: [],
+      version: 0,
+      localStatus: 'DELETED',
+      createdAt: FIXED_TIME,
+      updatedAt: FIXED_TIME,
+      deletedAt: DELETE_TIME
+    });
+
+    const restored = await restoreTask(noteId, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(RESTORE_TIME)
+    });
+    expect(restored.kind).toBe('NOTE');
+    expect(restored.deletedAt).toBeNull();
+    expect((await store.listTasks(INBOX_PROJECT_ID)).length).toBe(1);
+  });
+
+  it('throws TaskNotFoundError for a non-existent task id', async () => {
+    const store = makeStore();
+    await expect(
+      restoreTask('non-existent-id', { store, userId: 'user-1' })
+    ).rejects.toThrow(TaskNotFoundError);
+  });
+
+  it('rollback after storage failure: leaves task deleted if storage throws', async () => {
+    const { task, store } = await createAndDelete();
+    const failingStore = {
+      ...store,
+      getTask: store.getTask.bind(store),
+      saveTaskWithMutation: async () => {
+        throw new Error('Storage write failed on restore');
+      }
+    };
+
+    await expect(
+      restoreTask(task.id, {
+        store: failingStore as unknown as typeof store,
+        userId: 'user-1'
+      })
+    ).rejects.toThrow('Storage write failed on restore');
+
+    // Task remains deleted in store
+    const stored = await store.getTask(task.id);
+    expect(stored?.deletedAt).toBe(DELETE_TIME);
+    expect(await store.listTasks(INBOX_PROJECT_ID)).toHaveLength(0);
   });
 });

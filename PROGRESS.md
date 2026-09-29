@@ -7,18 +7,17 @@
 - **مرحله:** فاز ۲، هسته دامنه و storage محلی Web
 - **آخرین به‌روزرسانی:** 2026-09-30
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 55%
-- **Branch فعال:** `feature/web-task-completion`
+- **درصد تقریبی پیشرفت:** 65%
+- **Branch فعال:** `feature/web-task-delete-restore`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-پیاده‌سازی رفتارهای تکمیل و بازگشایی تسک (`complete/reopen`) در کلاینت Web و Inbox با ذخیره‌سازی اتمیک، به‌روزرسانی بلافاصله UI، بازگشت امن در صورت خطا و ایجاد mutation همگام‌سازی.
+پیاده‌سازی حذف نرم (`soft delete`) و بازیابی تسک (`restore`) در کلاینت Web و Inbox با ذخیره‌سازی اتمیک، حذف از نمای اصلی Inbox، حفظ فیزیکی رکوردها در IndexedDB، ایجاد جهش UPDATE برای هماهنگی با پروتکل سینک، و بازگشت امن در صورت خطا (Rollback).
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی و PR شاخه `feature/web-task-completion` به `develop`
-- [ ] پیاده‌سازی حذف و بازیابی تسک (delete/restore / soft delete)
+- [ ] بازبینی و PR شاخه `feature/web-task-delete-restore` به `develop`
 - [ ] بررسی دستی در مرورگر
 
 ## کارهای انجام‌شده
@@ -47,6 +46,8 @@
 - [x] ادغام PR شماره ۳ (`chore/web-eslint-and-docs`) در `develop`
 - [x] همگام‌سازی مستندات پروژه (`docs/git-workflow.md`، `CONTRIBUTING.md`، قالب‌ها و ADRها)
 - [x] **P2-WEB-004:** پیاده‌سازی رفتار تکمیل و بازگشایی تسک (`complete/reopen`) در دامنه، کنترل‌های UI و اعتبارسنجی اتمیک
+- [x] ادغام PR شماره ۴ (`feature/web-task-completion`) در `develop`
+- [x] **P2-WEB-005:** پیاده‌سازی حذف نرم و بازیابی تسک (`delete/restore`) در دامنه و رابط کاربری Inbox
 
 ## فعالیت AIها
 
@@ -311,17 +312,79 @@
   - حذف نرم (soft delete) و بازیابی تسک (در مرحله بعدی فاز ۲)
   - `INBOX_PROJECT_ID = 'inbox'` موقت تا فاز ۳ (حساب کاربری)
 - **وضعیت PR:**
-  - Pull Request شماره ۴ با عنوان `feat(web): add task completion controls` برای شاخه `feature/web-task-completion` به `develop` در گیت‌هاب باز است و گام‌های CI گیت‌هاب با موفقیت پاس شده‌اند.
+  - Pull Request شماره ۴ با موفقیت در شاخه `develop` ادغام شد.
 - **گام بعدی (Handoff):**
-  - ادغام PR شماره ۴ در `develop` توسط کاربر/مالک مخزن
-  - پس از ادغام، شروع پیاده‌سازی حذف نرم و بازیابی تسک (`delete/restore`) در دامنه و رابط کاربری
+  - ادغام کامل شد؛ آغاز پیاده‌سازی P2-WEB-005 (حذف نرم و بازیابی تسک).
+
+### 2026-09-30 | P2-WEB-005 | پیاده‌سازی حذف نرم و بازیابی تسک‌ها در Inbox Web
+
+- **عامل:** Antigravity
+- **Task ID:** P2-WEB-005
+- **Branch:** `feature/web-task-delete-restore`
+- **هدف:** پیاده‌سازی حذف نرم (`deleteTask`) با تنظیم `deletedAt` و بازیابی تسک (`restoreTask`) با بازنشانی آن به `null` بدون حذف فیزیکی تسک از IndexedDB، تولید جهش `UPDATE` به صورت اتمیک، مستثنی‌کردن تسک‌های حذف‌شده از لیست پیش‌فرض Inbox و بازگشت امن در صورت خطا در رابط کاربری (Optimistic Rollback).
+- **انجام‌شده:**
+  - به‌روزرسانی رفتار `listTasks` در `IndexedDbLocalStore` و `MemoryLocalStore` به‌گونه‌ای که به طور پیش‌فرض رکوردهای دارای `deletedAt != null` فیلتر شوند و آپشن اختیاری `{ includeDeleted?: boolean }` برای دسترسی به همه تسک‌ها در صورت نیاز فراهم باشد.
+  - پیاده‌سازی سرویس‌های دامنه `deleteTask` و `restoreTask` در `apps/web/src/features/tasks/services/task-service.ts`:
+    - بررسی idempotency: در صورتی که تسک قبلاً حذف یا بازیابی شده باشد، بدون تولید جهش اضافی یا تغییر زمان همان تسک بازگردانده می‌شود.
+    - پشتیبانی از تمام انواع موجودیت (`TASK`، `NOTE` و `CHECKLIST`).
+    - تنظیم فیلد `deletedAt` (مقدار ISO timestamp هنگام حذف و `null` هنگام بازیابی).
+    - به‌روزرسانی `updatedAt` به زمان جاری.
+    - به‌روزرسانی وضعیت همگام‌سازی محلی `localStatus` به `'DELETED'` هنگام حذف، و در صورت بازیابی بازگشت به `'CREATED'` (برای تسک‌های با ورژن ۰) یا `'UPDATED'`.
+    - ایجاد جهش جزئی `UPDATE` شامل `fieldTimestamps.deletedAt` برای همسویی با الگوریتم LWW در پروتکل سینک.
+    - ذخیره‌سازی اتمیک با `store.saveTaskWithMutation`.
+  - ارتقای کامپوننت `TaskItem`:
+    - افزودن دکمه‌های حذف (`btn-delete` با `aria-label="حذف تسک"`) و بازیابی (`btn-restore` با `aria-label="بازیابی تسک"`).
+    - تفکیک وضعیت نمایش بر اساس مقدار `deletedAt`.
+  - ارتقای کامپوننت `TaskList` و اتصال callbackهای `onDelete` و `onRestore`.
+  - ارتقای صفحه `InboxPage`:
+    - پیاده‌سازی `handleDelete` با به‌روزرسانی آنی UI (حذف بلافاصله از لیست) و ذخیره تسک در حافظه undo.
+    - نمایش بنر تعاملی Undo با امکان بازگردانی سریع (`banner-undo`).
+    - پیاده‌سازی `handleRestore` با به‌روزرسانی آنی و بازگرداندن تسک به لیست.
+    - پیاده‌سازی کامل Rollback در صورت بروز خطای پایگاه داده در هر دو عملیات delete و restore جهت حفظ یکپارچگی حالت UI با حافظه دائم.
+  - به‌روزرسانی استایل‌ها در `apps/web/src/styles/globals.css`:
+    - استایل‌های دکمه حذف و بازیابی با هاور و فیدبک مناسب.
+    - استایل بنر Undo با چیدمان راست‌به‌چپ (RTL).
+  - نگارش تست‌های خودکار جامع:
+    - ۱۵ تست جدید در `task-service.test.ts` (مجموعاً ۵۰ تست دامنه شامل soft delete، restore، idempotency، جهش UPDATE، پشتیبانی از انواع موجودیت و rollback در خطا).
+    - تست بقای داده پس از رفرش شبیه‌سازی‌شده در `indexeddb-local-store.test.ts` (مجموعاً ۱۹ تست).
+    - تست فیلترینگ `includeDeleted` در `memory-local-store.test.ts` (مجموعاً ۱۳ تست).
+    - تست‌های تعاملی کامپوننت در `TaskItem.test.tsx` (مجموعاً ۷ تست).
+    - مجموع کل تست‌های پروژه: ۹۴ تست کاملاً سبز.
+- **فایل‌های تغییرکرده/ایجاده‌شده:**
+  - `apps/web/src/core/storage/indexeddb-local-store.ts`
+  - `apps/web/src/core/storage/indexeddb-local-store.test.ts`
+  - `apps/web/src/core/storage/memory-local-store.ts`
+  - `apps/web/src/core/storage/memory-local-store.test.ts`
+  - `apps/web/src/features/tasks/services/task-service.ts`
+  - `apps/web/src/features/tasks/services/task-service.test.ts`
+  - `apps/web/src/features/tasks/components/TaskItem.tsx`
+  - `apps/web/src/features/tasks/components/TaskItem.test.tsx`
+  - `apps/web/src/features/tasks/components/TaskList.tsx`
+  - `apps/web/src/features/tasks/pages/InboxPage.tsx`
+  - `apps/web/src/styles/globals.css`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npm ci`: موفق
+  - `npm run lint`: موفق با ۰ خطا و ۰ هشدار
+  - `npm run typecheck`: موفق با ۰ خطا
+  - `npm run test`: موفق؛ تمام ۹۴ تست در ۵ فایل تست پاس شدند
+  - `npm run build --workspace @orbit/web`: موفق بدون خطا
+  - `git diff --check`: بدون خطای فاصله‌گذاری
+- **محدودیت‌های باقی‌مانده:**
+  - بررسی دستی در مرورگر فیزیکی توسط کاربر
+  - `INBOX_PROJECT_ID = 'inbox'` موقت تا فاز ۳ (حساب کاربری)
+- **وضعیت PR:**
+  - آماده ایجاد PR برای شاخه `feature/web-task-delete-restore` به `develop`.
+- **گام بعدی (Handoff):**
+  - ادغام PR در `develop`
+  - برنامه‌ریزی گام بعدی فاز ۲
 
 ## محدودیت‌های باقی‌مانده
 
 - **بررسی دستی مرورگر:** InboxPage در مرورگر واقعی تست نشده.
 - **`INBOX_PROJECT_ID = 'inbox'`:** placeholder تا فاز ۳ (حساب کاربری). پس از account system باید به list ID واقعی کاربر تغییر کند.
 - **`MemoryLocalStore` اتمیکیتی واقعی:** JS single-thread آن را ایمن می‌کند اما تراکنش واقعی ندارد. فقط برای تست است.
-- **حذف نرم (soft delete) و بازیابی task:** هنوز پیاده‌سازی نشده (فاز ۲، تسک بعدی).
+- **حذف دائمی (Hard delete/Purge):** در فاز ۲ فقط soft delete با `deletedAt` پیاده‌سازی شده؛ پروتکل پاک‌سازی قطعی در کلاینت یا سرور در فازهای بعدی مشخص خواهد شد.
 - **allowScripts (esbuild):** npm هشدار postinstall می‌دهد؛ build موفق است ولی سیاست تایید اسکریپت نیاز به تصمیم دارد.
 - **port gap:** `LocalStore` هنوز برای sync engine نیاز به `saveTaskWithMutation` atomic دارد که با `AtomicTaskStore` جداگانه حل شد.
 

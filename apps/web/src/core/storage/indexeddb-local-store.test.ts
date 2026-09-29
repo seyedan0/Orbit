@@ -294,4 +294,84 @@ describe('IndexedDbLocalStore', () => {
     expect(finalTask?.completedAt).toBeNull();
     expect(finalTask?.updatedAt).toBe(reopenedTimestamp);
   });
+
+  it('persists soft-deleted task and UPDATE mutation across refresh, and reappears when restored', async () => {
+    const dbName = uniqueDb();
+    const store1 = new IndexedDbLocalStore(dbName);
+
+    const task = makeTask({ title: 'Task to delete across refresh' });
+    await store1.saveTaskWithMutation(task, makeMutation(task));
+
+    // Soft delete
+    const deleteTime = '2026-09-30T15:00:00.000Z';
+    const deletedTask: TaskEntity = {
+      ...task,
+      deletedAt: deleteTime,
+      updatedAt: deleteTime,
+      localStatus: 'DELETED'
+    };
+    const deleteMut: SyncQueueEntry = {
+      id: crypto.randomUUID(),
+      idempotencyKey: crypto.randomUUID(),
+      entityType: 'TASK',
+      entityId: task.id,
+      operation: 'UPDATE',
+      baseVersion: 0,
+      payloadType: 'PARTIAL',
+      payload: { deletedAt: deleteTime },
+      fieldTimestamps: { deletedAt: deleteTime },
+      createdAt: deleteTime,
+      status: 'PENDING',
+      attemptCount: 0,
+      nextAttemptAt: PAST
+    };
+    await store1.saveTaskWithMutation(deletedTask, deleteMut);
+
+    // Refresh simulation: create store2
+    const store2 = new IndexedDbLocalStore(dbName);
+
+    // 1. Excluded from normal listTasks
+    const activeTasks = await store2.listTasks('inbox');
+    expect(activeTasks.find((t) => t.id === task.id)).toBeUndefined();
+
+    // 2. Still physically present in storage
+    const physical = await store2.getTask(task.id);
+    expect(physical).toBeDefined();
+    expect(physical?.deletedAt).toBe(deleteTime);
+
+    // 3. Retrievable with includeDeleted: true
+    const allTasks = await store2.listTasks('inbox', { includeDeleted: true });
+    expect(allTasks.find((t) => t.id === task.id)).toBeDefined();
+
+    // 4. Restore the task
+    const restoreTime = '2026-09-30T16:00:00.000Z';
+    const restoredTask: TaskEntity = {
+      ...deletedTask,
+      deletedAt: null,
+      updatedAt: restoreTime,
+      localStatus: 'UPDATED'
+    };
+    const restoreMut: SyncQueueEntry = {
+      id: crypto.randomUUID(),
+      idempotencyKey: crypto.randomUUID(),
+      entityType: 'TASK',
+      entityId: task.id,
+      operation: 'UPDATE',
+      baseVersion: 0,
+      payloadType: 'PARTIAL',
+      payload: { deletedAt: null },
+      fieldTimestamps: { deletedAt: restoreTime },
+      createdAt: restoreTime,
+      status: 'PENDING',
+      attemptCount: 0,
+      nextAttemptAt: PAST
+    };
+    await store2.saveTaskWithMutation(restoredTask, restoreMut);
+
+    // Refresh simulation: create store3
+    const store3 = new IndexedDbLocalStore(dbName);
+    const restoredList = await store3.listTasks('inbox');
+    expect(restoredList.find((t) => t.id === task.id)).toBeDefined();
+    expect(restoredList.find((t) => t.id === task.id)?.deletedAt).toBeNull();
+  });
 });

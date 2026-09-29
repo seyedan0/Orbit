@@ -68,9 +68,15 @@ export class IndexedDbLocalStore implements AtomicTaskStore {
     await db.put('tasks', task);
   }
 
-  async listTasks(projectId: string): Promise<TaskEntity[]> {
+  async listTasks(
+    projectId: string,
+    options?: { includeDeleted?: boolean }
+  ): Promise<TaskEntity[]> {
     const db = await this.getDb();
     const all = await db.getAllFromIndex('tasks', 'by-projectId', projectId);
+    if (options?.includeDeleted) {
+      return all;
+    }
     return all.filter((t) => t.deletedAt == null);
   }
 

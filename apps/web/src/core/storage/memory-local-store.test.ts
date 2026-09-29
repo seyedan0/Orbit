@@ -85,6 +85,16 @@ describe('MemoryLocalStore', () => {
     expect(list.map((t) => t.id)).toEqual(['t1']);
   });
 
+  it('includes soft-deleted tasks when includeDeleted is true', async () => {
+    const store = new MemoryLocalStore(() => NOW);
+    await store.saveTask(task({ id: 't1', projectId: 'inbox' }));
+    await store.saveTask(
+      task({ id: 't2', projectId: 'inbox', deletedAt: '2026-09-29T11:00:00.000Z', localStatus: 'DELETED' })
+    );
+    const list = await store.listTasks('inbox', { includeDeleted: true });
+    expect(list.map((t) => t.id).sort()).toEqual(['t1', 't2']);
+  });
+
   it('returns empty array when no tasks exist for projectId', async () => {
     const store = new MemoryLocalStore(() => NOW);
     expect(await store.listTasks('inbox')).toEqual([]);
