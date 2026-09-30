@@ -7,18 +7,18 @@
 - **مرحله:** فاز ۳، sync و حساب کاربری
 - **آخرین به‌روزرسانی:** 2026-09-30
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 75%
-- **Branch فعال:** `feature/web-http-sync-transport`
+- **درصد تقریبی پیشرفت:** 80%
+- **Branch فعال:** `feature/server-sync-foundation`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-پیاده‌سازی `HttpSyncTransport` در `packages/sync-engine` منطبق بر اینترفیس `SyncTransport` با استفاده از `fetch` استاندارد، پشتیبانی از URL پایه، هدرهای سفارشی (مانند توکن احراز هویت)، نگاشت خطاهای HTTP (خطاهای 4xx غیرقابل تلاش مجدد به جز 429، و خطاهای 5xx و 429 قابل تلاش مجدد)، مدیریت timeout شبکه، پیاده‌سازی `SyncCoordinator`، `SyncProvider` و هوک `useSyncStatus` در Web، و افزودن نشانگر وضعیت همگام‌سازی و دکمه دستی به `AppShell`.
+راه‌اندازی اسکلت سرور NestJS در `apps/server`، پیکربندی پیشوند نسخه `/api/v1`، پیاده‌سازی فیلتر استاندارد خطا با شناسه درخواست (`requestId`)، پیاده‌سازی `InMemorySyncRepository` جهت جداسازی لایه داده، پیاده‌سازی endpointهای `/api/v1/health`، `/api/v1/sync/push` (همراه با اعتبارسنجی جهش‌ها و اعمال اصل idempotency) و `/api/v1/sync/pull` (همراه با پیشروی کرسر) و تست‌های یکپارچگی E2E با Supertest.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی و PR شاخه `feature/web-http-sync-transport` به `develop`
-- [ ] شروع گام‌های بعدی فاز ۳ (احراز هویت و APIهای سینک سرور)
+- [ ] بازبینی و PR شاخه `feature/server-sync-foundation` به `develop`
+- [ ] گام‌های بعدی فاز ۳ (اتصال واقعی دیتابیس PostgreSQL، مایگریشن‌ها و احراز هویت JWT)
 
 ## کارهای انجام‌شده
 
@@ -52,6 +52,8 @@
 - [x] **P3-WEB-001:** طراحی و پیاده‌سازی اولین برش عمودی sync runtime با fake transport قطعی
 - [x] ادغام PR شماره ۷ (`feature/sync-runtime-fake-transport`) در `develop`
 - [x] **P3-WEB-002:** پیاده‌سازی HttpSyncTransport در sync-engine و ادغام نشانگر وضعیت و کلید دستی در Web UI
+- [x] ادغام PR شماره ۸ (`feature/web-http-sync-transport`) در `develop`
+- [x] **P3-SRV-001:** راه‌اندازی اسکلت سرور NestJS در `apps/server` و پیاده‌سازی endpointهای اولیه push/pull همگام‌سازی
 
 ## فعالیت AIها
 
@@ -484,10 +486,72 @@
   - `npm run build`: موفق؛ کامپایل موفقیت‌آمیز تمام پکیج‌ها و اپلیکیشن وب
   - `git diff --check`: بدون خطای فاصله‌گذاری
 - **وضعیت PR:**
-  - آماده ایجاد PR برای شاخه `feature/web-http-sync-transport` به `develop`.
+  - ادغام‌شده در `develop` (PR شماره ۸).
+- **گام بعدی (Handoff):**
+  - پیاده‌سازی اسکلت NestJS در apps/server و endpointهای همگام‌سازی (انجام‌شده در P3-SRV-001)
+
+### 2026-09-30 | P3-SRV-001 | راه‌اندازی اسکلت سرور NestJS و endpointهای همگام‌سازی
+
+- **عامل:** Antigravity
+- **هدف:** راه‌اندازی اسکلت سرور NestJS در `apps/server`، پیکربندی ساختار ماژولار و سبک، پیاده‌سازی قراردادهای API مطابق `docs/api/README.md` با پیشوند `/api/v1`، و پیاده‌سازی endpointهای اولیه health، push و pull همگام‌سازی با استفاده از repository حافظه‌ای.
+- **انجام‌شده:**
+  - راه‌اندازی پروژه `apps/server` به صورت ماژولار با NestJS 11 و پشتیبانی بومی از NodeNext ESM:
+    - پیکربندی `package.json`، `tsconfig.json`، `tsconfig.build.json` و `eslint.config.js`.
+    - تنظیم پیشوند نسخه `/api/v1` به صورت سراسری در `main.ts`.
+    - پیاده‌سازی فیلتر سراسری استثناها (`HttpExceptionFilter`) در `common/filters/http-exception.filter.ts` جهت استانداردسازی کلیه پاسخ‌های خطا با فرمت `{ code, message, requestId }` و هدر `x-request-id`.
+    - پیاده‌سازی پارامتر دکوراتور `@UserId()` جهت استخراج شناسه کاربر از هدرهای `x-user-id` یا Bearer token با fallback به کاربر پیش‌فرض.
+  - پیاده‌سازی `HealthModule` و `HealthController`:
+    - ارائه مسیر `GET /api/v1/health` با خروجی `{ status: "ok", version: "0.1.0" }`.
+  - پیاده‌سازی `SyncModule` با تفکیک کامل لایه ذخیره‌سازی از طریق `SyncRepository`:
+    - تعریف اینترفیس و توکن تزریق وابستگی `SYNC_REPOSITORY`.
+    - پیاده‌سازی `InMemorySyncRepository` با نگهداری ایزوله تسک‌ها، جهش‌ها، تغییرات و کرسر برای هر کاربر.
+    - پیاده‌سازی `POST /api/v1/sync/push`: اعتبارسنجی کامل دسته‌ای جهش‌ها (`MutationPayload`)، بازگردانی `REJECTED` برای جهش‌های نامعتبر، تضمین اصل یکتایی و عدم تکرار (Idempotency) با بازگردانی وضعیت `ALREADY_APPLIED` برای کلیدهای تکراری، و اعمال تغییرات معتبر و بازگردانی `APPLIED`.
+    - پیاده‌سازی `GET /api/v1/sync/pull`: دریافت پارامترهای `cursor` و `limit`، فیلتر تغییرات جدیدتر از کرسر، و بازگردانی `{ changes, nextCursor, hasMore }`.
+  - پیاده‌سازی مجموعه آزمون‌های جامع E2E در `src/sync.e2e.test.ts` با Supertest (شامل ۹ تست جدید):
+    - اعتبارسنجی خروجی health check.
+    - اعتبارسنجی ساختار استاندارد خطای 404 و خطای اعتبارسنجی 400.
+    - ارسال دسته‌ای جهش‌های معتبر با نتیجه `APPLIED`.
+    - ارسال مجدد جهش تکراری و تایید وضعیت `ALREADY_APPLIED`.
+    - تفکیک جهش‌های معتبر و نامعتبر در یک دسته و دریافت `REJECTED` بدون شکست کل دسته.
+    - پیشروی ترتیبی کرسر در pull با پارامترهای صفحه‌بندی و نشانگر `hasMore`.
+    - ایزولاسیون کامل داده‌ها بین کاربران مجزا.
+    - دریافت تغییرات حذف نرم (`deletedAt`) در pull.
+  - نتایج اعتبارسنجی: تمام ۱۳۵ تست مخزن (۱۲۶ تست پیشین + ۹ تست سرور) با موفقیت پاس شدند.
+- **فایل‌های تغییرکرده/ایجاده‌شده:**
+  - `apps/server/package.json`
+  - `apps/server/tsconfig.json`
+  - `apps/server/tsconfig.build.json`
+  - `apps/server/eslint.config.js`
+  - `apps/server/vitest.config.ts`
+  - `apps/server/src/main.ts`
+  - `apps/server/src/app.module.ts`
+  - `apps/server/src/common/filters/http-exception.filter.ts`
+  - `apps/server/src/common/decorators/user-id.decorator.ts`
+  - `apps/server/src/health/health.controller.ts`
+  - `apps/server/src/health/health.module.ts`
+  - `apps/server/src/sync/interfaces/sync-repository.interface.ts`
+  - `apps/server/src/sync/repositories/in-memory-sync.repository.ts`
+  - `apps/server/src/sync/dto/sync.dto.ts`
+  - `apps/server/src/sync/sync.service.ts`
+  - `apps/server/src/sync/sync.controller.ts`
+  - `apps/server/src/sync/sync.module.ts`
+  - `apps/server/src/sync.e2e.test.ts`
+  - `package.json`
+  - `package-lock.json`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npm ci`: موفق
+  - `npm run lint`: موفق با ۰ خطا و ۰ هشدار در تمام ورک‌اسپیس‌ها
+  - `npm run typecheck`: موفق با ۰ خطا در پکیج‌ها، وب و سرور
+  - `npm run test`: موفق؛ تمام ۱۳۵ تست در ۱۰ فایل آزمون پاس شدند
+  - `npm run build`: موفق؛ کامپایل پکیج‌ها، وب و سرور در دایرکتوری dist
+  - `git diff --check`: بدون خطای فاصله‌گذاری
+- **وضعیت PR:**
+  - آماده ایجاد PR برای شاخه `feature/server-sync-foundation` به `develop`.
 - **گام بعدی (Handoff):**
   - ادغام PR در `develop`
-  - پیاده‌سازی مدل داده و ماژول احراز هویت / Sync API در `apps/server` (NestJS/PostgreSQL)
+  - راه‌اندازی اتصال به پایگاه داده PostgreSQL، پیکربندی مایگریشن‌ها و لایه پایدار دیتابیس در `apps/server`
 
 ## محدودیت‌های باقی‌مانده
 
