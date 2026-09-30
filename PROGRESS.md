@@ -591,6 +591,7 @@
   - `apps/server/src/sync.e2e.test.ts`
   - `apps/server/src/postgres-sync.integration.test.ts`
   - `apps/server/.env.example`
+  - `.github/workflows/ci.yml`
   - `package-lock.json`
   - `PROGRESS.md`
 - **اعتبارسنجی:**
@@ -599,8 +600,9 @@
   - `npm run test`: موفق؛ تمام ۱۴۲ تست در ۱۱ فایل آزمون با موفقیت پاس شدند (شامل ۱۶ تست سرور و ۱۲۶ تست وب)
   - `npm run build`: موفق؛ بیلد کامل تمام ورک‌اسپیس‌ها
   - `git diff --check`: موفق بدون هیچ خطای فاصله‌گذاری یا پایان خط
+  - `GitHub Actions CI`: هر دو جاب `CI / quality (pull_request)` و `CI / quality (push)` با کانتینر سرویس PostgreSQL سبز و پاس شدند.
 - **وضعیت PR:**
-  - شاخه `feature/server-postgres-integration` آماده بازبینی و ادغام در `develop`.
+  - PR شماره ۱۰ در شاخه `feature/server-postgres-integration` به `develop` ایجاد شده و تمام CI checks سبز هستند.
 - **گام بعدی (Handoff):**
   - ادغام PR در `develop`
   - پیاده‌سازی لایه احراز هویت سرور (JWT، جدول کاربران و ارتباط سشن کاربری در ریکوئست‌ها)
