@@ -1,3 +1,4 @@
+export type { AuthCredentials, AuthResponse, AuthUser } from './auth.js';
 export type {
   LocalStatus,
   SubTaskItem,

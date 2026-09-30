@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { MutationPayload } from '@orbit/shared-types';
-import { FakeSyncTransport, SyncRuntime } from '@orbit/sync-engine';
+import { FakeSyncTransport, HttpSyncError, SyncRuntime } from '@orbit/sync-engine';
 import { MemoryLocalStore } from '../storage/memory-local-store.js';
 import { StoreProvider } from '../storage/store-context.js';
 import {
@@ -154,5 +154,23 @@ describe('SyncProvider and useSyncStatus', () => {
     );
 
     expect(html).toContain('IDLE');
+  });
+
+  it('triggers onUnauthorized callback when syncOnce throws 401 HttpSyncError', async () => {
+    const store = new MemoryLocalStore();
+    const transport = new FakeSyncTransport();
+    const runtime = new SyncRuntime(store, transport);
+    const onUnauthorized = vi.fn();
+
+    const coordinator = new SyncCoordinator(runtime, true, onUnauthorized);
+    vi.spyOn(runtime, 'syncOnce').mockRejectedValueOnce(
+      new HttpSyncError('Unauthorized token', 401, false)
+    );
+
+    await coordinator.triggerSync();
+
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+    expect(coordinator.getSnapshot().syncState).toBe('ERROR');
+    expect(coordinator.getSnapshot().lastError).toBe('Unauthorized token');
   });
 });

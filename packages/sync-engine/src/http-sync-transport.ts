@@ -17,6 +17,7 @@ export interface HttpSyncTransportOptions {
   fetcher?: HttpFetcher;
   getHeaders?: () => Promise<Record<string, string>> | Record<string, string>;
   timeoutMs?: number;
+  onUnauthorized?: () => void;
 }
 
 export class HttpSyncError extends Error {
@@ -49,6 +50,7 @@ export class HttpSyncTransport implements SyncTransport {
   private readonly fetcher: HttpFetcher;
   private readonly getHeaders?: () => Promise<Record<string, string>> | Record<string, string>;
   private readonly timeoutMs: number;
+  private readonly onUnauthorized?: () => void;
 
   constructor(options: HttpSyncTransportOptions) {
     this.baseUrl = options.baseUrl.replace(/\/+$/, '');
@@ -57,6 +59,9 @@ export class HttpSyncTransport implements SyncTransport {
       this.getHeaders = options.getHeaders;
     }
     this.timeoutMs = options.timeoutMs ?? 15000;
+    if (options.onUnauthorized) {
+      this.onUnauthorized = options.onUnauthorized;
+    }
   }
 
   async pull(cursor: string | undefined, limit: number): Promise<PullResponse> {
@@ -141,11 +146,15 @@ export class HttpSyncTransport implements SyncTransport {
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
-      return await this.fetcher(url, {
+      const response = await this.fetcher(url, {
         ...init,
         headers,
         signal: controller.signal
       });
+      if (response.status === 401 && this.onUnauthorized) {
+        this.onUnauthorized();
+      }
+      return response;
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         throw new HttpSyncError(`Request timeout after ${this.timeoutMs}ms`, 0, true);

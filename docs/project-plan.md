@@ -86,10 +86,10 @@
 
 **کارها:**
 
-- authentication و session امن
-- PostgreSQL schema و migration
-- mutation queue، idempotency و retry
-- push، pull و cursor
+- [x] authentication و session امن (سرور JWT، پاسپورت، مهاجرت رمز عبور، کلاینت وب و ارتباط سشن در هدرهای همگام‌سازی)
+- [x] PostgreSQL schema و migration (مهاجرت‌های TypeORM، جداول کاربران، تسک‌ها و جهش‌ها)
+- [x] mutation queue، idempotency و retry (پروتکل همگام‌سازی و جهش‌های اتمیک)
+- [x] push، pull و cursor (اندپوینت‌های همگام‌سازی و کلاینت HTTP)
 - field-level conflict resolution
 - tombstone و retention policy
 - recovery بعد از crash، timeout و نصب مجدد

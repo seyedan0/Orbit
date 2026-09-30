@@ -286,4 +286,44 @@ describe('HttpSyncTransport', () => {
       isRetryable: true
     });
   });
+
+  it('pull invokes onUnauthorized callback on 401 status', async () => {
+    const onUnauthorized = vi.fn();
+    const mockFetcher = vi.fn(async () => {
+      return new Response(JSON.stringify({ message: 'Unauthorized' }), { status: 401 });
+    });
+
+    const transport = new HttpSyncTransport({
+      baseUrl: 'https://api.orbit.app/v1',
+      fetcher: mockFetcher,
+      onUnauthorized
+    });
+
+    await expect(transport.pull(undefined, 10)).rejects.toMatchObject({
+      name: 'HttpSyncError',
+      status: 401,
+      isRetryable: false
+    });
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+  });
+
+  it('push invokes onUnauthorized callback on 401 status', async () => {
+    const onUnauthorized = vi.fn();
+    const mockFetcher = vi.fn(async () => {
+      return new Response(JSON.stringify({ message: 'Unauthorized' }), { status: 401 });
+    });
+
+    const transport = new HttpSyncTransport({
+      baseUrl: 'https://api.orbit.app/v1',
+      fetcher: mockFetcher,
+      onUnauthorized
+    });
+
+    const task = makeTask({ id: 't1' });
+    const mut = makeMutation(task, { id: 'm1' });
+    const results = await transport.push([mut]);
+
+    expect(results[0]?.status).toBe('REJECTED');
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+  });
 });
