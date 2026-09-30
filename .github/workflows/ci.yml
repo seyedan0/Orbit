@@ -20,6 +20,20 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: orbit
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,8 +50,12 @@ jobs:
         run: tsc --build
       - name: Typecheck (web)
         run: npm run typecheck --workspace @orbit/web
+      - name: Typecheck (server)
+        run: npm run typecheck --workspace @orbit/server
       - name: Test
         run: npm test
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/orbit
       - name: Build
         run: npm run build
       - name: Diff whitespace check

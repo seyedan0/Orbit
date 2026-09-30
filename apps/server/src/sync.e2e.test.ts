@@ -16,7 +16,10 @@ describe('Server Sync Foundation (E2E)', () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule]
-    }).compile();
+    })
+      .overrideProvider(SYNC_REPOSITORY)
+      .useClass(InMemorySyncRepository)
+      .compile();
 
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix('api/v1');

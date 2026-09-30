@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import type { MutationPayload, TaskEntity } from '@orbit/shared-types';
-import type { PullResult, SyncRepository } from '../interfaces/sync-repository.interface.js';
+import type {
+  ApplyMutationResult,
+  PullResult,
+  SyncRepository
+} from '../interfaces/sync-repository.interface.js';
 
 interface ChangelogEntry {
   cursor: number;
@@ -52,6 +56,20 @@ export class InMemorySyncRepository implements SyncRepository {
   async saveAppliedMutation(userId: string, mutation: MutationPayload): Promise<void> {
     const userMutations = this.getUserMutations(userId);
     userMutations.set(mutation.idempotencyKey, { ...mutation });
+  }
+
+  async applyMutationAtomic(
+    userId: string,
+    mutation: MutationPayload
+  ): Promise<ApplyMutationResult> {
+    const existing = await this.getMutationByIdempotencyKey(userId, mutation.idempotencyKey);
+    if (existing) {
+      return { status: 'ALREADY_APPLIED' };
+    }
+
+    const task = await this.applyTaskMutation(userId, mutation);
+    await this.saveAppliedMutation(userId, mutation);
+    return { status: 'APPLIED', task };
   }
 
   async applyTaskMutation(userId: string, mutation: MutationPayload): Promise<TaskEntity> {

@@ -7,18 +7,18 @@
 - **مرحله:** فاز ۳، sync و حساب کاربری
 - **آخرین به‌روزرسانی:** 2026-09-30
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 80%
-- **Branch فعال:** `feature/server-sync-foundation`
+- **درصد تقریبی پیشرفت:** 85%
+- **Branch فعال:** `feature/server-postgres-integration`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-راه‌اندازی اسکلت سرور NestJS در `apps/server`، پیکربندی پیشوند نسخه `/api/v1`، پیاده‌سازی فیلتر استاندارد خطا با شناسه درخواست (`requestId`)، پیاده‌سازی `InMemorySyncRepository` جهت جداسازی لایه داده، پیاده‌سازی endpointهای `/api/v1/health`، `/api/v1/sync/push` (همراه با اعتبارسنجی جهش‌ها و اعمال اصل idempotency) و `/api/v1/sync/pull` (همراه با پیشروی کرسر) و تست‌های یکپارچگی E2E با Supertest.
+اتصال پایگاه داده PostgreSQL در سرور NestJS (`apps/server`)، ایجاد مایگریشن‌ها و موجودیت‌های دیتابیس (Users, Workspaces, Tasks, Sync Mutations)، پیاده‌سازی `PostgresSyncRepository` با تراکنش‌های اتمیک (`applyMutationAtomic`) و پیاده‌سازی تست‌های جامع یکپارچگی پایگاه داده و همگام‌سازی.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی و PR شاخه `feature/server-sync-foundation` به `develop`
-- [ ] گام‌های بعدی فاز ۳ (اتصال واقعی دیتابیس PostgreSQL، مایگریشن‌ها و احراز هویت JWT)
+- [ ] بازبینی و PR شاخه `feature/server-postgres-integration` به `develop`
+- [ ] گام بعدی فاز ۳: احراز هویت کاربری با JWT و اتصال شناسه کاربر واقعی در session به سرور
 
 ## کارهای انجام‌شده
 
@@ -54,6 +54,8 @@
 - [x] **P3-WEB-002:** پیاده‌سازی HttpSyncTransport در sync-engine و ادغام نشانگر وضعیت و کلید دستی در Web UI
 - [x] ادغام PR شماره ۸ (`feature/web-http-sync-transport`) در `develop`
 - [x] **P3-SRV-001:** راه‌اندازی اسکلت سرور NestJS در `apps/server` و پیاده‌سازی endpointهای اولیه push/pull همگام‌سازی
+- [x] ادغام PR شماره ۹ (`feature/server-sync-foundation`) در `develop`
+- [x] **P3-SRV-002:** اتصال PostgreSQL، اجرای مایگریشن‌ها، پیاده‌سازی موجودیت‌های TypeORM و `PostgresSyncRepository` با تراکنش‌های اتمیک
 
 ## فعالیت AIها
 
@@ -552,6 +554,58 @@
 - **گام بعدی (Handoff):**
   - ادغام PR در `develop`
   - راه‌اندازی اتصال به پایگاه داده PostgreSQL، پیکربندی مایگریشن‌ها و لایه پایدار دیتابیس در `apps/server`
+
+### 2026-09-30 | پیاده‌سازی اتصال PostgreSQL، مایگریشن و PostgresSyncRepository در سرور (P3-SRV-002)
+
+- **عامل:** Antigravity
+- **هدف:** اتصال پایگاه داده PostgreSQL در سرور NestJS، مستندسازی ADR-008 برای انتخاب ORM، تعریف موجودیت‌ها و مایگریشن اولیه schema مطابق `docs/data-model.md`، پیاده‌سازی `PostgresSyncRepository` به عنوان جایگزین لایه داده، اعمال تراکنش‌های اتمیک (`applyMutationAtomic`) برای ثبت هم‌زمان جهش‌ها و تسک‌ها و نوشتن آزمون‌های یکپارچگی پایگاه داده.
+- **انجام‌شده:**
+  - ثبت سند تصمیم‌گیری معماری `ADR-008: انتخاب TypeORM برای پایگاه داده PostgreSQL سرور NestJS` در `docs/decisions/ADR-008-server-database-orm.md` و به‌روزرسانی `docs/decisions.md`.
+  - نصب بسته‌های وابسته TypeORM (`@nestjs/typeorm`, `typeorm`, `pg`, `@types/pg`) در `apps/server`.
+  - ایجاد مایگریشن اولیه `1727650000000-InitialSyncSchema.ts` با تعریف جداول `users`, `workspaces`, `tasks`, `sync_mutations` و سکوئنس `tasks_cursor_seq`.
+  - ایجاد موجودیت‌های TypeORM (`UserEntity`, `WorkspaceEntity`, `TaskEntityModel`, `SyncMutationEntity`) با نگاشت صریح ستون‌های snake_case به خصوصیات camelCase و اعمال ایندکس‌ها و قیود یکتایی.
+  - اعمال قید یکتایی `uq_sync_mutations_user_idempotency` در سطح موتور دیتابیس برای تضمین قطعی idempotency.
+  - پیاده‌سازی `PostgresSyncRepository` با متدهای `getMutationByIdempotencyKey`, `saveAppliedMutation`, `applyTaskMutation`, `applyMutationAtomic` و `getChanges` (پشتیبانی از صفحه‌بندی کرسر با سکوئنس ترتیبی).
+  - استفاده از `dataSource.transaction` در `applyMutationAtomic` برای ذخیره‌سازی کاملاً اتمیک تغییرات تسک و لاگ جهش در یک تراکنش دیتابیس با مدیریت خطای تداخل کلید تکراری (Postgres 23505).
+  - اتصال ماژول‌های دیتابیس در `AppModule` و جایگزینی `PostgresSyncRepository` در `SyncModule`.
+  - افزودن فایل‌های `.env` و `.env.example` و پشتیبانی از بارگذاری خودکار متغیرهای محیطی در `database.config.ts`.
+  - نگارش مجموعه آزمون‌های یکپارچگی دیتابیس در `apps/server/src/postgres-sync.integration.test.ts` شامل اعتبارسنجی نگاشت مدل‌ها، قید idempotency، تراکنش‌های اتمیک و rollback، پیشروی کرسر و تفکیک داده کاربران و تست‌های HTTP endpointها.
+- **فایل‌های تغییرکرده/ایجاده‌شده:**
+  - `docs/decisions/ADR-008-server-database-orm.md`
+  - `docs/decisions.md`
+  - `apps/server/package.json`
+  - `apps/server/vitest.config.ts`
+  - `apps/server/src/database/database.config.ts`
+  - `apps/server/src/database/entities/user.entity.ts`
+  - `apps/server/src/database/entities/workspace.entity.ts`
+  - `apps/server/src/database/entities/task.entity.ts`
+  - `apps/server/src/database/entities/sync-mutation.entity.ts`
+  - `apps/server/src/database/entities/index.ts`
+  - `apps/server/src/database/migrations/1727650000000-InitialSyncSchema.ts`
+  - `apps/server/src/sync/interfaces/sync-repository.interface.ts`
+  - `apps/server/src/sync/repositories/postgres-sync.repository.ts`
+  - `apps/server/src/sync/repositories/in-memory-sync.repository.ts`
+  - `apps/server/src/sync/sync.service.ts`
+  - `apps/server/src/sync/sync.module.ts`
+  - `apps/server/src/app.module.ts`
+  - `apps/server/src/sync.e2e.test.ts`
+  - `apps/server/src/postgres-sync.integration.test.ts`
+  - `apps/server/.env.example`
+  - `.github/workflows/ci.yml`
+  - `package-lock.json`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npm run lint`: موفق با ۰ خطا و ۰ هشدار در تمام پکیج‌ها و ورک‌اسپیس‌ها
+  - `npm run typecheck`: موفق با ۰ خطا در کل مونو‌ریپو
+  - `npm run test`: موفق؛ تمام ۱۴۲ تست در ۱۱ فایل آزمون با موفقیت پاس شدند (شامل ۱۶ تست سرور و ۱۲۶ تست وب)
+  - `npm run build`: موفق؛ بیلد کامل تمام ورک‌اسپیس‌ها
+  - `git diff --check`: موفق بدون هیچ خطای فاصله‌گذاری یا پایان خط
+  - `GitHub Actions CI`: هر دو جاب `CI / quality (pull_request)` و `CI / quality (push)` با کانتینر سرویس PostgreSQL سبز و پاس شدند.
+- **وضعیت PR:**
+  - PR شماره ۱۰ در شاخه `feature/server-postgres-integration` به `develop` ایجاد شده و تمام CI checks سبز هستند.
+- **گام بعدی (Handoff):**
+  - ادغام PR در `develop`
+  - پیاده‌سازی لایه احراز هویت سرور (JWT، جدول کاربران و ارتباط سشن کاربری در ریکوئست‌ها)
 
 ## محدودیت‌های باقی‌مانده
 

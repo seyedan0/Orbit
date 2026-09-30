@@ -75,6 +75,15 @@ export class SyncService {
 
       const mutation = rawMutation;
 
+      if (this.syncRepository.applyMutationAtomic) {
+        const atomicResult = await this.syncRepository.applyMutationAtomic(userId, mutation);
+        results.push({
+          mutationId: mutation.id,
+          status: atomicResult.status
+        });
+        continue;
+      }
+
       const existing = await this.syncRepository.getMutationByIdempotencyKey(
         userId,
         mutation.idempotencyKey
