@@ -8,6 +8,11 @@ export interface PullResult {
   hasMore: boolean;
 }
 
+export interface ApplyMutationResult {
+  status: 'APPLIED' | 'ALREADY_APPLIED';
+  task?: TaskEntity;
+}
+
 export interface SyncRepository {
   getMutationByIdempotencyKey(
     userId: string,
@@ -17,6 +22,11 @@ export interface SyncRepository {
   saveAppliedMutation(userId: string, mutation: MutationPayload): Promise<void>;
 
   applyTaskMutation(userId: string, mutation: MutationPayload): Promise<TaskEntity>;
+
+  applyMutationAtomic?(
+    userId: string,
+    mutation: MutationPayload
+  ): Promise<ApplyMutationResult>;
 
   getChanges(
     userId: string,
