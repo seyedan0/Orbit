@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { SessionProvider } from '../core/auth/session-context';
 import { IndexedDbLocalStore } from '../core/storage/indexeddb-local-store';
 import { StoreProvider } from '../core/storage/store-context';
+import { SyncProvider } from '../core/sync/sync-context';
 import { AppRoutes } from './routes';
 
 export function App() {
@@ -12,9 +13,11 @@ export function App() {
   return (
     <SessionProvider>
       <StoreProvider store={store}>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <SyncProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </SyncProvider>
       </StoreProvider>
     </SessionProvider>
   );
