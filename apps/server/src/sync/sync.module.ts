@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from '../auth/auth.module.js';
 import {
   SyncMutationEntity,
   TaskEntityModel,
@@ -14,6 +15,7 @@ import { SyncService } from './sync.service.js';
 
 @Module({
   imports: [
+    AuthModule,
     TypeOrmModule.forFeature([
       TaskEntityModel,
       SyncMutationEntity,

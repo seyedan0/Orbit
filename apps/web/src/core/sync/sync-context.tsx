@@ -6,8 +6,15 @@ import {
   useSyncExternalStore,
   type ReactNode
 } from 'react';
-import { HttpSyncTransport, SyncRuntime, type SyncTransport } from '@orbit/sync-engine';
-import { useStore } from '../storage/store-context';
+import {
+  HttpSyncError,
+  HttpSyncTransport,
+  SyncRuntime,
+  type SyncTransport
+} from '@orbit/sync-engine';
+import { useStore } from '../storage/store-context.js';
+import { useOptionalSession } from '../auth/session-context.js';
+import { readToken } from '../auth/local-session.js';
 
 export type SyncState = 'IDLE' | 'SYNCING' | 'ERROR' | 'OFFLINE';
 
@@ -26,9 +33,17 @@ export class SyncCoordinator {
   private runtime: SyncRuntime;
   private state: SyncSnapshot;
   private listeners = new Set<() => void>();
+  private onUnauthorized?: (() => void) | undefined;
 
-  constructor(runtime: SyncRuntime, initialOnline?: boolean) {
+  constructor(
+    runtime: SyncRuntime,
+    initialOnline?: boolean,
+    onUnauthorized?: () => void
+  ) {
     this.runtime = runtime;
+    if (onUnauthorized) {
+      this.onUnauthorized = onUnauthorized;
+    }
     const online =
       initialOnline ??
       (typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean'
@@ -94,6 +109,9 @@ export class SyncCoordinator {
       };
       this.notify();
     } catch (err: unknown) {
+      if (err instanceof HttpSyncError && err.status === 401) {
+        this.onUnauthorized?.();
+      }
       const message = err instanceof Error ? err.message : String(err);
       this.state = {
         ...this.state,
@@ -129,14 +147,31 @@ export function SyncProvider({
   baseUrl = '/api/v1'
 }: SyncProviderProps) {
   const store = useStore();
+  const sessionContext = useOptionalSession();
 
   const coordinator = useMemo(() => {
     if (customCoordinator) return customCoordinator;
-    const runtime =
-      customRuntime ??
-      new SyncRuntime(store, customTransport ?? new HttpSyncTransport({ baseUrl }));
-    return new SyncCoordinator(runtime);
-  }, [customCoordinator, customRuntime, customTransport, baseUrl, store]);
+
+    const handleUnauthorized = () => {
+      sessionContext?.signOut();
+    };
+
+    const transport =
+      customTransport ??
+      new HttpSyncTransport({
+        baseUrl,
+        getHeaders: () => {
+          const token =
+            sessionContext?.token ??
+            (typeof window !== 'undefined' ? readToken(window.localStorage) : undefined);
+          return token ? { Authorization: `Bearer ${token}` } : {};
+        },
+        onUnauthorized: handleUnauthorized
+      });
+
+    const runtime = customRuntime ?? new SyncRuntime(store, transport);
+    return new SyncCoordinator(runtime, undefined, handleUnauthorized);
+  }, [customCoordinator, customRuntime, customTransport, baseUrl, store, sessionContext]);
 
   const snapshot = useSyncExternalStore(
     coordinator.subscribe,

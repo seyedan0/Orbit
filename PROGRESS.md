@@ -607,6 +607,86 @@
   - ادغام PR در `develop`
   - پیاده‌سازی لایه احراز هویت سرور (JWT، جدول کاربران و ارتباط سشن کاربری در ریکوئست‌ها)
 
+### 2026-09-30 | P3-AUTH-001 | پیاده‌سازی کامل احراز هویت کاربری (JWT) در سرور و اتصال سشن کلاینت وب و ترنسپورت همگام‌سازی
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی احراز هویت کاربر سرتاسری با JWT و گذرواژه هش‌شده در سرور NestJS، مهاجرت اسکیمای دیتابیس، محافظت از مسیرهای همگام‌سازی با گارد احراز هویت، و اتصال کلاینت وب (فرم ورود/ثبت‌نام، کلاینت API احراز هویت، نگهداری سشن در localStorage و تزریق خودکار توکن به هدرهای ترنسپورت همگام‌سازی همراه با مدیریت خطای 401).
+- **انجام‌شده:**
+  - **طرحواره دیتابیس و مدل کاربر سرور:**
+    - ایجاد مهاجرت TypeORM با نام `1727660000000-AddPasswordHashToUsers.ts` جهت افزودن ستون `password_hash VARCHAR(255) NULL` به جدول `users`.
+    - به‌روزرسانی موجودیت `UserEntity` در `apps/server/src/database/entities/user.entity.ts` برای نگاشت فیلد `passwordHash` به ستون `password_hash`.
+    - نصب و پیکربندی کتابخانه‌های مورد نیاز احراز هویت (`@nestjs/jwt`، `@nestjs/passport`، `passport`، `passport-jwt`، `bcrypt`، `@types/bcrypt` و `@types/passport-jwt`).
+  - **ماژول احراز هویت سرور (`apps/server/src/auth/`):**
+    - تعریف تایپ‌های مشترک `AuthCredentials`، `AuthResponse` و `AuthUser` در `@orbit/shared-types`.
+    - پیاده‌سازی تنظیمات JWT و اعتبارسنجی متغیر محیطی `JWT_SECRET` با طول عمر پیش‌فرض ۷ روز در `auth.config.ts`.
+    - پیاده‌سازی اعتبارسنجی ورودی‌های ایمیل و پسورد در `auth.validation.ts` (نرمال‌سازی ایمیل، طول مجاز و حداقل ۸ نویسه برای رمز عبور).
+    - پیاده‌سازی `AuthService` با هش امن bcrypt (۱۲ راند)، مقابله با Timing Attack از طریق مقایسه مداوم با هش ساختگی، ایجاد حساب، ورود، و دریافت پروفایل عمومی کاربر.
+    - پیاده‌سازی `AuthController` با اندپوینت‌های:
+      - `POST /api/v1/auth/register`: ثبت‌نام کاربر، ذخیره در دیتابیس، بازگردانی JWT access token و اطلاعات عمومی کاربر.
+      - `POST /api/v1/auth/login`: اعتبارسنجی اطلاعات ورود، بازگردانی JWT access token و اطلاعات عمومی کاربر.
+      - `GET /api/v1/auth/me`: بازگردانی پروفایل کاربر احرازهویت‌شده با گارد JWT.
+    - پیاده‌سازی `JwtStrategy` و گارد `JwtAuthGuard`.
+    - حفاظت از اندپوینت‌های همگام‌سازی `POST /api/v1/sync/push` و `GET /api/v1/sync/pull` با `@UseGuards(JwtAuthGuard)`.
+    - به‌روزرسانی دکوراتور `@UserId()` جهت استخراج امن `req.user.id` از توکن معتبر با fallback به `x-user-id` در حالت تست/توسعه.
+    - افزودن مجموعه کامل آزمون‌های E2E احراز هویت در `apps/server/src/auth.e2e.test.ts` (۳۷ تست موفق) و به‌روزرسانی آزمون‌های sync.
+  - **یکپارچه‌سازی احراز هویت در کلاینت وب (`apps/web`):**
+    - پیاده‌سازی کلاینت API احراز هویت در `apps/web/src/core/auth/auth-api.ts` با متدهای `login`، `register` و `getMe` و کلاس خطای `AuthApiError`.
+    - ارتقای `local-session.ts` جهت نگهداری ساختار سشن به همراه `token` و `user` در `localStorage` با کلیدهای `orbit.session.v1` و `orbit.token.v1`.
+    - ارتقای `session-context.tsx` جهت ارائه `signIn(email, password)`، `signUp(email, password)`، `signOut()`، وضعیت `token`، `user`، `isLoading` و `error`.
+    - ارتقای `SignInPage.tsx` با تب‌های تعاملی ورود و ثبت‌نام، اعتبارسنجی فرم کلاینت، دسترسی‌پذیری مناسب (ARIA)، حالت‌های بارگذاری و نمایش خطاهای بازگشتی سرور.
+    - تنظیم `HttpSyncTransport` در پکیج `@orbit/sync-engine` برای پشتیبانی از callback اختیاری `onUnauthorized` هنگام دریافت خطای 401.
+    - پیکربندی `SyncProvider` در کلاینت وب جهت تزریق پویای هدر `Authorization: Bearer <token>` از سشن جاری به تمام ریکوئست‌های `push` و `pull`، و مدیریت خطای 401 برای خروج خودکار کاربر و هدایت به صفحه ورود.
+    - افزودن آزمون‌های جامع وب در `auth-api.test.ts`، `session-context.test.tsx`، `SignInPage.test.tsx`، `http-sync-transport.test.ts` و `sync-context.test.tsx` (۱۴۲ تست وب موفق).
+- **فایل‌ها:**
+  - `packages/shared-types/src/auth.ts`
+  - `packages/shared-types/src/index.ts`
+  - `packages/sync-engine/src/http-sync-transport.ts`
+  - `apps/server/package.json`
+  - `apps/server/src/app.module.ts`
+  - `apps/server/src/database/database.config.ts`
+  - `apps/server/src/database/entities/user.entity.ts`
+  - `apps/server/src/database/migrations/1727660000000-AddPasswordHashToUsers.ts`
+  - `apps/server/src/common/decorators/user-id.decorator.ts`
+  - `apps/server/src/auth/auth.config.ts`
+  - `apps/server/src/auth/auth.types.ts`
+  - `apps/server/src/auth/auth.validation.ts`
+  - `apps/server/src/auth/jwt.strategy.ts`
+  - `apps/server/src/auth/jwt-auth.guard.ts`
+  - `apps/server/src/auth/auth.service.ts`
+  - `apps/server/src/auth/auth.controller.ts`
+  - `apps/server/src/auth/auth.module.ts`
+  - `apps/server/src/auth.e2e.test.ts`
+  - `apps/server/src/testing/auth-test-helpers.ts`
+  - `apps/server/src/sync/sync.controller.ts`
+  - `apps/server/src/sync.e2e.test.ts`
+  - `apps/server/src/postgres-sync.integration.test.ts`
+  - `apps/web/src/core/auth/auth-api.ts`
+  - `apps/web/src/core/auth/auth-api.test.ts`
+  - `apps/web/src/core/auth/local-session.ts`
+  - `apps/web/src/core/auth/local-session.test.ts`
+  - `apps/web/src/core/auth/session-context.tsx`
+  - `apps/web/src/core/auth/session-context.test.tsx`
+  - `apps/web/src/features/auth/pages/SignInPage.tsx`
+  - `apps/web/src/features/auth/pages/SignInPage.test.tsx`
+  - `apps/web/src/core/sync/sync-context.tsx`
+  - `apps/web/src/core/sync/sync-context.test.tsx`
+  - `apps/web/src/core/sync/http-sync-transport.test.ts`
+  - `apps/web/src/styles/globals.css`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npm ci`: موفق
+  - `npm run lint`: موفق با ۰ خطا و ۰ هشدار
+  - `npm run typecheck`: موفق با ۰ خطا در تمام پکیج‌ها و اپلیکیشن‌ها
+  - `npm run test`: موفق؛ تمام ۲۰۶ تست با موفقیت پاس شدند (۶۴ تست سرور شامل ۳۷ تست احراز هویت + ۱۴۲ تست وب شامل تست‌های سشن و احراز هویت)
+  - `npm run build`: موفق؛ کامپایل موفقیت‌آمیز تمام ورک‌اسپیس‌ها
+  - `git diff --check`: بدون خطای فاصله‌گذاری یا پایان خط
+- **وضعیت PR:**
+  - آماده برای بازبینی و ثبت Commit با فرمت `feat(auth): implement jwt auth in server and integrate web session`
+- **گام بعدی (Handoff):**
+  - ادغام شاخه `feature/auth-and-user-accounts` در `develop` پس از تایید PR
+  - پیاده‌سازی حل تعارض در سطح فیلد (field-level conflict resolution) در فاز ۳
+
 ## محدودیت‌های باقی‌مانده
 
 - **بررسی دستی مرورگر:** InboxPage در مرورگر واقعی تست نشده.

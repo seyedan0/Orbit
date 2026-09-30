@@ -4,18 +4,20 @@ import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import type { DataSource } from 'typeorm';
-import type { MutationPayload } from '@orbit/shared-types';
+import type { AuthResponse, MutationPayload } from '@orbit/shared-types';
 import { getDataSourceToken } from '@nestjs/typeorm';
 import { AppModule } from './app.module.js';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter.js';
 import { SYNC_REPOSITORY } from './sync/interfaces/sync-repository.interface.js';
 import { PostgresSyncRepository } from './sync/repositories/postgres-sync.repository.js';
 import { SyncMutationEntity, TaskEntityModel } from './database/entities/index.js';
+import { bearer, deleteTestUsers, registerTestUser } from './testing/auth-test-helpers.js';
 
 describe('PostgreSQL Sync Repository & Schema Integration', () => {
   let app: INestApplication;
   let repo: PostgresSyncRepository;
   let dataSource: DataSource;
+  let httpUser: AuthResponse;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -29,11 +31,15 @@ describe('PostgreSQL Sync Repository & Schema Integration', () => {
 
     repo = moduleRef.get<PostgresSyncRepository>(SYNC_REPOSITORY);
     dataSource = moduleRef.get<DataSource>(getDataSourceToken());
+    httpUser = await registerTestUser(app, 'pg-http');
   });
 
   afterAll(async () => {
     if (repo) {
       await repo.clear();
+    }
+    if (dataSource && httpUser) {
+      await deleteTestUsers(dataSource, [httpUser.user.id]);
     }
     if (app) {
       await app.close();
@@ -307,7 +313,7 @@ describe('PostgreSQL Sync Repository & Schema Integration', () => {
       // POST /api/v1/sync/push
       const pushRes = await request(app.getHttpServer())
         .post('/api/v1/sync/push')
-        .set('x-user-id', 'user-http')
+        .set('Authorization', bearer(httpUser.accessToken))
         .send({ mutations: [mutation] });
 
       expect(pushRes.status).toBe(200);
@@ -318,7 +324,7 @@ describe('PostgreSQL Sync Repository & Schema Integration', () => {
       // GET /api/v1/sync/pull
       const pullRes = await request(app.getHttpServer())
         .get('/api/v1/sync/pull?cursor=0&limit=10')
-        .set('x-user-id', 'user-http');
+        .set('Authorization', bearer(httpUser.accessToken));
 
       expect(pullRes.status).toBe(200);
       expect(pullRes.body.changes).toHaveLength(1);

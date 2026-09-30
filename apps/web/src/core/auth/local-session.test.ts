@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
+import type { AuthResponse } from '@orbit/shared-types';
 import {
   SESSION_STORAGE_KEY,
+  TOKEN_STORAGE_KEY,
   clearSession,
   createLocalSession,
   readSession,
+  readToken,
+  saveAuthSession,
   type KeyValueStorage
-} from './local-session';
+} from './local-session.js';
 
 function fakeStorage(): KeyValueStorage & { data: Map<string, string> } {
   const data = new Map<string, string>();
@@ -55,5 +59,43 @@ describe('local session', () => {
     createLocalSession(storage, undefined, () => VALID_ID);
     clearSession(storage);
     expect(readSession(storage)).toBeUndefined();
+  });
+
+  it('persists and reads back an authenticated session with token and user', () => {
+    const storage = fakeStorage();
+    const authResponse: AuthResponse = {
+      accessToken: 'jwt-token-xyz',
+      tokenType: 'Bearer',
+      expiresIn: 3600,
+      user: {
+        id: VALID_ID,
+        email: 'user@example.com'
+      }
+    };
+
+    const session = saveAuthSession(
+      storage,
+      authResponse,
+      () => new Date('2026-09-30T12:00:00.000Z')
+    );
+
+    expect(session).toEqual({
+      userId: VALID_ID,
+      token: 'jwt-token-xyz',
+      user: {
+        id: VALID_ID,
+        email: 'user@example.com'
+      },
+      createdAt: '2026-09-30T12:00:00.000Z'
+    });
+
+    expect(readSession(storage)).toEqual(session);
+    expect(readToken(storage)).toBe('jwt-token-xyz');
+    expect(storage.getItem(TOKEN_STORAGE_KEY)).toBe('jwt-token-xyz');
+
+    clearSession(storage);
+    expect(readSession(storage)).toBeUndefined();
+    expect(readToken(storage)).toBeUndefined();
+    expect(storage.getItem(TOKEN_STORAGE_KEY)).toBeNull();
   });
 });

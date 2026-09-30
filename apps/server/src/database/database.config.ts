@@ -6,6 +6,7 @@ import {
   WorkspaceEntity
 } from './entities/index.js';
 import { InitialSyncSchema1727650000000 } from './migrations/1727650000000-InitialSyncSchema.js';
+import { AddPasswordHashToUsers1727660000000 } from './migrations/1727660000000-AddPasswordHashToUsers.js';
 
 if (typeof process.loadEnvFile === 'function') {
   const envCandidates = ['.env', 'apps/server/.env'];
@@ -25,7 +26,7 @@ export function getDatabaseConfig(): TypeOrmModuleOptions {
   const baseConfig: TypeOrmModuleOptions = {
     type: 'postgres',
     entities: [UserEntity, WorkspaceEntity, TaskEntityModel, SyncMutationEntity],
-    migrations: [InitialSyncSchema1727650000000],
+    migrations: [InitialSyncSchema1727650000000, AddPasswordHashToUsers1727660000000],
     migrationsRun: true,
     synchronize: false
   };

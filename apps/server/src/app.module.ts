@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module.js';
 import { getDatabaseConfig } from './database/database.config.js';
 import { HealthModule } from './health/health.module.js';
 import { SyncModule } from './sync/sync.module.js';
@@ -9,6 +10,7 @@ import { SyncModule } from './sync/sync.module.js';
     TypeOrmModule.forRootAsync({
       useFactory: () => getDatabaseConfig()
     }),
+    AuthModule,
     HealthModule,
     SyncModule
   ]

@@ -3,15 +3,20 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import type { MutationPayload } from '@orbit/shared-types';
+import { getDataSourceToken } from '@nestjs/typeorm';
+import type { AuthResponse, MutationPayload } from '@orbit/shared-types';
+import type { DataSource } from 'typeorm';
 import { AppModule } from './app.module.js';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter.js';
 import { SYNC_REPOSITORY } from './sync/interfaces/sync-repository.interface.js';
 import { InMemorySyncRepository } from './sync/repositories/in-memory-sync.repository.js';
+import { bearer, deleteTestUsers, registerTestUser } from './testing/auth-test-helpers.js';
 
 describe('Server Sync Foundation (E2E)', () => {
   let app: INestApplication;
+  let dataSource: DataSource;
   let syncRepo: InMemorySyncRepository;
+  let users: { user1: AuthResponse; userA: AuthResponse; userB: AuthResponse };
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -27,9 +32,19 @@ describe('Server Sync Foundation (E2E)', () => {
     await app.init();
 
     syncRepo = moduleRef.get<InMemorySyncRepository>(SYNC_REPOSITORY);
+    dataSource = moduleRef.get<DataSource>(getDataSourceToken());
+
+    users = {
+      user1: await registerTestUser(app, 'sync-1'),
+      userA: await registerTestUser(app, 'sync-a'),
+      userB: await registerTestUser(app, 'sync-b')
+    };
   });
 
   afterAll(async () => {
+    if (dataSource && users) {
+      await deleteTestUsers(dataSource, Object.values(users).map((u) => u.user.id));
+    }
     await app.close();
   });
 
@@ -63,6 +78,7 @@ describe('Server Sync Foundation (E2E)', () => {
     it('formats validation error on malformed push request body', async () => {
       const res = await request(app.getHttpServer())
         .post('/api/v1/sync/push')
+        .set('Authorization', bearer(users.user1.accessToken))
         .send({ notMutations: true });
 
       expect(res.status).toBe(400);
@@ -99,7 +115,7 @@ describe('Server Sync Foundation (E2E)', () => {
 
       const res = await request(app.getHttpServer())
         .post('/api/v1/sync/push')
-        .set('x-user-id', 'user-1')
+        .set('Authorization', bearer(users.user1.accessToken))
         .send({ mutations: [mutation1, mutation2] });
 
       expect(res.status).toBe(200);
@@ -116,7 +132,7 @@ describe('Server Sync Foundation (E2E)', () => {
 
       const firstRes = await request(app.getHttpServer())
         .post('/api/v1/sync/push')
-        .set('x-user-id', 'user-1')
+        .set('Authorization', bearer(users.user1.accessToken))
         .send({ mutations: [mutation] });
 
       expect(firstRes.status).toBe(200);
@@ -127,7 +143,7 @@ describe('Server Sync Foundation (E2E)', () => {
       // Send same mutation again with identical idempotencyKey
       const secondRes = await request(app.getHttpServer())
         .post('/api/v1/sync/push')
-        .set('x-user-id', 'user-1')
+        .set('Authorization', bearer(users.user1.accessToken))
         .send({ mutations: [mutation] });
 
       expect(secondRes.status).toBe(200);
@@ -149,7 +165,7 @@ describe('Server Sync Foundation (E2E)', () => {
 
       const res = await request(app.getHttpServer())
         .post('/api/v1/sync/push')
-        .set('x-user-id', 'user-1')
+        .set('Authorization', bearer(users.user1.accessToken))
         .send({ mutations: [validMut, invalidMut] });
 
       expect(res.status).toBe(200);
@@ -165,7 +181,7 @@ describe('Server Sync Foundation (E2E)', () => {
       // 1. Initial pull with no changes
       const initialPull = await request(app.getHttpServer())
         .get('/api/v1/sync/pull')
-        .set('x-user-id', 'user-1');
+        .set('Authorization', bearer(users.user1.accessToken));
 
       expect(initialPull.status).toBe(200);
       expect(initialPull.body).toEqual({
@@ -177,7 +193,7 @@ describe('Server Sync Foundation (E2E)', () => {
       // 2. Push task 1
       await request(app.getHttpServer())
         .post('/api/v1/sync/push')
-        .set('x-user-id', 'user-1')
+        .set('Authorization', bearer(users.user1.accessToken))
         .send({
           mutations: [
             {
@@ -198,7 +214,7 @@ describe('Server Sync Foundation (E2E)', () => {
       // 3. Push task 2
       await request(app.getHttpServer())
         .post('/api/v1/sync/push')
-        .set('x-user-id', 'user-1')
+        .set('Authorization', bearer(users.user1.accessToken))
         .send({
           mutations: [
             {
@@ -219,7 +235,7 @@ describe('Server Sync Foundation (E2E)', () => {
       // 4. Pull page 1 (limit 1)
       const page1 = await request(app.getHttpServer())
         .get('/api/v1/sync/pull?cursor=0&limit=1')
-        .set('x-user-id', 'user-1');
+        .set('Authorization', bearer(users.user1.accessToken));
 
       expect(page1.status).toBe(200);
       expect(page1.body.changes).toHaveLength(1);
@@ -230,7 +246,7 @@ describe('Server Sync Foundation (E2E)', () => {
       // 5. Pull page 2 (from nextCursor 1, limit 1)
       const page2 = await request(app.getHttpServer())
         .get(`/api/v1/sync/pull?cursor=${page1.body.nextCursor}&limit=1`)
-        .set('x-user-id', 'user-1');
+        .set('Authorization', bearer(users.user1.accessToken));
 
       expect(page2.status).toBe(200);
       expect(page2.body.changes).toHaveLength(1);
@@ -241,7 +257,7 @@ describe('Server Sync Foundation (E2E)', () => {
       // 6. Pull again from cursor 2
       const emptyPull = await request(app.getHttpServer())
         .get(`/api/v1/sync/pull?cursor=${page2.body.nextCursor}&limit=10`)
-        .set('x-user-id', 'user-1');
+        .set('Authorization', bearer(users.user1.accessToken));
 
       expect(emptyPull.status).toBe(200);
       expect(emptyPull.body.changes).toHaveLength(0);
@@ -253,7 +269,7 @@ describe('Server Sync Foundation (E2E)', () => {
       // User A creates a task
       await request(app.getHttpServer())
         .post('/api/v1/sync/push')
-        .set('x-user-id', 'user-a')
+        .set('Authorization', bearer(users.userA.accessToken))
         .send({
           mutations: [
             {
@@ -274,7 +290,7 @@ describe('Server Sync Foundation (E2E)', () => {
       // User B pulls
       const userBPull = await request(app.getHttpServer())
         .get('/api/v1/sync/pull')
-        .set('x-user-id', 'user-b');
+        .set('Authorization', bearer(users.userB.accessToken));
 
       expect(userBPull.status).toBe(200);
       expect(userBPull.body.changes).toHaveLength(0);
@@ -284,7 +300,7 @@ describe('Server Sync Foundation (E2E)', () => {
       // Create then delete
       await request(app.getHttpServer())
         .post('/api/v1/sync/push')
-        .set('x-user-id', 'user-1')
+        .set('Authorization', bearer(users.user1.accessToken))
         .send({
           mutations: [
             {
@@ -316,7 +332,7 @@ describe('Server Sync Foundation (E2E)', () => {
 
       const pullRes = await request(app.getHttpServer())
         .get('/api/v1/sync/pull')
-        .set('x-user-id', 'user-1');
+        .set('Authorization', bearer(users.user1.accessToken));
 
       expect(pullRes.status).toBe(200);
       expect(pullRes.body.changes).toHaveLength(2);

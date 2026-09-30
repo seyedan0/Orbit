@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Post,
+  Query,
+  UseGuards
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { UserId } from '../common/decorators/user-id.decorator.js';
 import type {
   PullResponseBody,
@@ -8,6 +19,7 @@ import type {
 import { SyncService } from './sync.service.js';
 
 @Controller('sync')
+@UseGuards(JwtAuthGuard)
 export class SyncController {
   constructor(
     @Inject(SyncService)
