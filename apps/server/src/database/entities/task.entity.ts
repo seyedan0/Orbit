@@ -71,4 +71,11 @@ export class TaskEntityModel {
 
   @Column({ name: 'deleted_at', type: 'varchar', length: 64, nullable: true })
   deletedAt?: string | null;
+
+  @Column({ name: 'field_timestamps', type: 'jsonb', default: () => "'{}'" })
+  fieldTimestamps!: Record<string, string>;
+
+  @Column({ name: 'last_mutation_id', type: 'varchar', length: 255, nullable: true })
+  lastMutationId?: string | null;
 }
+
