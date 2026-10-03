@@ -9,7 +9,7 @@ export interface PullResult {
 }
 
 export interface ApplyMutationResult {
-  status: 'APPLIED' | 'ALREADY_APPLIED';
+  status: 'APPLIED' | 'ALREADY_APPLIED' | 'CONFLICT_MERGED';
   task?: TaskEntity;
 }
 
