@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "typecheck": "tsc --build",
+    "typecheck": "tsc --build && npm run typecheck --workspace @orbit/web && npm run typecheck --workspace @orbit/server",
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present"
   },

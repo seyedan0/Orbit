@@ -22,12 +22,13 @@
 
 ## 2. مرحله فعلی
 
-- **مرحله:** فاز 1، قراردادها و پایه monorepo
-- **وضعیت:** در حال انجام
+- **مرحله:** فاز ۳، sync و حساب کاربری
+- **وضعیت:** در حال انجام (حل تعارض در سطح فیلد با مکانیزم LWW و tie-breaker و وضعیت CONFLICT_MERGED در سرور - P3-SYNC-001)
 - **اولویت کلاینت:** Web به‌عنوان اولین محصول قابل استفاده و مرجع رفتاری
-- **خروجی بعدی:** اسکلت Web، تصمیم دیتابیس محلی، schema version 1 و queue واقعی
+- **خروجی اخیر:** حل تعارض در سطح فیلد بر اساس Last-Write-Wins (LWW)، مقایسه لکسیکوگرافیک mutation ID برای شکستن تساوی، متادیتای فیلدها در پایگاه داده PostgreSQL، و پشتیبانی از وضعیت CONFLICT_MERGED در PostgresSyncRepository و اندپوینت‌های push/pull سرور (P3-SYNC-001)
+- **خروجی بعدی:** پاک‌سازی، مدیریت tombstone و سیاست retention
 - **مسئول پیش‌فرض:** عامل اجرایی بعدی
-- **مانع شناخته‌شده:** انتخاب بین SQLite و WatermelonDB و تثبیت نیازهای وسیع‌تر TickTick
+- **مانع شناخته‌شده:** بررسی دستی در مرورگر فیزیکی و انتخاب بین SQLite و WatermelonDB برای دسکتاپ و اندروید در فازهای بعد
 
 ## 3. فازهای کامل پروژه
 
@@ -85,13 +86,13 @@
 
 **کارها:**
 
-- authentication و session امن
-- PostgreSQL schema و migration
-- mutation queue، idempotency و retry
-- push، pull و cursor
-- field-level conflict resolution
-- tombstone و retention policy
-- recovery بعد از crash، timeout و نصب مجدد
+- [x] authentication و session امن (سرور JWT، پاسپورت، مهاجرت رمز عبور، کلاینت وب و ارتباط سشن در هدرهای همگام‌سازی)
+- [x] PostgreSQL schema و migration (مهاجرت‌های TypeORM، جداول کاربران، تسک‌ها و جهش‌ها)
+- [x] mutation queue، idempotency و retry (پروتکل همگام‌سازی و جهش‌های اتمیک)
+- [x] push، pull و cursor (اندپوینت‌های همگام‌سازی و کلاینت HTTP)
+- [x] field-level conflict resolution (حل تعارض در سطح فیلد با استراتژی LWW و tie-breaker و وضعیت CONFLICT_MERGED)
+- [x] tombstone و retention policy (نگهداری ۳۰ روزه، پاک‌سازی اتمیک و جلوگیری قطعی از احیای تسک در cleaned_tombstones)
+- [x] recovery بعد از crash، timeout و نصب مجدد (بازیابی جهش‌های IN_FLIGHT، بازگشت امن به PENDING با backoff، حفظ کرسر و اتمیسیتی pull، سقف retry و ثبت FAILED برای خطاهای دائمی)
 - telemetry حداقلی برای sync health
 
 **دروازه خروج:** سناریوی دو دستگاه آفلاین/آنلاین بدون duplicate یا از دست‌رفتن تغییرات قبول می‌شود.
