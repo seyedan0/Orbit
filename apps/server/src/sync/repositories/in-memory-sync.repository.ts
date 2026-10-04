@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import type { MutationPayload, TaskEntity } from '@orbit/shared-types';
 import type {
   ApplyMutationResult,
+  CleanTombstonesOptions,
+  CleanTombstonesResult,
   PullResult,
   SyncRepository
 } from '../interfaces/sync-repository.interface.js';
@@ -15,8 +17,20 @@ interface ChangelogEntry {
 export class InMemorySyncRepository implements SyncRepository {
   private tasks = new Map<string, Map<string, TaskEntity>>();
   private mutations = new Map<string, Map<string, MutationPayload>>();
+  private cleanedTombstones = new Map<string, Map<string, { deletedAt: string; purgedAt: Date }>>();
   private changelog = new Map<string, ChangelogEntry[]>();
   private counters = new Map<string, number>();
+
+  private getUserCleanedTombstones(
+    userId: string
+  ): Map<string, { deletedAt: string; purgedAt: Date }> {
+    let userCleaned = this.cleanedTombstones.get(userId);
+    if (!userCleaned) {
+      userCleaned = new Map();
+      this.cleanedTombstones.set(userId, userCleaned);
+    }
+    return userCleaned;
+  }
 
   private getUserTasks(userId: string): Map<string, TaskEntity> {
     let userTasks = this.tasks.get(userId);
@@ -67,12 +81,27 @@ export class InMemorySyncRepository implements SyncRepository {
       return { status: 'ALREADY_APPLIED' };
     }
 
+    const userCleaned = this.getUserCleanedTombstones(userId);
+    if (userCleaned.has(mutation.entityId)) {
+      return {
+        status: 'REJECTED',
+        error: `Task ${mutation.entityId} was permanently cleaned up and cannot be resurrected`
+      };
+    }
+
     const task = await this.applyTaskMutation(userId, mutation);
     await this.saveAppliedMutation(userId, mutation);
     return { status: 'APPLIED', task };
   }
 
   async applyTaskMutation(userId: string, mutation: MutationPayload): Promise<TaskEntity> {
+    const userCleaned = this.getUserCleanedTombstones(userId);
+    if (userCleaned.has(mutation.entityId)) {
+      throw new Error(
+        `Task ${mutation.entityId} was permanently cleaned up and cannot be resurrected`
+      );
+    }
+
     const userTasks = this.getUserTasks(userId);
     const existing = userTasks.get(mutation.entityId);
     const version = existing ? existing.version + 1 : (mutation.baseVersion || 0) + 1;
@@ -191,9 +220,49 @@ export class InMemorySyncRepository implements SyncRepository {
     };
   }
 
+  async cleanTombstones(options?: CleanTombstonesOptions): Promise<CleanTombstonesResult> {
+    const retentionDays = options?.retentionDays ?? 30;
+    const now = options?.now ?? new Date();
+    const cutoffTime =
+      options?.cutoffDate?.getTime() ??
+      now.getTime() - retentionDays * 24 * 60 * 60 * 1000;
+    const cutoffIso = new Date(cutoffTime).toISOString();
+
+    const userIds = options?.userId ? [options.userId] : Array.from(this.tasks.keys());
+    let cleanedCount = 0;
+    const cleanedTaskIds: string[] = [];
+
+    for (const uid of userIds) {
+      const userTasks = this.getUserTasks(uid);
+      const userCleaned = this.getUserCleanedTombstones(uid);
+
+      for (const [id, task] of Array.from(userTasks.entries())) {
+        if (task.deletedAt && task.deletedAt <= cutoffIso) {
+          userTasks.delete(id);
+          userCleaned.set(id, { deletedAt: task.deletedAt, purgedAt: new Date() });
+          cleanedCount++;
+          cleanedTaskIds.push(id);
+        }
+      }
+
+      if (cleanedTaskIds.length > 0) {
+        const userLog = this.getUserChangelog(uid);
+        const retainedLog = userLog.filter((entry) => !cleanedTaskIds.includes(entry.task.id));
+        this.changelog.set(uid, retainedLog);
+      }
+    }
+
+    if (options?.onBeforeCommit) {
+      await options.onBeforeCommit(null);
+    }
+
+    return { cleanedCount, cleanedTaskIds };
+  }
+
   clear(): void {
     this.tasks.clear();
     this.mutations.clear();
+    this.cleanedTombstones.clear();
     this.changelog.clear();
     this.counters.clear();
   }

@@ -2,6 +2,8 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { MutationPayload } from '@orbit/shared-types';
 import {
   SYNC_REPOSITORY,
+  type CleanTombstonesOptions,
+  type CleanTombstonesResult,
   type SyncRepository
 } from './interfaces/sync-repository.interface.js';
 import type {
@@ -79,7 +81,8 @@ export class SyncService {
         const atomicResult = await this.syncRepository.applyMutationAtomic(userId, mutation);
         results.push({
           mutationId: mutation.id,
-          status: atomicResult.status
+          status: atomicResult.status,
+          ...(atomicResult.error ? { error: atomicResult.error } : {})
         });
         continue;
       }
@@ -118,5 +121,11 @@ export class SyncService {
     const safeLimit = Number.isNaN(limit) ? 50 : limit;
 
     return this.syncRepository.getChanges(userId, cursor, safeLimit);
+  }
+
+  async cleanTombstones(
+    options?: CleanTombstonesOptions
+  ): Promise<CleanTombstonesResult> {
+    return this.syncRepository.cleanTombstones(options);
   }
 }

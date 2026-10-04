@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module.js';
 import {
+  CleanedTombstoneEntity,
   SyncMutationEntity,
   TaskEntityModel,
   UserEntity,
@@ -20,7 +21,8 @@ import { SyncService } from './sync.service.js';
       TaskEntityModel,
       SyncMutationEntity,
       UserEntity,
-      WorkspaceEntity
+      WorkspaceEntity,
+      CleanedTombstoneEntity
     ])
   ],
   controllers: [SyncController],
