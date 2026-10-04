@@ -26,11 +26,13 @@
 | duration                | 4     | زمان برنامه‌ریزی‌شده برای time blocking |
 | all-day                 | 2     | task بدون ساعت محلی                     |
 | timezone                | 2     | ذخیره IANA و تست DST                    |
-| recurrence              | 4     | RRULE، exception و occurrence           |
+| تقویم شمسی (Jalali)     | 4     | پشتیبانی کامل از تاریخ و ماه‌های شمسی، شروع هفته از شنبه و سوئیچ با میلادی |
+| Jalali Date/Time Picker | 4     | کامپوننت انتخاب تاریخ و ساعت شمسی با طراحی مدرن و واکنش‌گرا |
+| recurrence              | 4     | RRULE، exception، occurrence و تطبیق با ماه‌های شمسی |
 | reminder                | 4     | زمان‌بندی reminder قابل sync            |
-| smart date input        | 4     | تفسیر عباراتی مانند tomorrow            |
+| smart date input        | 4     | تفسیر عبارات فارسی و انگلیسی (فردا، شنبه، tomorrow) |
 | Today/Tomorrow/Upcoming | 4     | نماهای زمانی آماده                      |
-| calendar day/week/month | 4     | مشاهده و جابه‌جایی زمانی                |
+| calendar day/week/month | 4     | مشاهده و جابه‌جایی زمانی در تقویم شمسی/میلادی |
 | agenda                  | 4     | فهرست زمانی فشرده                       |
 | location reminder       | 10    | فقط پس از ارزیابی محدودیت پلتفرم        |
 
