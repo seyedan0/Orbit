@@ -204,7 +204,8 @@ describe('PostgreSQL Sync Repository & Schema Integration', () => {
             localStatus: 'SYNCED',
             cursor: '999999',
             createdAt: '2026-09-30T10:00:00.000Z',
-            updatedAt: '2026-09-30T10:00:00.000Z'
+            updatedAt: '2026-09-30T10:00:00.000Z',
+            fieldTimestamps: {}
           } as TaskEntityModel);
 
           await manager.save(SyncMutationEntity, {

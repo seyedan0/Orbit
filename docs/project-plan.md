@@ -23,10 +23,10 @@
 ## 2. مرحله فعلی
 
 - **مرحله:** فاز ۳، sync و حساب کاربری
-- **وضعیت:** در حال انجام (راه‌اندازی اسکلت سرور NestJS در apps/server و endpointهای اولیه push/pull همگام‌سازی - P3-SRV-001)
+- **وضعیت:** در حال انجام (حل تعارض در سطح فیلد با مکانیزم LWW و tie-breaker و وضعیت CONFLICT_MERGED در سرور - P3-SYNC-001)
 - **اولویت کلاینت:** Web به‌عنوان اولین محصول قابل استفاده و مرجع رفتاری
-- **خروجی اخیر:** راه‌اندازی سرور NestJS در apps/server با پیشوند نسخه /api/v1، فیلتر خطای استاندارد، پیاده‌سازی InMemorySyncRepository و endpointهای /health، /sync/push (همراه با اعتبارسنجی و idempotency) و /sync/pull (با پیشروی کرسر) و آزمون‌های E2E (۱۳۵ تست سبز - P3-SRV-001)
-- **خروجی بعدی:** راه‌اندازی اتصال واقعی PostgreSQL، مایگریشن‌های اسکیما و سیستم احراز هویت سرور
+- **خروجی اخیر:** حل تعارض در سطح فیلد بر اساس Last-Write-Wins (LWW)، مقایسه لکسیکوگرافیک mutation ID برای شکستن تساوی، متادیتای فیلدها در پایگاه داده PostgreSQL، و پشتیبانی از وضعیت CONFLICT_MERGED در PostgresSyncRepository و اندپوینت‌های push/pull سرور (P3-SYNC-001)
+- **خروجی بعدی:** پاک‌سازی، مدیریت tombstone و سیاست retention
 - **مسئول پیش‌فرض:** عامل اجرایی بعدی
 - **مانع شناخته‌شده:** بررسی دستی در مرورگر فیزیکی و انتخاب بین SQLite و WatermelonDB برای دسکتاپ و اندروید در فازهای بعد
 
@@ -90,7 +90,7 @@
 - [x] PostgreSQL schema و migration (مهاجرت‌های TypeORM، جداول کاربران، تسک‌ها و جهش‌ها)
 - [x] mutation queue، idempotency و retry (پروتکل همگام‌سازی و جهش‌های اتمیک)
 - [x] push، pull و cursor (اندپوینت‌های همگام‌سازی و کلاینت HTTP)
-- field-level conflict resolution
+- [x] field-level conflict resolution (حل تعارض در سطح فیلد با استراتژی LWW و tie-breaker و وضعیت CONFLICT_MERGED)
 - tombstone و retention policy
 - recovery بعد از crash، timeout و نصب مجدد
 - telemetry حداقلی برای sync health

@@ -5,20 +5,20 @@
 ## وضعیت کلی
 
 - **مرحله:** فاز ۳، sync و حساب کاربری
-- **آخرین به‌روزرسانی:** 2026-09-30
+- **آخرین به‌روزرسانی:** 2026-10-03
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 85%
-- **Branch فعال:** `feature/server-postgres-integration`
+- **درصد تقریبی پیشرفت:** 90%
+- **Branch فعال:** `feature/server-field-conflict-resolution`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-اتصال پایگاه داده PostgreSQL در سرور NestJS (`apps/server`)، ایجاد مایگریشن‌ها و موجودیت‌های دیتابیس (Users, Workspaces, Tasks, Sync Mutations)، پیاده‌سازی `PostgresSyncRepository` با تراکنش‌های اتمیک (`applyMutationAtomic`) و پیاده‌سازی تست‌های جامع یکپارچگی پایگاه داده و همگام‌سازی.
+پیاده‌سازی حل تعارض در سطح فیلد بر اساس Last-Write-Wins (LWW)، مقایسه لکسیکوگرافیک mutation ID برای شکستن تساوی، ذخیره متادیتای زمانی فیلدها در PostgreSQL، و بازگرداندن وضعیت CONFLICT_MERGED در PostgresSyncRepository سرور.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی و PR شاخه `feature/server-postgres-integration` به `develop`
-- [ ] گام بعدی فاز ۳: احراز هویت کاربری با JWT و اتصال شناسه کاربر واقعی در session به سرور
+- [ ] بازبینی و PR شاخه `feature/server-field-conflict-resolution` به `develop`
+- [ ] گام بعدی فاز ۳: پاک‌سازی، مدیریت tombstone و سیاست retention در همگام‌سازی
 
 ## کارهای انجام‌شده
 
@@ -56,6 +56,10 @@
 - [x] **P3-SRV-001:** راه‌اندازی اسکلت سرور NestJS در `apps/server` و پیاده‌سازی endpointهای اولیه push/pull همگام‌سازی
 - [x] ادغام PR شماره ۹ (`feature/server-sync-foundation`) در `develop`
 - [x] **P3-SRV-002:** اتصال PostgreSQL، اجرای مایگریشن‌ها، پیاده‌سازی موجودیت‌های TypeORM و `PostgresSyncRepository` با تراکنش‌های اتمیک
+- [x] ادغام PR شماره ۱۰ (`feature/server-postgres-integration`) در `develop`
+- [x] **P3-AUTH-001:** پیاده‌سازی سیستم احراز هویت سرور (JWT، هش رمز عبور bcrypt، گاردها) و اتصال سشن کاربری وب
+- [x] ادغام PR شماره ۱۱ (`feature/auth-and-user-accounts`) در `develop`
+- [x] **P3-SYNC-001:** پیاده‌سازی حل تعارض در سطح فیلد (LWW)، شکستن تساوی لکسیکوگرافیک و وضعیت CONFLICT_MERGED در PostgresSyncRepository و سرور
 
 ## فعالیت AIها
 
@@ -682,10 +686,55 @@
   - `npm run build`: موفق؛ کامپایل موفقیت‌آمیز تمام ورک‌اسپیس‌ها
   - `git diff --check`: بدون خطای فاصله‌گذاری یا پایان خط
 - **وضعیت PR:**
-  - آماده برای بازبینی و ثبت Commit با فرمت `feat(auth): implement jwt auth in server and integrate web session`
+  - ادغام شده در `develop`
 - **گام بعدی (Handoff):**
-  - ادغام شاخه `feature/auth-and-user-accounts` در `develop` پس از تایید PR
   - پیاده‌سازی حل تعارض در سطح فیلد (field-level conflict resolution) در فاز ۳
+
+### 2026-10-03 | P3-SYNC-001 | حل تعارض فیلدی در سرور (LWW و CONFLICT_MERGED)
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی استراتژی Last-Write-Wins (LWW) در سطح فیلد با شکستن تساوی لکسیکوگرافیک و وضعیت `CONFLICT_MERGED` در سرور
+- **انجام‌شده:**
+  - ایجاد مایگریشن `1727670000000-AddConflictMetadataToTasks.ts` برای اضافه کردن ستون‌های `field_timestamps` (JSONB) و `last_mutation_id` (VARCHAR) به جدول `tasks` و ثبت آن در `database.config.ts`.
+  - به‌روزرسانی مدل دیتابیس `TaskEntityModel` با فیلدهای `fieldTimestamps` و `lastMutationId`.
+  - پیاده‌سازی تابع خالص `mergeTaskFieldsWithLww(existingTask, mutation)` در `conflict-resolution.util.ts`:
+    - برنده بودن فیلد با timestamp بزرگتر (ISO string comparison).
+    - شکستن تساوی در صورت برابری کامل timestamp با مقایسه لکسیکوگرافیک شناسه mutation جدید در برابر `lastMutationId` موجود.
+    - پشتیبانی از `deletedAt` به عنوان فیلد استاندارد زمان‌دار (پشتیبانی کامل از حذف نرم و بازیابی / restore).
+    - برگرداندن وضعیت `APPLIED` در صورت پیروزی تمام فیلدهای mutation بدون واگرایی نسخه (`mutation.baseVersion >= existing.version`) و برگرداندن `CONFLICT_MERGED` در صورت ادغام تعارض با فیلدهای سرور یا نسخه پایه قدیمی‌تر.
+  - تست‌های واحد سریع در حافظه در `conflict-resolution.util.test.ts` (۶ تست سبز در ~18ms).
+  - ادغام در `PostgresSyncRepository`:
+    - به‌روزرسانی نوع `ApplyMutationResult` برای دربرگرفتن وضعیت `'CONFLICT_MERGED'`.
+    - استفاده از `mergeTaskFieldsWithLww` در متد `applyTaskMutationInManager` برای اعمال جهش‌های `UPSERT` و `UPDATE`.
+  - تست‌های جامع یکپارچگی پایگاه داده در `conflict-resolution.integration.test.ts` شامل ۸ تست:
+    - ویرایش‌های همزمان روی فیلدهای مجزا (disjoint fields) و ادغام موفقیت‌آمیز فیلدها.
+    - ویرایش‌های همزمان روی فیلد مشترک (برد timestamp بزرگتر صرف نظر از ترتیب رسیدن جهش‌ها).
+    - ویرایش‌های همزمان با timestamp یکسان (حل تعارض قطعی با tie-breaker بر اساس شناسه جهش).
+    - تعارض حذف نرم در برابر ویرایش با رفتار LWW.
+    - فلوی کامل HTTP push/pull و دریافت وضعیت `CONFLICT_MERGED`.
+- **فایل‌ها:**
+  - `apps/server/src/database/migrations/1727670000000-AddConflictMetadataToTasks.ts`
+  - `apps/server/src/database/database.config.ts`
+  - `apps/server/src/database/entities/task.entity.ts`
+  - `apps/server/src/sync/interfaces/sync-repository.interface.ts`
+  - `apps/server/src/sync/utils/conflict-resolution.util.ts`
+  - `apps/server/src/sync/utils/conflict-resolution.util.test.ts`
+  - `apps/server/src/sync/repositories/postgres-sync.repository.ts`
+  - `apps/server/src/conflict-resolution.integration.test.ts`
+  - `apps/server/vitest.config.ts`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npm run lint`: موفق با ۰ خطا و ۰ هشدار
+  - `npm run typecheck`: موفق با ۰ خطا در تمام پکیج‌ها و اپلیکیشن‌ها
+  - `npm run test`: موفق؛ تمام ۲۲۰ تست با موفقیت پاس شدند (۷۸ تست سرور + ۱۴۲ تست وب)
+  - `npm run build`: موفق؛ کامپایل موفقیت‌آمیز تمام پکیج‌ها و کلاینت وب
+  - `git diff --check`: بدون خطای فاصله‌گذاری یا خط جدید
+- **وضعیت PR:**
+  - آماده برای بازبینی و ثبت Commit با فرمت `feat(sync): implement server field-level conflict resolution (LWW)`
+- **گام بعدی (Handoff):**
+  - ادغام شاخه `feature/server-field-conflict-resolution` در `develop`
+  - گام بعدی فاز ۳: مدیریت tombstone و سیاست retention
 
 ## محدودیت‌های باقی‌مانده
 
