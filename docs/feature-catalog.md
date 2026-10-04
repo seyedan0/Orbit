@@ -32,26 +32,28 @@
 | reminder                | 4     | زمان‌بندی reminder قابل sync            |
 | smart date input        | 4     | تفسیر عبارات فارسی و انگلیسی (فردا، شنبه، tomorrow) |
 | Today/Tomorrow/Upcoming | 4     | نماهای زمانی آماده                      |
-| calendar day/week/month | 4     | مشاهده و جابه‌جایی زمانی در تقویم شمسی/میلادی |
-| agenda                  | 4     | فهرست زمانی فشرده                       |
-| location reminder       | 10    | فقط پس از ارزیابی محدودیت پلتفرم        |
+| calendar day/week/month | 4     | مشاهده و جابه‌جایی زمانی در تقویم شمسی/میلادی (۱۰۰٪ رایگان و بدون محدودیت) |
+| multi-day & agenda      | 4     | نماهای تقویم چندروزه و فهرست فشرده زمانی |
+| timeline / mini-gantt   | 5     | نمایش و کشیدن مدت‌زمان تسک‌ها بر روی خط زمان افقی |
+| location reminder       | 10    | اعلان مکانی با geofencing محلی          |
 
 ## 3. سازمان‌دهی و جست‌وجو
 
-| قابلیت             | مرحله | توضیح                                     |
-| ------------------ | ----- | ----------------------------------------- |
-| priority 0/1/3/5   | 2     | نگاشت سازگار با TickTick                  |
-| tags               | 5     | برچسب task و note                         |
-| tag groups         | 5     | دسته‌بندی برچسب‌ها                        |
-| filters            | 5     | ترکیب شرط‌های وضعیت، زمان، priority و tag |
-| smart lists        | 5     | فهرست ذخیره‌شده بر اساس query             |
-| full-text search   | 5     | title، content، list، tag و date          |
-| sort/group         | 5     | مرتب‌سازی و گروه‌بندی قابل تنظیم          |
-| bulk actions       | 5     | تغییر چند رکورد هم‌زمان                   |
-| Eisenhower matrix  | 5     | نمایش بر اساس اهمیت و فوریت               |
-| calendar filters   | 4     | محدودکردن رویدادهای قابل نمایش            |
-| quick capture      | 2     | ایجاد سریع از هر کلاینت                   |
-| keyboard shortcuts | 11    | بهره‌وری Desktop                          |
+| قابلیت                 | مرحله | توضیح                                     |
+| ---------------------- | ----- | ----------------------------------------- |
+| priority 0/1/3/5       | 2     | نگاشت سازگار با TickTick                  |
+| tags                   | 5     | برچسب task و note                         |
+| tag groups             | 5     | دسته‌بندی برچسب‌ها                        |
+| filters (JSON Rule DSL)| 5     | ترکیب شرط‌های بولی پیچیده (AND/OR) به صورت مدل خنثی |
+| smart lists            | 5     | فهرست‌های ذخیره‌شده نامحدود بر اساس کوئری‌های هوشمند |
+| full-text search       | 5     | جست‌وجو در title، content، list، tag و date |
+| sort/group             | 5     | مرتب‌سازی و گروه‌بندی پویا                |
+| LexoRank positioning   | 5     | رتبه‌بندی کسری لکسیکوگرافیک برای Drag & Drop بدون تغییر کل جدول |
+| bulk actions           | 5     | تغییر چند رکورد هم‌زمان                   |
+| Eisenhower matrix      | 5     | ماتریس ۴ خانه اهمیت و فوریت به صورت Derived View |
+| calendar filters       | 4     | محدودکردن رویدادهای قابل نمایش            |
+| quick capture          | 2     | ایجاد سریع از هر کلاینت با کلید میانبر    |
+| keyboard shortcuts     | 11    | بهره‌وری Desktop با میانبرهای کامل        |
 
 ## 4. Focus و Pomodoro
 
@@ -71,19 +73,19 @@
 | focus by task/list/tag  | 8     | گزارش زمان تمرکز                            |
 | daily focus goal        | 8     | هدف اختیاری بدون جریمه                      |
 
-## 5. عادت‌ها
+## 5. عادت‌ها و روتین‌ها (کاملاً رایگان و نامحدود)
 
 | قابلیت             | مرحله | توضیح                         |
 | ------------------ | ----- | ----------------------------- |
-| daily/weekly habit | 7     | هدف تکرارشونده                |
+| daily/weekly habit | 7     | هدف تکرارشونده بدون محدودیت تعداد (در برابر سقف ۵ تیک‌تیک) |
 | completion و skip  | 7     | ثبت رخداد با policy مشخص      |
 | streak             | 7     | زنجیره بر اساس timezone کاربر |
 | completion rate    | 7     | درصد انجام در بازه            |
-| heatmap            | 7     | نمایش روزهای انجام‌شده        |
+| heatmap            | 7     | نمایش تقویم بصری روزهای انجام‌شده |
 | habit reminder     | 7     | reminder مستقل از task        |
-| habit-task link    | 7     | ارتباط اختیاری با task        |
+| habit-task link    | 7     | ارتباط اختیاری با task و شروع focus |
 
-## 6. تحلیل و گزارش
+## 6. تحلیل، گزارش و بازبینی (Honest Productivity)
 
 | قابلیت                    | مرحله | توضیح                                     |
 | ------------------------- | ----- | ----------------------------------------- |
@@ -98,7 +100,10 @@
 | list/folder/tag breakdown | 8     | توزیع کار و تمرکز                         |
 | priority breakdown        | 8     | تعادل urgency و importance                |
 | habit streak/report       | 8     | روند استمرار                              |
-| weekly review             | 8     | خلاصه قابل اقدام، نه امتیاز مبهم          |
+| Daily Review              | 8     | ماژول بازبینی شبانه کارهای روز و تنظیم فردا |
+| Weekly Review             | 8     | ارزیابی هفتگی دستاوردها و برنامه‌ریزی هفته بعد |
+| Task Debt indicator       | 8     | شناسایی تسک‌هایی که مکرراً به تعویق می‌افتند |
+| Honest Capacity Warning   | 8     | هشدار بیش‌برنامه‌ریزی (تداخل زمانی کارها با تقویم) |
 | CSV/JSON export           | 8     | خروجی قابل بررسی کاربر                    |
 | privacy controls          | 8     | حذف یا محدودکردن analytics                |
 
@@ -106,43 +111,38 @@
 
 | قابلیت                | مرحله | توضیح                               |
 | --------------------- | ----- | ----------------------------------- |
-| Web                   | 1/11  | اولین کلاینت و مرجع رفتاری          |
+| Web                   | 1/11  | اولین کلاینت و مرجع رفتاری (React + Vite) |
 | Windows/Linux Desktop | 1/11  | پس از تثبیت Web با Tauri + React    |
 | Android               | 1/11  | پس از تثبیت Web با React Native     |
 | responsive layout     | 1/11  | ابتدا برای Web و سپس سایر کلاینت‌ها |
-| dark/light theme      | 11    | تنظیم قابل sync                     |
-| localization          | 11    | فارسی، انگلیسی و localeهای بعدی     |
+| dark/light theme      | 6.5/11| تم تاریک و روشن قابل sync           |
+| localization          | 4/11  | فارسی، انگلیسی و تقویم شمسی/میلادی  |
 | accessibility         | 1/11  | ابتدا Web، سپس parity پلتفرم‌ها     |
 | widget                | 10    | quick capture و Today               |
 | notification          | 4/6   | reminder و focus                    |
 | share/quick action    | 10    | ورود سریع محتوا                     |
 | offline indicator     | 3     | وضعیت sync قابل فهم                 |
-| import/export         | 5/10  | جلوگیری از قفل‌شدن داده             |
+| import/export         | 5/10  | جلوگیری از قفل‌شدن داده (Todoist/TickTick) |
 
-## 8. همکاری و اتصال
+## 8. همکاری، اتصال و هوش مصنوعی متن‌باز
 
 | قابلیت            | مرحله | توضیح                    |
 | ----------------- | ----- | ------------------------ |
-| account/session   | 3     | هویت امن                 |
+| account/session   | 3     | هویت امن (JWT/Bcrypt)    |
 | shared list       | 9     | همکاری چندکاربره         |
-| roles/permissions | 9     | کنترل دسترسی             |
+| roles/permissions | 9     | کنترل دسترسی بر پایه Workspace |
 | assignment        | 9     | مسئول task               |
 | activity log      | 9     | تاریخچه تغییرات          |
-| CalDAV            | 10    | تقویم شخص ثالث           |
-| MCP               | 10    | اتصال عامل‌های AI        |
+| CalDAV            | 10    | تقویم شخص ثالث دوطرفه   |
+| BYOK AI Gateway   | 10    | اتصال کلید اختصاصی کاربر (Gemini / OpenAI / Groq) بدون هزینه سروری |
+| Local LLM support | 10    | اتصال به Ollama / LM Studio برای پردازش محلی و آفلاین |
+| AI Brain Dump     | 10    | استخراج خودکار تسک و تاریخ از یادداشت صوتی یا متن آزاد |
+| AI Weekly Planner | 10    | پیشنهاد برنامه هفتگی متوازن با تایید کاربر |
+| Built-in MCP      | 10    | سرور رسمی Model Context Protocol برای ارتباط با عامل‌های AI |
 | CLI               | 10    | automation و power users |
-| API token/webhook | 10    | اتصال سرویس‌ها           |
+| API token/webhook | 10    | اتصال سرویس‌ها و وب‌هوک‌ها |
 | URL Scheme        | 10    | deep link و automation   |
 
-## 9. قواعد اضافه‌کردن قابلیت
+## 9. تضمین پایداری و عدم وجود پِی‌وال (FOSS Guarantee)
 
-هر ردیف پیش از implementation باید این موارد را داشته باشد:
-
-- user story و دلیل محصولی
-- مالک و فاز هدف
-- تغییرات model و migration
-- API یا event contract
-- حالت آفلاین و رفتار sync
-- permission و privacy impact
-- تست و معیار پذیرش
-- تصمیم درباره analytics و retention
+تمامی قابلیت‌های مندرج در این کاتالوگ به‌صورت پایدار و متن‌باز تحت لایسنس آزاد منتشر می‌شوند. هیچ‌یک از امکانات هسته، تقویم، عادت‌ها، آمار، تم‌ها یا فیلترها هرگز مشمول محدودیت یا پرداخت نخواهند شد.

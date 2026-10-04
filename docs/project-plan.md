@@ -118,23 +118,27 @@
 
 **دروازه خروج:** یک task تکرارشونده و یک task بازه‌ای در هر دو تقویم شمسی و میلادی و در timezoneهای مختلف به درستی نمایش داده شده، ویرایش و sync می‌شوند.
 
-### فاز 5: سازمان‌دهی و بازیابی اطلاعات
+### فاز 5: سازمان‌دهی، فیلترها و نماهای پیشرفته
 
-**هدف:** پیدا کردن و مرتب‌کردن سریع اطلاعات.
+**هدف:** پیدا کردن، اولویت‌بندی و مشاهده منعطف کارها در نماهای چندگانه.
 
 **کارها:**
 
 - tags و tag groups
-- filters و smart lists
-- saved searches
-- search در title، content، tag، list و date
+- موتور فیلترهای هوشمند مبتنی بر JSON Rule DSL (ارزیابی ترکیبات پیچیده شرطی به صورت خنثی)
+- smart lists نامحدود بر پایه فیلترهای هوشمند
+- ماتریس آیزنهاور (Eisenhower Matrix) ۴ خانه به صورت Derived View بر پایه اولویت و سررسید
+- تایم‌لاین و مینی‌گانت سبک (Timeline View) برای نمایش و تنظیم افقی مدت‌زمان تسک‌ها
+- رتبه‌بندی کسری (LexoRank / Fractional Indexing) برای جابه‌جایی Drag & Drop بدون سنگین کردن تراکنش‌ها
+- saved searches و تاریخچه جست‌وجو
+- search چندفیلدی در title، content، tag، list و date
 - فیلتر priority، status، assignee، due state و location
-- sort و grouping
+- sort و grouping پویا
 - bulk edit، bulk complete و bulk move
 - archive و trash قابل بازیابی
-- import/export کنترل‌شده
+- import/export کنترل‌شده (پشتیبانی از فرمت‌های Todoist و TickTick)
 
-**دروازه خروج:** queryهای اصلی با dataset بزرگ پاسخ‌گو هستند و نتیجه در همه clientها consistent است.
+**دروازه خروج:** نماهای ماتریس و تایم‌لاین بدون وابستگی به دیتابیس جداگانه و بر اساس مدل تسک رندر می‌شوند؛ queryهای فیلترهای هوشمند در هر سه کلاینت یکسان عمل می‌کنند.
 
 ### فاز 6: تمرکز و Pomodoro
 
@@ -205,6 +209,10 @@
 - میانگین زمان تا تکمیل
 - throughput و lead time
 - مقایسه planned vs completed بدون ایجاد فشار یا امتیاز اجباری
+- ماژول بازبینی روزانه (Daily Review) برای مرور وضعیت شبانه و انتخاب اولویت‌های فردا
+- ماژول بازبینی هفتگی (Weekly Review) برای تحلیل دستاوردها و تراز بار کاری هفته بعد
+- شاخص بدهی بهره‌وری (Task Debt): تشخیص و پیشنهاد اقدام برای تسک‌هایی با بیش از ۳ بار جابه‌جایی
+- هشدار برنامه‌ریزی صادقانه (Honest Capacity Warning): آگاه‌سازی کاربر در صورت چیدن کار فراتر از ساعت‌های آزاد تقویم
 
 **اصول تحلیل:**
 
@@ -231,21 +239,26 @@
 
 **دروازه خروج:** تست authorization برای هر عملیات و تست حذف دسترسی وجود دارد.
 
-### فاز 10: یکپارچه‌سازی و اتوماسیون
+### فاز 10: یکپارچه‌سازی، هوش مصنوعی متن‌باز و اتوماسیون
 
-**هدف:** اتصال Orbit به اکوسیستم کاربر.
+**هدف:** اتصال Orbit به اکوسیستم ابزارها و تجهیز به هوش مصنوعی باز، آزاد و کارآمد.
 
 **کارها:**
 
-- calendar از طریق CalDAV یا providerهای مجاز
+- calendar دوطرفه از طریق استانداردهای باز (CalDAV و iCal subscription)
+- درگاه هوش مصنوعی BYOK (Bring Your Own Key): اتصال به Gemini، OpenAI، Groq و OpenRouter در کلاینت بدون تحمیل هزینه سروری به پروژه
+- پشتیبانی از هوش مصنوعی محلی آفلاین: اتصال کلاینت دسکتاپ/وب به Ollama / LM Studio برای پردازش محلی حریم‌خصوصی‌محور
+- AI Brain Dump: تبدیل یادداشت‌های متنی یا صوتی ساختارنیافته به تسک با استخراج تاریخ، اولویت و تگ
+- AI Weekly Planner: پیشنهاد زمان‌بندی هفتگی متوازن در تقویم بر اساس تسک‌های عقب‌افتاده با تایید کاربر
+- سرور داخلی MCP (Model Context Protocol): تعامل دوجانبه با عامل‌های دسکتاپ نظیر Claude Desktop و Cursor
 - import/export استاندارد
-- MCP و CLI
+- CLI و اتوماسیون برای Power Users
 - URL Scheme و x-callback-url
 - webhook و API token
 - widget و quick capture
 - share extension و deep link
 
-**دروازه خروج:** هر integration قرارداد versionدار، rate limit، revoke و failure recovery دارد.
+**دروازه خروج:** هر integration قرارداد versionدار، rate limit، revoke و failure recovery دارد؛ موتور AI با تایید کاربر عمل کرده و بدون اینترنت یا کلید خارجی نیز اختلالی در عملکرد نرم‌افزار ایجاد نمی‌کند.
 
 ### فاز 11: انتشار و کیفیت production
 
