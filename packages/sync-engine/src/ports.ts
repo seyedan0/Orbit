@@ -29,7 +29,7 @@ export interface LocalStore {
   ): Promise<void>;
   getCursor(): Promise<string | undefined>;
   saveCursor(cursor: string): Promise<void>;
-  listTasks(projectId: string, options?: { includeDeleted?: boolean }): Promise<TaskEntity[]>;
+  listTasks(projectId?: string, options?: { includeDeleted?: boolean }): Promise<TaskEntity[]>;
 }
 
 /**

@@ -115,6 +115,16 @@ body {
   color: #8e8e93;
 }
 
+.task-due-badge {
+  font-size: 0.78rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  background-color: #f0f4ff;
+  color: #1e3bb3;
+  border: 1px solid #d4e2ff;
+  white-space: nowrap;
+}
+
 .task-item.deleted {
   opacity: 0.5;
   background: #fbfbfb;
