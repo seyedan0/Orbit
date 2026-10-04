@@ -33,9 +33,11 @@ export interface TaskEntity {
   kind: TaskKind;
   priority: TaskPriority;
   isAllDay: boolean;
-  startDate?: string;
-  dueDate?: string;
+  allDay?: boolean;
+  startDate?: string | null;
+  dueDate?: string | null;
   timeZone: string;
+  timezone?: string | null;
   repeatFlag?: string;
   reminders: string[];
   items: SubTaskItem[];
@@ -47,6 +49,13 @@ export interface TaskEntity {
   deletedAt?: string | null;
 }
 ```
+
+### قواعد زمان‌بندی و نگهداری Timestampها (P4-CAL-001)
+
+- **استاندارد واحد ذخیره‌سازی و همگام‌سازی:** تمام مقادیر زمانی (`dueDate`، `startDate`، `createdAt`، `updatedAt`، `completedAt`، `deletedAt`) به صورت رشته‌های استاندارد UTC ISO-8601 (مانند `2026-10-05T14:30:00.000Z`) ذخیره و در سطح شبکه جابه‌جا می‌شوند تا سازگاری کامل همگام‌سازی و حل تعارض LWW حفظ شود.
+- **پاک‌کردن تاریخ و زمان:** لغو یا پاک‌کردن تاریخ سررسید یا تاریخ شروع با مقدار صریح `null` در موجودیت و در payload جهش‌های جزئی (PARTIAL UPDATE) ثبت می‌شود (`{ dueDate: null }`) و دارای برچسب زمانی فیلد (`fieldTimestamps.dueDate`) است.
+- **تسک‌های تمام‌روز (allDay / isAllDay):** در صورت فعال بودن `isAllDay`، ساعت و دقیقه بر روی بامداد (00:00:00) نرمال می‌شوند.
+- **جداسازی نمایش تقویم از ذخیره‌سازی:** نمایش تاریخ‌ها در سیستم تقویم شمسی (جلالی / هجری خورشیدی) یا میلادی منحصراً در لایه رابط کاربری انجام می‌پذیرد و هیچ تغییری در فرمت ذخیره‌سازی زمان UTC ایجاد نمی‌کند.
 
 ## 3. ساختار سازمانی
 

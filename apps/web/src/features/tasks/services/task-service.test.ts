@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { TaskEntity } from '@orbit/shared-types';
 import { MemoryLocalStore } from '../../../core/storage/memory-local-store';
 import {
   INBOX_PROJECT_ID,
@@ -10,6 +11,11 @@ import {
   reopenTask,
   deleteTask,
   restoreTask,
+  scheduleTask,
+  isDueToday,
+  isDueTomorrow,
+  filterTasksDueToday,
+  filterTasksDueTomorrow,
   type CreateTaskInput
 } from './task-service';
 
@@ -793,5 +799,235 @@ describe('restoreTask', () => {
     const stored = await store.getTask(task.id);
     expect(stored?.deletedAt).toBe(DELETE_TIME);
     expect(await store.listTasks(INBOX_PROJECT_ID)).toHaveLength(0);
+  });
+});
+
+describe('Task Scheduling (P4-CAL-001)', () => {
+  it('creates a task with dueDate, isAllDay and timeZone', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      {
+        title: 'Task with schedule',
+        dueDate: '2026-10-05T14:30:00.000Z',
+        isAllDay: false,
+        timeZone: 'Asia/Tehran'
+      },
+      { store, userId: 'user-1' }
+    );
+
+    expect(task.dueDate).toBe('2026-10-05T14:30:00.000Z');
+    expect(task.isAllDay).toBe(false);
+    expect(task.timeZone).toBe('Asia/Tehran');
+
+    const inStore = await store.getTask(task.id);
+    expect(inStore?.dueDate).toBe('2026-10-05T14:30:00.000Z');
+    expect(inStore?.isAllDay).toBe(false);
+
+    // Mutation has fieldTimestamps for dueDate
+    const mutations = await store.listPendingMutations(10);
+    expect(mutations[0]?.fieldTimestamps?.dueDate).toBeDefined();
+    expect(mutations[0]?.fieldTimestamps?.isAllDay).toBeDefined();
+  });
+
+  it('rejects task creation if startDate > dueDate', async () => {
+    const store = makeStore();
+    await expect(
+      createTask(
+        {
+          title: 'Invalid dates',
+          startDate: '2026-10-10T00:00:00.000Z',
+          dueDate: '2026-10-05T00:00:00.000Z'
+        },
+        { store, userId: 'user-1' }
+      )
+    ).rejects.toThrow(TaskValidationError);
+  });
+
+  it('schedules an existing task with partial UPDATE mutation and fieldTimestamps', async () => {
+    const store = new MemoryLocalStore(() => new Date('2026-10-05T12:00:00.000Z'));
+    const task = await createTask({ title: 'Plan launch' }, { store, userId: 'user-1' });
+
+    const scheduled = await scheduleTask(
+      task.id,
+      {
+        dueDate: '2026-10-06T09:00:00.000Z',
+        startDate: '2026-10-05T08:00:00.000Z',
+        isAllDay: false,
+        timeZone: 'Asia/Tehran'
+      },
+      {
+        store,
+        userId: 'user-1',
+        now: () => new Date('2026-10-05T02:00:00.000Z')
+      }
+    );
+
+    expect(scheduled.dueDate).toBe('2026-10-06T09:00:00.000Z');
+    expect(scheduled.startDate).toBe('2026-10-05T08:00:00.000Z');
+    expect(scheduled.isAllDay).toBe(false);
+    expect(scheduled.timeZone).toBe('Asia/Tehran');
+    expect(scheduled.localStatus).toBe('CREATED'); // version was 0
+
+    // Check store
+    const inStore = await store.getTask(task.id);
+    expect(inStore?.dueDate).toBe('2026-10-06T09:00:00.000Z');
+
+    // Mutation check
+    const mutations = await store.listPendingMutations(10);
+    const updateMut = mutations.find((m) => m.operation === 'UPDATE');
+    expect(updateMut).toBeDefined();
+    expect(updateMut?.payloadType).toBe('PARTIAL');
+    expect(updateMut?.fieldTimestamps?.dueDate).toBe('2026-10-05T02:00:00.000Z');
+    expect(updateMut?.fieldTimestamps?.startDate).toBe('2026-10-05T02:00:00.000Z');
+    expect(updateMut?.fieldTimestamps?.isAllDay).toBe('2026-10-05T02:00:00.000Z');
+  });
+
+  it('allows clearing dueDate by passing null', async () => {
+    const store = new MemoryLocalStore(() => new Date('2026-10-05T12:00:00.000Z'));
+    const task = await createTask(
+      { title: 'Needs clearing', dueDate: '2026-10-05T12:00:00.000Z' },
+      { store, userId: 'user-1' }
+    );
+
+    const cleared = await scheduleTask(
+      task.id,
+      { dueDate: null },
+      {
+        store,
+        userId: 'user-1',
+        now: () => new Date('2026-10-05T03:00:00.000Z')
+      }
+    );
+
+    expect(cleared.dueDate).toBeNull();
+    const inStore = await store.getTask(task.id);
+    expect(inStore?.dueDate).toBeNull();
+
+    const mutations = await store.listPendingMutations(10);
+    const updateMut = mutations.find((m) => m.operation === 'UPDATE');
+    expect(updateMut?.payload).toEqual({ dueDate: null });
+    expect(updateMut?.fieldTimestamps?.dueDate).toBe('2026-10-05T03:00:00.000Z');
+  });
+
+  it('rejects scheduleTask if startDate > dueDate', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      { title: 'Fixed start', startDate: '2026-10-10T00:00:00.000Z' },
+      { store, userId: 'user-1' }
+    );
+
+    await expect(
+      scheduleTask(task.id, { dueDate: '2026-10-08T00:00:00.000Z' }, { store, userId: 'user-1' })
+    ).rejects.toThrow(TaskValidationError);
+  });
+
+  it('throws TaskNotFoundError if task does not exist', async () => {
+    const store = makeStore();
+    await expect(
+      scheduleTask('non-existent-id', { dueDate: '2026-10-05T00:00:00.000Z' }, { store, userId: 'user-1' })
+    ).rejects.toThrow(TaskNotFoundError);
+  });
+
+  it('returns existing task if schedule input has no changes', async () => {
+    const store = makeStore();
+    const task = await createTask({ title: 'No changes' }, { store, userId: 'user-1' });
+
+    const result = await scheduleTask(task.id, {}, { store, userId: 'user-1' });
+    expect(result).toEqual(task);
+
+    const mutations = await store.listPendingMutations(10);
+    expect(mutations).toHaveLength(1); // Only CREATE mutation
+  });
+});
+
+describe('Today and Tomorrow Date Filtering (P4-CAL-001)', () => {
+  const refDate = new Date('2026-10-05T12:00:00.000Z'); // 2026-10-05
+
+  it('identifies tasks due today correctly', () => {
+    const todayTask = {
+      id: '1',
+      title: 'Due today',
+      dueDate: '2026-10-05T09:00:00.000Z',
+      timeZone: 'UTC',
+      kind: 'TASK',
+      priority: 1,
+      isAllDay: false,
+      items: [],
+      reminders: [],
+      version: 1,
+      localStatus: 'SYNCED',
+      projectId: 'inbox',
+      userId: 'user-1',
+      createdAt: '2026-10-01T00:00:00.000Z',
+      updatedAt: '2026-10-01T00:00:00.000Z'
+    } as unknown as TaskEntity;
+
+    const tomorrowTask = {
+      ...todayTask,
+      id: '2',
+      title: 'Due tomorrow',
+      dueDate: '2026-10-06T15:00:00.000Z'
+    };
+
+    const deletedTask = {
+      ...todayTask,
+      id: '3',
+      deletedAt: '2026-10-05T10:00:00.000Z'
+    };
+
+    expect(isDueToday(todayTask, refDate, 'UTC')).toBe(true);
+    expect(isDueToday(tomorrowTask, refDate, 'UTC')).toBe(false);
+    expect(isDueToday(deletedTask, refDate, 'UTC')).toBe(false);
+
+    expect(isDueTomorrow(tomorrowTask, refDate, 'UTC')).toBe(true);
+    expect(isDueTomorrow(todayTask, refDate, 'UTC')).toBe(false);
+  });
+
+  it('filters and sorts tasks due today', () => {
+    const taskA = {
+      id: 'a',
+      title: 'High priority earlier today',
+      dueDate: '2026-10-05T08:00:00.000Z',
+      priority: 5,
+      timeZone: 'UTC',
+      completedAt: null,
+      createdAt: '2026-10-01T00:00:00.000Z'
+    } as unknown as TaskEntity;
+
+    const taskB = {
+      id: 'b',
+      title: 'Completed today',
+      dueDate: '2026-10-05T10:00:00.000Z',
+      priority: 5,
+      timeZone: 'UTC',
+      completedAt: '2026-10-05T09:00:00.000Z',
+      createdAt: '2026-10-01T00:00:00.000Z'
+    } as unknown as TaskEntity;
+
+    const taskC = {
+      id: 'c',
+      title: 'Lower priority today',
+      dueDate: '2026-10-05T11:00:00.000Z',
+      priority: 1,
+      timeZone: 'UTC',
+      completedAt: null,
+      createdAt: '2026-10-01T00:00:00.000Z'
+    } as unknown as TaskEntity;
+
+    const taskTomorrow = {
+      id: 'd',
+      title: 'Tomorrow',
+      dueDate: '2026-10-06T09:00:00.000Z',
+      priority: 3,
+      timeZone: 'UTC',
+      completedAt: null,
+      createdAt: '2026-10-01T00:00:00.000Z'
+    } as unknown as TaskEntity;
+
+    const todayList = filterTasksDueToday([taskB, taskTomorrow, taskC, taskA], refDate, 'UTC');
+    expect(todayList.map((t) => t.id)).toEqual(['a', 'c', 'b']); // Uncompleted by priority, then completed
+
+    const tomorrowList = filterTasksDueTomorrow([taskB, taskTomorrow, taskC, taskA], refDate, 'UTC');
+    expect(tomorrowList.map((t) => t.id)).toEqual(['d']);
   });
 });

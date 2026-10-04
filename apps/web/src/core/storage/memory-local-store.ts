@@ -24,13 +24,13 @@ export class MemoryLocalStore implements AtomicTaskStore {
   }
 
   async listTasks(
-    projectId: string,
+    projectId?: string,
     options?: { includeDeleted?: boolean }
   ): Promise<TaskEntity[]> {
     return [...this.tasks.values()]
       .filter(
         (t) =>
-          t.projectId === projectId &&
+          (projectId ? t.projectId === projectId : true) &&
           (options?.includeDeleted ? true : t.deletedAt == null)
       )
       .map((t) => structuredClone(t));

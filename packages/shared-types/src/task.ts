@@ -19,9 +19,11 @@ export interface TaskEntity {
   kind: TaskKind;
   priority: TaskPriority;
   isAllDay: boolean;
-  startDate?: string;
-  dueDate?: string;
+  allDay?: boolean;
+  startDate?: string | null;
+  dueDate?: string | null;
   timeZone: string;
+  timezone?: string | null;
   repeatFlag?: string;
   reminders: string[];
   items: SubTaskItem[];

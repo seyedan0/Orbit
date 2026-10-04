@@ -4,21 +4,20 @@
 
 ## وضعیت کلی
 
-- **مرحله:** فاز ۳، sync و حساب کاربری
+- **مرحله:** فاز ۴، مدیریت زمان و تقویم
 - **آخرین به‌روزرسانی:** 2026-10-05
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 99%
-- **Branch فعال:** `feature/sync-health-telemetry`
+- **درصد تقریبی پیشرفت:** 20% (فاز ۴)
+- **Branch فعال:** `feature/calendar-jalali-foundation`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-افزودن تله‌متری حداقلی برای سلامت همگام‌سازی (Sync Health Telemetry) بدون وابستگی دامنه به ارائه‌دهنده‌های خاص (شامل رابط استاندارد و خنثی `SyncTelemetry`، ثبت ۱۳ رویداد و متریک کلیدی، عدم نشت محتوای خصوصی کاربران، پیاده‌سازی No-op پیش‌فرض و `InMemorySyncTelemetry`، و ایمنی در برابر شکست گردآورنده).
+پیاده‌سازی زیرساخت تقویم، موتور محاسباتی تقویم شمسی (جلالی / هجری خورشیدی) بدون وابستگی خارجی با الگوریتم دقیق ۳۳ ساله برکوفسکی، کامپوننت DatePicker دوگانه با پشتیبانی از سوئیچ تقویم شمسی و میلادی و زمان‌بندی تمام‌روز/ساعت، یکپارچه‌سازی با TaskForm و سرویس task-service جهت زمان‌بندی تسک‌ها و صدور جهش‌های PARTIAL UPDATE با fieldTimestamps، و پیاده‌سازی نماهای زمانی «امروز» (Today) و «فردا» (Tomorrow) همراه با لینک‌های ناوبری سایدبار.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی و PR شاخه `feature/sync-health-telemetry` به `develop`
-- [ ] گام بعدی فاز ۳: نهایی‌سازی و آمادگی برای یکپارچه‌سازی فرانت‌اند
+- [ ] بازبینی و ثبت PR از شاخه `feature/calendar-jalali-foundation` به `develop`
 
 ## کارهای انجام‌شده
 
@@ -66,6 +65,8 @@
 - [x] **P3-SYNC-003:** پیاده‌سازی بازیابی بعد از crash، timeout و restart برای sync runtime (بازیابی IN_FLIGHT، بازگشت امن به PENDING با backoff، حفظ کرسر و اتمیسیتی pull، سقف retry و ثبت FAILED برای خطاهای دائمی)
 - [x] ادغام PR شماره ۱۴ (`feature/sync-recovery`) در `develop`
 - [x] **P3-SYNC-004:** افزودن تله‌متری حداقلی برای سلامت همگام‌سازی بدون وابستگی دامنه به ارائه‌دهنده خاص (شامل رابط خنثی `SyncTelemetry`، ثبت ۱۳ رویداد و متریک الزامی، عدم نشت عناوین و محتوای تسک‌ها، پیاده‌سازی No-op پیش‌فرض و `InMemorySyncTelemetry`، و آزمون‌های پایداری و تاب‌آوری در برابر خطای گردآورنده)
+- [x] ادغام PR شماره ۱۸ (`feature/sync-health-telemetry`) در `develop` و `main` و آغاز رسمی فاز ۴
+- [x] **P4-CAL-001:** پیاده‌سازی زیرساخت تقویم، موتور بدون وابستگی محاسباتی شمسی (Jalali)، کامپوننت انتخاب تاریخ و زمان (DatePicker دوگانه شمسی/میلادی)، یکپارچه‌سازی زمان‌بندی تسک‌ها در سرویس و فرم تسک، و نماهای زمانی «امروز» (Today) و «فردا» (Tomorrow) همراه با لینک‌های سایدبار
 
 ## فعالیت AIها
 
@@ -896,10 +897,83 @@
   - `npm run test --workspace @orbit/web`: تمام ۱۶۵ تست در ۱۳ فایل پاس شدند
   - `git diff --check`: بدون خطا
 - **وضعیت PR:**
-  - آماده ثبت PR از شاخه `feature/sync-health-telemetry` به `develop`
+  - ادغام‌شده در `develop` و `main` (PR #18).
 - **گام بعدی (Handoff):**
-  - ادغام `feature/sync-health-telemetry` در `develop`
-  - ادامه پیاده‌سازی و نهایی‌سازی قابلیت‌های بعدی فاز ۳
+  - آغاز رسمی فاز ۴ با وظیفه P4-CAL-001.
+
+### 2026-10-05 | زیرساخت تقویم، موتور جلالی، کامپوننت DatePicker و نماهای Today/Tomorrow (P4-CAL-001)
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی زیرساخت مدیریت زمان و تقویم شامل موتور مستقل و دقیق تقویم شمسی (جلالی)، کامپوننت انتخاب‌گر دوگانه تاریخ و ساعت (Jalali/Gregorian DatePicker)، زمان‌بندی تسک‌ها در سرویس دامنه، و نماهای روزانه «امروز» (Today) و «فردا» (Tomorrow).
+- **انجام‌شده:**
+  - **گسترش مدل داده (`packages/shared-types/src/task.ts`):**
+    - افزودن فیلدهای اختیاری زمان‌بندی: `startDate?: string | null`، `dueDate?: string | null`، `allDay?: boolean`، `timezone?: string | null`.
+    - تثبیت استاندارد ذخیره‌سازی مقادیر زمانی در قالب UTC ISO-8601 به منظور حفظ سازگاری همگام‌سازی و حل تعارض LWW.
+  - **موتور تقویم شمسی مستقل (`apps/web/src/core/calendar/jalali.ts`):**
+    - پیاده‌سازی بدون وابستگی خارجی با الگوریتم دقیق محاسباتی ۳۳ ساله برکوفسکی (Borkowski 1996) معتبر برای بازه سال‌های جلالی ۶۱- تا ۳۱۷۷.
+    - محاسبه دقیق سال‌های کبیسه شمسی (مانند ۱۳۹۵، ۱۳۹۹، ۱۴۰۳، ۱۴۰۸) و طول ماه‌ها (فروردین تا شهریور ۳۱ روز، مهر تا بهمن ۳۰ روز، و اسفند ۲۹/۳۰ روز).
+    - نگاشت شاخص روزهای هفته با شروع از شنبه (شنبه = ۰ تا جمعه = ۶) برای زبان فارسی (`fa-IR`).
+    - توابع تبدیل دوطرفه میلادی و شمسی (`gregorianToJalali`, `jalaliToGregorian`, `dateToJalali`, `jalaliToDate`, `isoToJalali`, `jalaliToIso`).
+    - ابزارهای فرمت‌بندی تاریخ و ساعت، تبدیل ارقام به فارسی (`toPersianDigits`) و پارس رشته‌های تاریخ.
+  - **کامپوننت انتخاب تاریخ و زمان (`apps/web/src/features/calendar/components/DatePicker.tsx`):**
+    - کامپوننت دسترس‌پذیر (ARIA) با `role="dialog"`, `aria-modal="false"`, `aria-haspopup="dialog"`, `aria-selected` و مدیریت فوکوس و بسته‌شدن با دکمه Escape و کلیک بیرون.
+    - پشتیبانی از تعویض زنده سیستم تقویم بین شمسی و میلادی با حفظ برچسب زمانی انتخاب‌شده.
+    - گزینه‌های زمان‌بندی تمام‌روز (تمام روز / All-Day) و انتخاب ساعت و دقیقه.
+    - دکمه‌های سریع «امروز»، «فردا» و «پاک کردن».
+  - **یکپارچه‌سازی سرویس دامنه تسک‌ها (`apps/web/src/features/tasks/services/task-service.ts`):**
+    - پشتیبانی از زمان‌بندی در زمان ایجاد (`createTask`).
+    - پیاده‌سازی متد `scheduleTask` جهت زمان‌بندی، به‌روزرسانی و لغو تاریخ سررسید/شروع با صدور جهش‌های `PARTIAL UPDATE` و متادیتای `fieldTimestamps`.
+    - اعتبارسنجی شرط منطقی `startDate <= dueDate`.
+    - توابع کوئری و فیلتر نماهای زمانی: `isDueToday`, `isDueTomorrow`, `filterTasksDueToday`, `filterTasksDueTomorrow`.
+  - **یکپارچه‌سازی فرم تسک (`apps/web/src/features/tasks/components/TaskForm.tsx`):**
+    - ادغام `DatePicker` درون فرم افزودن تسک و امکان تعیین سررسید پیش‌فرض.
+  - **نمایش تاریخ سررسید در تسک‌ها (`apps/web/src/features/tasks/components/TaskItem.tsx`):**
+    - نمایش برچسب زیبای تاریخ سررسید به تقویم شمسی در کنار عنوان تسک.
+  - **نماهای امروز و فردا (`TodayPage.tsx` و `TomorrowPage.tsx`):**
+    - ایجاد صفحات `/today` و `/tomorrow` با هدر تاریخ روز فارسی و لیست تسک‌های سررسید شده.
+    - به‌روزرسانی ناوبری سایدبار `AppShell.tsx` با پیوندهای «امروز» و «فردا».
+    - ثبت مسیرها در `apps/web/src/app/routes.tsx`.
+  - **تست‌های واحد و یکپارچه‌سازی:**
+    - آزمون‌های ۲۹گانه موتور جلالی (`apps/web/src/core/calendar/jalali.test.ts`).
+    - آزمون‌های سرویس زمان‌بندی و فیلترینگ تاریخ (`apps/web/src/features/tasks/services/task-service.test.ts`).
+    - آزمون‌های کامپوننت `DatePicker` (`apps/web/src/features/calendar/components/DatePicker.test.tsx`).
+    - آزمون‌های صفحات `TodayPage` و `TomorrowPage`.
+  - **مستندات:**
+    - به‌روزرسانی `docs/data-model.md` با فیلدهای جدید `TaskEntity` و قواعد ذخیره‌سازی UTC ISO-8601.
+- **فایل‌ها:**
+  - `packages/shared-types/src/task.ts`
+  - `packages/sync-engine/src/ports.ts`
+  - `apps/web/src/core/calendar/jalali.ts`
+  - `apps/web/src/core/calendar/jalali.test.ts`
+  - `apps/web/src/core/storage/indexeddb-local-store.ts`
+  - `apps/web/src/core/storage/memory-local-store.ts`
+  - `apps/web/src/features/calendar/components/DatePicker.tsx`
+  - `apps/web/src/features/calendar/components/DatePicker.module.css`
+  - `apps/web/src/features/calendar/components/DatePicker.test.tsx`
+  - `apps/web/src/features/calendar/index.ts`
+  - `apps/web/src/features/tasks/services/task-service.ts`
+  - `apps/web/src/features/tasks/services/task-service.test.ts`
+  - `apps/web/src/features/tasks/components/TaskForm.tsx`
+  - `apps/web/src/features/tasks/components/TaskForm.test.tsx`
+  - `apps/web/src/features/tasks/components/TaskItem.tsx`
+  - `apps/web/src/features/tasks/pages/TodayPage.tsx`
+  - `apps/web/src/features/tasks/pages/TodayPage.test.tsx`
+  - `apps/web/src/features/tasks/pages/TomorrowPage.tsx`
+  - `apps/web/src/features/tasks/pages/TomorrowPage.test.tsx`
+  - `apps/web/src/layout/AppShell.tsx`
+  - `apps/web/src/layout/AppShell.test.tsx`
+  - `apps/web/src/app/routes.tsx`
+  - `apps/web/src/styles/globals.css`
+  - `docs/data-model.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - اجرای کامل اعتبارسنجی‌های شش‌گانه الزامی (`npm ci`, `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build`, `git diff --check`).
+- **وضعیت PR:**
+  - آماده ثبت PR از شاخه `feature/calendar-jalali-foundation` به `develop`.
+- **گام بعدی (Handoff):**
+  - ادغام `feature/calendar-jalali-foundation` در `develop`.
+  - اجرای تسک بعدی فاز ۴ (نماهای Upcoming و تقویم کامل هفتگی و ماهانه).
+
 
 
 

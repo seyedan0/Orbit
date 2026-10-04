@@ -4,6 +4,8 @@ import { useSyncStatus } from '../core/sync/sync-context';
 import styles from './AppShell.module.css';
 
 const NAV_ITEMS = [
+  { to: '/today', label: 'امروز' },
+  { to: '/tomorrow', label: 'فردا' },
   { to: '/inbox', label: 'صندوق ورودی' },
   { to: '/settings', label: 'تنظیمات' }
 ] as const;
