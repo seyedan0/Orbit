@@ -99,20 +99,24 @@
 
 ### فاز 4: مدیریت زمان و تقویم
 
-**هدف:** تبدیل task manager به برنامه‌ریز روزانه.
+**هدف:** تبدیل task manager به برنامه‌ریز روزانه با پشتیبانی کامل از تقویم شمسی و میلادی.
 
 **کارها:**
 
-- Today، Tomorrow، Upcoming و calendar views
-- day/week/month/agenda
+- پشتیبانی دوگانه از تقویم شمسی (Jalali / Solar Hijri) و میلادی (Gregorian) با امکان انتخاب پیش‌فرض در تنظیمات
+- تطبیق تقویم شمسی: شروع هفته از شنبه، نام ماه‌ها و روزهای فارسی، و مبدأ زمانی دقیق
+- ذخیره‌سازی داده‌های زمانی در سطح مدل و همگام‌سازی بر اساس استاندارد UTC / ISO-8601 و تبدیل بدون خطا در لایه کلاینت
+- کامپوننت‌های بصری تقویم و انتخاب‌گر تاریخ شمسی (Jalali Date/Time Picker) با تجربه کاربری روان
+- نماهای زمانی آماده: Today، Tomorrow، Upcoming و تقویم کامل
+- نماهای چندگانه تقویم: day / week / month / agenda با پشتیبانی از هر دو سیستم تقویمی
 - start date، due date، duration و timezone
 - reminder در زمان مشخص و reminder بر اساس location در صورت امکان پلتفرم
-- recurrence با RRULE و exception برای یک occurrence
-- natural language date parsing
-- drag-and-drop و time blocking
-- time zone و DST test suite
+- موتور recurrence با استاندارد RRULE و پشتیبانی از قوانین تکرار ماه‌های شمسی (نظیر روز خاص در ماه شمسی و سال‌های کبیسه)
+- natural language date parsing برای هر دو زبان فارسی و انگلیسی (عباراتی نظیر «فردا»، «شنبه بعد»، «tomorrow»)
+- drag-and-drop و time blocking برای جابه‌جایی و بلوک‌بندی زمانی تسک‌ها روی گرید تقویم
+- آزمون‌های جامع تبدیل تقویم، leap year (کبیسه شمسی و میلادی)، timezone و DST test suite
 
-**دروازه خروج:** یک task تکرارشونده و یک task بازه‌ای در timezoneهای مختلف درست نمایش داده و sync می‌شوند.
+**دروازه خروج:** یک task تکرارشونده و یک task بازه‌ای در هر دو تقویم شمسی و میلادی و در timezoneهای مختلف به درستی نمایش داده شده، ویرایش و sync می‌شوند.
 
 ### فاز 5: سازمان‌دهی و بازیابی اطلاعات
 
