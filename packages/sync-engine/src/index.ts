@@ -12,6 +12,7 @@ export type {
   InFlightRecoveryResult,
   PullRunResult,
   PushRunResult,
+  SyncInvocationContext,
   SyncRunResult,
   SyncRuntimeOptions
 } from './sync-runtime.js';
@@ -28,3 +29,25 @@ export type {
   HttpFetcher,
   HttpSyncTransportOptions
 } from './http-sync-transport.js';
+
+export {
+  calculateCursorLag,
+  InMemorySyncTelemetry,
+  NoopSyncTelemetry
+} from './telemetry.js';
+export type {
+  BaseSyncTelemetryEvent,
+  InFlightRecoveryEvent,
+  PullBatchEvent,
+  PushBatchEvent,
+  SyncCycleCompletedEvent,
+  SyncCycleFailedEvent,
+  SyncCycleStartedEvent,
+  SyncMetricName,
+  SyncMetricRecord,
+  SyncMetricType,
+  SyncTelemetry,
+  SyncTelemetryEvent,
+  SyncTelemetryEventMap,
+  SyncTelemetryEventType
+} from './telemetry.js';
