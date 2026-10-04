@@ -72,10 +72,35 @@ export class MemoryLocalStore implements AtomicTaskStore {
       .map((entry) => structuredClone(entry));
   }
 
+  async markMutationInFlight(id: string, inFlightSince?: string): Promise<void> {
+    const entry = this.queue.get(id);
+    if (entry === undefined) return;
+    this.queue.set(id, {
+      ...entry,
+      status: 'IN_FLIGHT',
+      inFlightSince: inFlightSince ?? this.now().toISOString()
+    });
+  }
+
+  async listInFlightMutations(): Promise<SyncQueueEntry[]> {
+    return [...this.queue.values()]
+      .filter((entry) => entry.status === 'IN_FLIGHT')
+      .sort(
+        (a, b) =>
+          Date.parse(a.createdAt) - Date.parse(b.createdAt) ||
+          a.id.localeCompare(b.id)
+      )
+      .map((entry) => structuredClone(entry));
+  }
+
   async markMutationSucceeded(id: string): Promise<void> {
     const entry = this.queue.get(id);
     if (entry === undefined) return;
-    this.queue.set(id, { ...entry, status: 'SUCCEEDED' });
+    const { inFlightSince: _discard, ...rest } = entry;
+    this.queue.set(id, {
+      ...rest,
+      status: 'SUCCEEDED'
+    });
   }
 
   async markMutationFailed(
@@ -86,8 +111,9 @@ export class MemoryLocalStore implements AtomicTaskStore {
   ): Promise<void> {
     const entry = this.queue.get(id);
     if (entry === undefined) return;
+    const { inFlightSince: _discard, ...rest } = entry;
     this.queue.set(id, {
-      ...entry,
+      ...rest,
       status,
       attemptCount: entry.attemptCount + 1,
       nextAttemptAt,

@@ -7,18 +7,18 @@
 - **مرحله:** فاز ۳، sync و حساب کاربری
 - **آخرین به‌روزرسانی:** 2026-10-04
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 95%
-- **Branch فعال:** `feature/sync-tombstone-retention`
+- **درصد تقریبی پیشرفت:** 98%
+- **Branch فعال:** `feature/sync-recovery`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-پیاده‌سازی مدیریت Tombstone و سیاست نگهداری (Retention Policy) برای تسک‌های حذف نرم شده در همگام‌سازی، ثبت رکوردهای پاک‌شده در `cleaned_tombstones` برای جلوگیری قطعی از زنده شدن مجدد تسک منقضی (Resurrection Prevention)، پاک‌سازی اتمیک و تراکنشی، و ادغام با اندپوینت‌های همگام‌سازی.
+پیاده‌سازی بازیابی پس از خرابی، انقضای زمانی و راه‌اندازی مجدد برای sync runtime (شامل جهش‌های گیرکرده در `IN_FLIGHT`، بازگشت امن به `PENDING` با backoff، حفظ کرسر و اتمیسیتی pull، سقف retry و ثبت دائمی `FAILED`، و تکرار امن پس از restart).
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی و PR شاخه `feature/sync-tombstone-retention` به `develop`
-- [ ] گام بعدی فاز ۳: بازیابی بعد از crash، timeout و نصب مجدد
+- [ ] بازبینی و PR شاخه `feature/sync-recovery` به `develop`
+- [ ] گام بعدی فاز ۳: تله‌متری حداقلی برای sync health
 
 ## کارهای انجام‌شده
 
@@ -62,6 +62,8 @@
 - [x] **P3-SYNC-001:** پیاده‌سازی حل تعارض در سطح فیلد (LWW)، شکستن تساوی لکسیکوگرافیک و وضعیت CONFLICT_MERGED در PostgresSyncRepository و سرور
 - [x] ادغام PR شماره ۱۲ (`feature/server-field-conflict-resolution`) در `develop`
 - [x] **P3-SYNC-002:** پیاده‌سازی مدیریت Tombstone، سیاست نگهداری ۳۰ روزه، جلوگیری از زنده شدن مجدد تسک‌های منقضی با جدول `cleaned_tombstones` و پاک‌سازی اتمیک و Idempotent
+- [x] ادغام PR شماره ۱۳ (`feature/sync-tombstone-retention`) در `develop`
+- [x] **P3-SYNC-003:** پیاده‌سازی بازیابی بعد از crash، timeout و restart برای sync runtime (بازیابی IN_FLIGHT، بازگشت امن به PENDING با backoff، حفظ کرسر و اتمیسیتی pull، سقف retry و ثبت FAILED برای خطاهای دائمی)
 
 ## فعالیت AIها
 
@@ -784,10 +786,66 @@
   - `tombstone-retention.integration.test.ts`: تمام ۱۰ تست با موفقیت پاس شدند
   - `in-memory-sync.repository.test.ts`: تمام ۵ تست با موفقیت پاس شدند
 - **وضعیت PR:**
-  - در حال تکمیل اعتبارسنجی نهایی و ثبت PR
+  - ادغام کامل PR شماره ۱۳ در `develop`
 - **گام بعدی (Handoff):**
-  - ادغام شاخه `feature/sync-tombstone-retention` در `develop`
-  - گام بعدی فاز ۳: بازیابی بعد از crash، timeout و نصب مجدد
+  - اجرای تسک P3-SYNC-003: بازیابی بعد از crash، timeout و نصب مجدد
+
+### 2026-10-04 | P3-SYNC-003 | بازیابی از خرابی، انقضای زمانی و راه‌اندازی مجدد در Sync Runtime
+
+- **عامل:** Antigravity
+- **شناسه تسک:** P3-SYNC-003
+- **شاخه:** `feature/sync-recovery`
+- **هدف:**
+  - پیاده‌سازی بازیابی بعد از crash، timeout و restart برای sync runtime.
+  - انتقال جهش‌های گیرکرده در `IN_FLIGHT` به `PENDING` پس از timeout به همراه افزایش `attemptCount` و محاسبه backoff نمایی.
+  - عدم تولید جهش‌های تکراری در بازیابی و حفظ اکید ترتیب FIFO بر اساس `createdAt`.
+  - حفظ idempotency و مدیریت پاسخ‌های `ALREADY_APPLIED` هنگام ارسال مجدد پس از restart.
+  - تفکیک خطاهای موقت (network error / retryable) از خطاهای دائمی (`REJECTED`) و انتقال جهش‌ها به `FAILED` پس از رسیدن به سقف تلاش (`maxAttempts`).
+  - حفظ کرسر و تضمین عدم advance شدن کرسر پیش از ثبت قطعی تمام تغییرات دریافتی در دیتابیس محلی (پوشش سناریوهای کرش قبل از ذخیره کرسر و کرش مابین ذخیره موجودیت‌ها و ذخیره کرسر).
+  - پشتیبانی از بازیابی پایدار در IndexedDB کلاینت در سناریوهای باز و بسته شدن مرورگر و reload تب.
+- **تغییرات اعمال‌شده:**
+  - **`packages/shared-types/src/sync.ts`:**
+    - افزودن فیلد اختیاری `inFlightSince?: string | undefined;` به ساختار `SyncQueueEntry` جهت ثبت دقیق زمان آغاز ارسال جهش.
+  - **`packages/sync-engine/src/ports.ts`:**
+    - ارتقای قرارداد پورت `LocalStore` با متدهای `markMutationInFlight(id, inFlightSince)`, `listInFlightMutations()` و `getMutation(id)`.
+  - **`packages/sync-engine/src/sync-runtime.ts`:**
+    - افزودن تنظیمات پیکربندی `inFlightTimeoutMs` (پیش‌فرض ۳۰ ثانیه)، `maxAttempts` (پیش‌فرض ۵ تلاش) و `jitter` به `SyncRuntimeOptions`.
+    - پیاده‌سازی متد `recoverInFlightMutations(options?)` با بررسی هوشمند زمان سپری‌شده از `inFlightSince`، تبدیل به `PENDING` با exponential backoff یا تبدیل به `FAILED` در صورت رسیدن به سقف مجاز `maxAttempts`.
+    - به‌روزرسانی `pushOnce()`:
+      1. اجرای خودکار بازیابی جهش‌های منقضی در ابتدای هر چرخه.
+      2. علامت‌گذاری اتمیک جهش‌های انتخابی با وضعیت `IN_FLIGHT` و ثبت زمان `inFlightSince` پیش از فراخوانی transport.
+      3. مدیریت بلوک catch در خطاهای شبکه و transport: تفکیک خطای دائمی و بررسی `maxAttempts` برای تعیین وضعیت `FAILED` یا `PENDING`.
+      4. مدیریت پاسخ‌های دریافتی: انتقال پاسخ‌های `RETRYABLE_ERROR` با سقف تلاش به `FAILED` و پاسخ‌های `REJECTED` به `FAILED` دائمی بدون retry خودکار.
+  - **`apps/web/src/core/storage/memory-local-store.ts` و `indexeddb-local-store.ts`:**
+    - پیاده‌سازی `markMutationInFlight` و `listInFlightMutations` با حفظ ترتیب FIFO بر اساس `createdAt`.
+    - پاک‌سازی خودکار متادیتای `inFlightSince` در عملیات‌های `markMutationSucceeded` و `markMutationFailed`.
+    - پشتیبانی از `now: () => Date` سفارشی در `IndexedDbLocalStore` برای شبیه‌سازی تست‌های زمانی قطعی.
+  - **`apps/web/src/core/sync/sync-runtime.test.ts`:**
+    - ایجاد مجموعه آزمون‌های جامع `Crash, Timeout and Restart Recovery (P3-SYNC-003)` شامل ۱۰ سناریوی الزامی:
+      1. بازیابی جهش‌های گیرکرده در `IN_FLIGHT` پس از انقضای زمانی (`inFlightTimeoutMs`).
+      2. بازگشت امن جهش‌های منقضی به `PENDING` با `nextAttemptAt` در آینده طبق backoff.
+      3. رسیدن به سقف تلاش مجدد (`maxAttempts`) و ثبت دائمی `FAILED`.
+      4. حفظ وضعیت `FAILED` برای رکوردهای `REJECTED` و عدم ارسال خودکار در چرخه‌های بعدی.
+      5. خاصیت Idempotent بودن اجرای مکرر متد recovery بدون افزایش تکراری شمارنده‌ها یا ایجاد رکورد جدید.
+      6. حفظ کرسر در صورت کرش قبل از ثبت کرسر در pull.
+      7. حفظ کرسر در صورت کرش پس از ذخیره موجودیت‌ها اما پیش از ذخیره کرسر، و اعمال بدون تکرار در تلاش بعدی.
+      8. بازیابی و ارسال مجدد موفقیت‌آمیز پس از انقضای زمانی سمت سرور (Server timeout).
+      9. ارسال مجدد جهش پس از restart و دریافت `ALREADY_APPLIED` از سرور بدون تولید رکورد تکراری.
+      10. پایداری و بازیابی کامل در پایگاه داده واقعی `IndexedDbLocalStore` در سناریوی reload تب مرورگر.
+  - **مستندات:**
+    - به‌روزرسانی بخش ۸ سند `docs/sync-protocol.md` با جزئیات کامل چرخه‌حیات بازیابی، انقضا و اتمیسیتی کرسر.
+    - افزودن راهنمای عملیاتی عیب‌یابی و بازیابی (`Sync Recovery Runbook`) در `docs/operations.md`.
+    - به‌روزرسانی `docs/project-plan.md` و تایید تکمیل کار فاز ۳.
+- **اعتبارسنجی:**
+  - `npm run lint`: موفق با ۰ خطا و ۰ هشدار
+  - `npm run typecheck`: موفق با ۰ خطا در ریشه، web و server
+  - `npm run test --workspace @orbit/web`: تمام ۱۵۵ تست در ۱۲ فایل پاس شدند
+  - `git diff --check`: بدون خطا
+- **وضعیت PR:**
+  - آماده ثبت PR از شاخه `feature/sync-recovery` به `develop`
+- **گام بعدی (Handoff):**
+  - ادغام `feature/sync-recovery` در `develop`
+  - ورود به تسک بعدی فاز ۳: تله‌متری حداقلی برای sync health
 
 
 ## محدودیت‌های باقی‌مانده
