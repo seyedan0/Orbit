@@ -10,6 +10,7 @@ import {
   HttpSyncError,
   HttpSyncTransport,
   SyncRuntime,
+  type SyncTelemetry,
   type SyncTransport
 } from '@orbit/sync-engine';
 import { useStore } from '../storage/store-context.js';
@@ -137,6 +138,7 @@ export interface SyncProviderProps {
   transport?: SyncTransport;
   coordinator?: SyncCoordinator;
   baseUrl?: string;
+  telemetry?: SyncTelemetry;
 }
 
 export function SyncProvider({
@@ -144,7 +146,8 @@ export function SyncProvider({
   runtime: customRuntime,
   transport: customTransport,
   coordinator: customCoordinator,
-  baseUrl = '/api/v1'
+  baseUrl = '/api/v1',
+  telemetry
 }: SyncProviderProps) {
   const store = useStore();
   const sessionContext = useOptionalSession();
@@ -169,9 +172,13 @@ export function SyncProvider({
         onUnauthorized: handleUnauthorized
       });
 
-    const runtime = customRuntime ?? new SyncRuntime(store, transport);
+    const runtime =
+      customRuntime ??
+      new SyncRuntime(store, transport, {
+        ...(telemetry ? { telemetry } : {})
+      });
     return new SyncCoordinator(runtime, undefined, handleUnauthorized);
-  }, [customCoordinator, customRuntime, customTransport, baseUrl, store, sessionContext]);
+  }, [customCoordinator, customRuntime, customTransport, baseUrl, store, sessionContext, telemetry]);
 
   const snapshot = useSyncExternalStore(
     coordinator.subscribe,
