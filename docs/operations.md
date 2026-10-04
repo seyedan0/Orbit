@@ -17,18 +17,55 @@
 - migration production قبل از deploy application اجرا یا به‌صورت backward-compatible rollout شود.
 - rollback destructive خودکار نیست و باید runbook داشته باشد.
 
-## مشاهده‌پذیری
+## مشاهده‌پذیری و تله‌متری سلامت همگام‌سازی (Sync Health Telemetry)
 
-حداقل metricها:
+موتور همگام‌سازی دارای رابط تله‌متری استاندارد و خنثی از ارائه‌دهنده (`SyncTelemetry`) است که رفتار پیش‌فرض آن بدون هزینه و بدون I/O (`NoopSyncTelemetry`) بوده و به هیچ ارائه‌دهنده یا SDK شخص ثالث وابسته نیست.
 
-- تعداد mutationهای pending، failed و retry
-- زمان آخرین sync موفق
-- نرخ خطای push و pull
-- اندازه batch و مدت پردازش
-- تعداد conflict و rejected mutation
-- lag مربوط به cursor
+### جدول متریک‌های سلامت همگام‌سازی
 
-Logها باید دارای request id، user scope غیرحساس، mutation id و نتیجه باشند و محتوای خصوصی task را ثبت نکنند.
+| نام متریک | نوع | محدوده | شرح و کارکرد |
+|---|---|---|---|
+| `sync_cycle_started` | Counter | Runtime | تعداد چرخه‌های همگام‌سازی آغازشده. |
+| `sync_cycle_completed` | Counter | Runtime | تعداد چرخه‌های همگام‌سازی که با موفقیت پایان یافته‌اند. |
+| `sync_cycle_failed` | Counter | Runtime | تعداد چرخه‌های همگام‌سازی ناموفق (دارای برچسب `phase: PULL \| PUSH \| SYNC`). |
+| `sync_duration_ms` | Histogram | Runtime | مدت زمان اجرای چرخه همگام‌سازی بر حسب میلی‌ثانیه. |
+| `push_batch_size` | Gauge / Histogram | Runtime / API | تعداد جهش‌های ارسال‌شده در بسته push. |
+| `pull_batch_size` | Gauge / Histogram | Runtime / API | تعداد تغییرات دریافت‌شده در پاسخ pull. |
+| `pending_mutation_count` | Gauge | Local Queue | تعداد جهش‌های در صف انتظار برای ارسال. |
+| `retry_count` | Counter | Runtime | تعداد تلاش‌های مجدد زمان‌بندی‌شده ناشی از خطای موقت شبکه یا سرور. |
+| `in_flight_timeout_recovery_count` | Counter | Runtime | تعداد جهش‌های معلق در `IN_FLIGHT` که پس از timeout بازیابی شدند. |
+| `failed_mutation_count` | Counter | Runtime | تعداد جهش‌هایی که به وضعیت دائمی `FAILED` منتقل شدند (سقف تلاش یا رد قطعی). |
+| `rejected_mutation_count` | Counter | Runtime / API | تعداد جهش‌های ردشده توسط سرور (خطای ساختار، اعتبارسنجی یا انقضای tombstone). |
+| `conflict_merged_count` | Counter | Runtime / Repository | تعداد جهش‌های ادغام‌شده با قاعده LWW در سطح فیلد بدون خطا. |
+| `cursor_lag` | Gauge | Replication | تاخیر همگام‌سازی کرسر بر حسب ثانیه (عمر آخرین تغییر) یا فاصله شمارنده کرسر. |
+
+### رویدادهای ساختاریافته (Structured Events)
+
+علاوه بر متریک‌های عددی، رویدادهای زیر برای گردآورنده‌های تحلیلی ارسال می‌شوند:
+- `sync_cycle_started`: شامل `syncId`، زمان آغاز، `userScope` و `requestId`.
+- `sync_cycle_completed`: شامل خلاصه تمام شمارنده‌ها، مدت زمان و تاخیر کرسر.
+- `sync_cycle_failed`: شامل شناسه، مدت زمان تا شکست، فاز خطا (`PULL` یا `PUSH`) و پیام خطا.
+- `push_batch`: شامل اندازه بسته، تعداد موفق، ردشده، با تلاش مجدد، شناسه‌های جهش‌ها (`mutationIds`).
+- `pull_batch`: شامل اندازه بسته، کرسر قبلی و جدید، پرچم `hasMore` و تاخیر کرسر.
+- `in_flight_recovery`: شامل تعداد بازیابی‌شده‌ها، شکست‌خورده‌ها و دست‌نخورده‌ها.
+
+### حریم خصوصی و امنیت لاگ‌ها و متریک‌ها
+
+- **عدم ثبت محتوای کاربر:** عناوین تسک‌ها (`title`)، یادداشت‌ها، محتویات آیتم‌ها، چک‌لیست‌ها و payloadهای خام موجودیت‌ها اکیداً نباید در متریک‌ها، تگ‌ها یا لاگ‌های تله‌متری ثبت شوند.
+- **شناسه‌های مجاز:** صرفاً شناسه‌های فنی غیرحساس شامل `syncId`، `requestId` (correlation ID)، `mutationId` (UUID یکتا) و `userScope` (شناسه غیرحساس یا هش‌شده کاربر) مجاز هستند.
+- **تحمل خطای گردآورنده (Fail-Safe):** بروز هرگونه استثنا یا شکست در لایه تله‌متری توسط `SyncRuntime` مهار می‌شود و هرگز چرخه همگام‌سازی را متوقف یا با شکست مواجه نمی‌سازد.
+
+### آستانه‌ها و هشدارهای عملیاتی (Operational Alert Thresholds)
+
+| شناسه هشدار | شرط فعال‌سازی | سطح اهمیت | اقدام عملیاتی |
+|---|---|---|---|
+| `SyncHighFailureRate` | نرخ خطای چرخه > ۱۰٪ در ۵ دقیقه | بحرانی (Critical) | بررسی وضعیت سرویس سرور، اتصالات دیتابیس و شبکه کلاینت‌ها. |
+| `SyncInFlightStall` | `in_flight_timeout_recovery_count > 10 / min` | اخطار (Warning) | بررسی کیفیت اتصال شبکه، پهنای باند و timeoutهای کلاینت. |
+| `SyncMutationPermanentFailure` | `failed_mutation_count > 0` | اطلاع‌رسانی / اخطار | بررسی علت خطای دائمی در صف محلی یا کنسول پشتیبانی. |
+| `SyncHighRejectionRate` | `rejected_mutation_count > 5 / min` | اخطار (Warning) | بررسی ناهماهنگی نسخه پروتکل، خطای اعتبارسنجی فرم‌ها یا باگ کلاینت. |
+| `SyncCursorLagHigh` | `cursor_lag > 300s` | اخطار (Warning) | بررسی کندی pull در کلاینت یا حجم بالای تغییرات معوق سرور. |
+| `SyncHighLatency` | `sync_duration_ms (p95) > 5000ms` | اخطار (Warning) | بهینه‌سازی کوئری‌های سرور، ایندکس‌های PostgreSQL یا اندازه دسته‌ها. |
+
 
 ## Backup و بازیابی
 
