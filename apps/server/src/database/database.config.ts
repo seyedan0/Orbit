@@ -1,5 +1,6 @@
 import type { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import {
+  CleanedTombstoneEntity,
   SyncMutationEntity,
   TaskEntityModel,
   UserEntity,
@@ -8,6 +9,7 @@ import {
 import { InitialSyncSchema1727650000000 } from './migrations/1727650000000-InitialSyncSchema.js';
 import { AddPasswordHashToUsers1727660000000 } from './migrations/1727660000000-AddPasswordHashToUsers.js';
 import { AddConflictMetadataToTasks1727670000000 } from './migrations/1727670000000-AddConflictMetadataToTasks.js';
+import { CreateCleanedTombstonesTable1727680000000 } from './migrations/1727680000000-CreateCleanedTombstonesTable.js';
 
 if (typeof process.loadEnvFile === 'function') {
   const envCandidates = ['.env', 'apps/server/.env'];
@@ -26,11 +28,18 @@ export function getDatabaseConfig(): TypeOrmModuleOptions {
 
   const baseConfig: TypeOrmModuleOptions = {
     type: 'postgres',
-    entities: [UserEntity, WorkspaceEntity, TaskEntityModel, SyncMutationEntity],
+    entities: [
+      UserEntity,
+      WorkspaceEntity,
+      TaskEntityModel,
+      SyncMutationEntity,
+      CleanedTombstoneEntity
+    ],
     migrations: [
       InitialSyncSchema1727650000000,
       AddPasswordHashToUsers1727660000000,
-      AddConflictMetadataToTasks1727670000000
+      AddConflictMetadataToTasks1727670000000,
+      CreateCleanedTombstonesTable1727680000000
     ],
     migrationsRun: true,
     synchronize: false

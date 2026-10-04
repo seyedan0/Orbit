@@ -36,6 +36,16 @@ Logها باید دارای request id، user scope غیرحساس، mutation id
 - retention و RPO/RTO پیش از production تعیین شوند.
 - backup شامل secret خام یا logهای حساس نباشد.
 
+## نگهداری و پاک‌سازی Tombstone (Tombstone Retention & Maintenance)
+
+- **سیاست نگهداری (Retention Period):** پیش‌فرض ۳۰ روز است تا دستگاه‌های با قطع موقت ارتباط بتوانند تغییرات حذف را همگام کنند.
+- **اجرای دوره‌ای:** جاب نگهداری سرور (Cron یا Worker زمان‌بندی‌شده) باید به صورت روزانه متد `cleanTombstones` یا اندپوینت `POST /api/v1/sync/cleanup` را اجرا کند.
+- **ایمنی و تراکنش:** فرآیند پاک‌سازی اتمیک و کاملاً Idempotent است؛ در صورت بروز هرگونه قطعی یا خطا در حین اجرای جاب، تراکنش به طور کامل Rollback می‌شود و اجرای مجدد آن هیچ تداخل یا خطایی ایجاد نمی‌کند.
+- **متریک‌های پایش نگهداری:**
+  - `tombstones_cleaned_count`: تعداد رکوردهای پاک‌شده در هر چرخه.
+  - `cleanup_duration_ms`: مدت زمان اجرای تراکنش پاک‌سازی.
+  - `resurrection_rejected_count`: تعداد جهش‌های نامعتبر ردشده که قصد احیای تسک منقضی داشته‌اند.
+
 ## Release checklist
 
 - تست‌ها و typecheck موفق

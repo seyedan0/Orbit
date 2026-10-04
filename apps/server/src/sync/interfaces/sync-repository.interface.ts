@@ -9,8 +9,22 @@ export interface PullResult {
 }
 
 export interface ApplyMutationResult {
-  status: 'APPLIED' | 'ALREADY_APPLIED' | 'CONFLICT_MERGED';
+  status: 'APPLIED' | 'ALREADY_APPLIED' | 'CONFLICT_MERGED' | 'REJECTED';
   task?: TaskEntity;
+  error?: string;
+}
+
+export interface CleanTombstonesOptions {
+  userId?: string;
+  retentionDays?: number;
+  now?: Date;
+  cutoffDate?: Date;
+  onBeforeCommit?: (manager: unknown) => Promise<void>;
+}
+
+export interface CleanTombstonesResult {
+  cleanedCount: number;
+  cleanedTaskIds: string[];
 }
 
 export interface SyncRepository {
@@ -33,4 +47,6 @@ export interface SyncRepository {
     cursor: string | undefined,
     limit: number
   ): Promise<PullResult>;
+
+  cleanTombstones(options?: CleanTombstonesOptions): Promise<CleanTombstonesResult>;
 }

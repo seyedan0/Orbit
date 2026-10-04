@@ -5,20 +5,20 @@
 ## وضعیت کلی
 
 - **مرحله:** فاز ۳، sync و حساب کاربری
-- **آخرین به‌روزرسانی:** 2026-10-03
+- **آخرین به‌روزرسانی:** 2026-10-04
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 90%
-- **Branch فعال:** `feature/server-field-conflict-resolution`
+- **درصد تقریبی پیشرفت:** 95%
+- **Branch فعال:** `feature/sync-tombstone-retention`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-پیاده‌سازی حل تعارض در سطح فیلد بر اساس Last-Write-Wins (LWW)، مقایسه لکسیکوگرافیک mutation ID برای شکستن تساوی، ذخیره متادیتای زمانی فیلدها در PostgreSQL، و بازگرداندن وضعیت CONFLICT_MERGED در PostgresSyncRepository سرور.
+پیاده‌سازی مدیریت Tombstone و سیاست نگهداری (Retention Policy) برای تسک‌های حذف نرم شده در همگام‌سازی، ثبت رکوردهای پاک‌شده در `cleaned_tombstones` برای جلوگیری قطعی از زنده شدن مجدد تسک منقضی (Resurrection Prevention)، پاک‌سازی اتمیک و تراکنشی، و ادغام با اندپوینت‌های همگام‌سازی.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی و PR شاخه `feature/server-field-conflict-resolution` به `develop`
-- [ ] گام بعدی فاز ۳: پاک‌سازی، مدیریت tombstone و سیاست retention در همگام‌سازی
+- [ ] بازبینی و PR شاخه `feature/sync-tombstone-retention` به `develop`
+- [ ] گام بعدی فاز ۳: بازیابی بعد از crash، timeout و نصب مجدد
 
 ## کارهای انجام‌شده
 
@@ -60,6 +60,8 @@
 - [x] **P3-AUTH-001:** پیاده‌سازی سیستم احراز هویت سرور (JWT، هش رمز عبور bcrypt، گاردها) و اتصال سشن کاربری وب
 - [x] ادغام PR شماره ۱۱ (`feature/auth-and-user-accounts`) در `develop`
 - [x] **P3-SYNC-001:** پیاده‌سازی حل تعارض در سطح فیلد (LWW)، شکستن تساوی لکسیکوگرافیک و وضعیت CONFLICT_MERGED در PostgresSyncRepository و سرور
+- [x] ادغام PR شماره ۱۲ (`feature/server-field-conflict-resolution`) در `develop`
+- [x] **P3-SYNC-002:** پیاده‌سازی مدیریت Tombstone، سیاست نگهداری ۳۰ روزه، جلوگیری از زنده شدن مجدد تسک‌های منقضی با جدول `cleaned_tombstones` و پاک‌سازی اتمیک و Idempotent
 
 ## فعالیت AIها
 
@@ -731,10 +733,62 @@
   - `npm run build`: موفق؛ کامپایل موفقیت‌آمیز تمام پکیج‌ها و کلاینت وب
   - `git diff --check`: بدون خطای فاصله‌گذاری یا خط جدید
 - **وضعیت PR:**
-  - آماده برای بازبینی و ثبت Commit با فرمت `feat(sync): implement server field-level conflict resolution (LWW)`
+  - ادغام شده در `develop` (PR شماره ۱۲)
 - **گام بعدی (Handoff):**
   - ادغام شاخه `feature/server-field-conflict-resolution` در `develop`
   - گام بعدی فاز ۳: مدیریت tombstone و سیاست retention
+
+### 2026-10-04 | P3-SYNC-002 | پیاده‌سازی مدیریت Tombstone و سیاست نگهداری (Retention Policy) در سرور
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی مدیریت کامل Tombstone و سیاست نگهداری ۳۰ روزه برای تسک‌های حذف نرم شده، پاک‌سازی اتمیک و تکرارپذیر (Idempotent) در تراکنش، جلوگیری قطعی از احیا و زنده شدن مجدد تسک‌های منقضی (Resurrection Prevention) توسط کلاینت‌های دیرهنگام، و اندپوینت پاک‌سازی `POST /api/v1/sync/cleanup`.
+- **انجام‌شده:**
+  - **طرحواره پایگاه داده و مهاجرت:**
+    - ایجاد مهاجرت TypeORM با نام `1727680000000-CreateCleanedTombstonesTable.ts` برای ایجاد جدول `cleaned_tombstones` به همراه قید یکتایی `(user_id, entity_id)` و ایندکس‌های مربوطه.
+    - تعریف موجودیت `CleanedTombstoneEntity` در `apps/server/src/database/entities/cleaned-tombstone.entity.ts` و ثبت آن در ایندکس و پیکربندی پایگاه داده `database.config.ts`.
+  - **منطق مخزن و همگام‌سازی سرور:**
+    - ارتقای اینترفیس `SyncRepository` با افزودن نوع‌های `CleanTombstonesOptions`، `CleanTombstonesResult` و افزودن وضعیت `'REJECTED'` به `ApplyMutationResult`.
+    - پیاده‌سازی متد `cleanTombstones` در `PostgresSyncRepository` داخل تراکنش اتمیک دیتابیس با فیلتر دقیق رکوردهای دارای `deletedAt` قبل از تاریخ cutoff، درج در `cleaned_tombstones` با قید `ON CONFLICT DO NOTHING` برای تضمین idempotency، و حذف فیزیکی از جدول `tasks`.
+    - پیاده‌سازی مسدودسازی جهش‌های احیاگر دیرهنگام (Resurrection Prevention) در `applyMutationAtomic` و `applyTaskMutation`: در صورت ارسال هرگونه جهش برای تسکی که در `cleaned_tombstones` ثبت شده است، درخواست با وضعیت `REJECTED` و پیام خطای صریح رد می‌شود و هیچ رکوردی در جدول `tasks` درج یا بازیابی نمی‌شود.
+    - پشتیبانی از هوک تراکنشی `onBeforeCommit` در `cleanTombstones` جهت تست قطعی Rollback تراکنش در شرایط بروز خطا.
+    - به‌روزرسانی `clear()` در `PostgresSyncRepository` جهت پاک‌سازی جدول `cleaned_tombstones`.
+    - پیاده‌سازی متناظر در `InMemorySyncRepository` شامل نگهداری رکوردهای پاک‌شده و پاک‌سازی همگام با changelog و تست‌های واحد اختصاصی در `in-memory-sync.repository.test.ts`.
+  - **لایه سرویس و کنترلر سرور:**
+    - افزودن متد `cleanTombstones` در `SyncService` و ارسال خطاهای اتمیک به نتیجه push.
+    - ایجاد اندپوینت `POST /api/v1/sync/cleanup` در `SyncController` تحت گارد احراز هویت `JwtAuthGuard`.
+  - **مستندات مهندسی:**
+    - به‌روزرسانی کامل `docs/sync-protocol.md` با افزودن بخش ۹ (نمایش Tombstone، سیاست نگهداری ۳۰ روزه و دلایل، شرایط واجد شرایط بودن، ایمنی و اتمیسیتی پاک‌سازی، رفتار کلاینت دیرهنگام و جلوگیری از احیا، رفتار کرسر و pull، و قوانین بازیابی).
+    - به‌روزرسانی `docs/data-model.md` با ثبت موجودیت و فیلدهای `cleaned_tombstones` و قوانین حذف.
+    - به‌روزرسانی `docs/operations.md` با مستندسازی جاب دوره‌ای نگهداری، ایمنی و متریک‌های پایش پاک‌سازی Tombstone.
+  - **تست‌های جامع:**
+    - ایجاد `apps/server/src/tombstone-retention.integration.test.ts` شامل ۱۰ آزمون یکپارچگی پایگاه داده و اندپوینت‌های HTTP پوشش‌دهنده تمام نیازمندی‌های تسک (پایداری در pull، عدم پاک‌سازی قبل از retention، پاک‌سازی دقیق موارد منقضی، عدم لمس تسک‌های فعال، idempotency، رد احیای دیرهنگام، تعارض حذف و ویرایش بر اساس LWW، بازیابی موفق قبل از پاک‌سازی، rollback قطعی تراکنش، و فلوی کامل HTTP).
+- **فایل‌ها:**
+  - `apps/server/src/database/entities/cleaned-tombstone.entity.ts`
+  - `apps/server/src/database/entities/index.ts`
+  - `apps/server/src/database/migrations/1727680000000-CreateCleanedTombstonesTable.ts`
+  - `apps/server/src/database/database.config.ts`
+  - `apps/server/src/sync/sync.module.ts`
+  - `apps/server/src/sync/interfaces/sync-repository.interface.ts`
+  - `apps/server/src/sync/repositories/postgres-sync.repository.ts`
+  - `apps/server/src/sync/repositories/in-memory-sync.repository.ts`
+  - `apps/server/src/sync/repositories/in-memory-sync.repository.test.ts`
+  - `apps/server/src/sync/sync.service.ts`
+  - `apps/server/src/sync/sync.controller.ts`
+  - `apps/server/src/tombstone-retention.integration.test.ts`
+  - `docs/sync-protocol.md`
+  - `docs/data-model.md`
+  - `docs/operations.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npm run typecheck`: موفق با ۰ خطا در تمام پکیج‌ها و اپلیکیشن‌ها
+  - `tombstone-retention.integration.test.ts`: تمام ۱۰ تست با موفقیت پاس شدند
+  - `in-memory-sync.repository.test.ts`: تمام ۵ تست با موفقیت پاس شدند
+- **وضعیت PR:**
+  - در حال تکمیل اعتبارسنجی نهایی و ثبت PR
+- **گام بعدی (Handoff):**
+  - ادغام شاخه `feature/sync-tombstone-retention` در `develop`
+  - گام بعدی فاز ۳: بازیابی بعد از crash، timeout و نصب مجدد
+
 
 ## محدودیت‌های باقی‌مانده
 

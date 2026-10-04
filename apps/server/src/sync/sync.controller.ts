@@ -43,4 +43,17 @@ export class SyncController {
   ): Promise<PullResponseBody> {
     return this.syncService.pull(userId, cursor, limit);
   }
+
+  @Post('cleanup')
+  @HttpCode(HttpStatus.OK)
+  async cleanup(
+    @UserId() userId: string,
+    @Query('retentionDays') retentionDays?: string
+  ) {
+    const days = retentionDays ? parseInt(retentionDays, 10) : undefined;
+    return this.syncService.cleanTombstones({
+      userId,
+      retentionDays: days && !Number.isNaN(days) ? days : undefined
+    });
+  }
 }

@@ -1,14 +1,21 @@
+import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import type { MutationPayload, TaskEntity } from '@orbit/shared-types';
 import type {
   ApplyMutationResult,
+  CleanTombstonesOptions,
+  CleanTombstonesResult,
   PullResult,
   SyncRepository
 } from '../interfaces/sync-repository.interface.js';
 import { mergeTaskFieldsWithLww } from '../utils/conflict-resolution.util.js';
-import { SyncMutationEntity, TaskEntityModel } from '../../database/entities/index.js';
+import {
+  CleanedTombstoneEntity,
+  SyncMutationEntity,
+  TaskEntityModel
+} from '../../database/entities/index.js';
 
 function toTaskEntity(model: TaskEntityModel): TaskEntity {
   return {
@@ -59,7 +66,9 @@ export class PostgresSyncRepository implements SyncRepository {
     @InjectRepository(TaskEntityModel)
     private readonly taskRepo: Repository<TaskEntityModel>,
     @InjectRepository(SyncMutationEntity)
-    private readonly mutationRepo: Repository<SyncMutationEntity>
+    private readonly mutationRepo: Repository<SyncMutationEntity>,
+    @InjectRepository(CleanedTombstoneEntity)
+    private readonly cleanedTombstoneRepo: Repository<CleanedTombstoneEntity>
   ) {}
 
   async getMutationByIdempotencyKey(
@@ -119,6 +128,15 @@ export class PostgresSyncRepository implements SyncRepository {
   }
 
   async applyTaskMutation(userId: string, mutation: MutationPayload): Promise<TaskEntity> {
+    const cleaned = await this.cleanedTombstoneRepo.findOne({
+      where: { userId, entityId: mutation.entityId }
+    });
+    if (cleaned) {
+      throw new Error(
+        `Task ${mutation.entityId} was permanently cleaned up and cannot be resurrected`
+      );
+    }
+
     const { task } = await this.applyTaskMutationInManager(
       this.dataSource.manager,
       userId,
@@ -140,11 +158,22 @@ export class PostgresSyncRepository implements SyncRepository {
         return { status: 'ALREADY_APPLIED' };
       }
 
-      // 2. Apply task mutation with deterministic field-level conflict resolution
+      // 2. Check if this entity is an expired / purged tombstone (Rule 6: prevent resurrection)
+      const cleaned = await manager.findOne(CleanedTombstoneEntity, {
+        where: { userId, entityId: mutation.entityId }
+      });
+      if (cleaned) {
+        return {
+          status: 'REJECTED',
+          error: `Task ${mutation.entityId} was permanently cleaned up and cannot be resurrected`
+        };
+      }
+
+      // 3. Apply task mutation with deterministic field-level conflict resolution
       const { task: savedTask, status: mutationStatus } =
         await this.applyTaskMutationInManager(manager, userId, mutation);
 
-      // 3. Save applied mutation
+      // 4. Save applied mutation
       const mutationEntity = new SyncMutationEntity();
       mutationEntity.id = mutation.id;
       mutationEntity.userId = userId;
@@ -176,6 +205,76 @@ export class PostgresSyncRepository implements SyncRepository {
       return {
         status: mutationStatus,
         task: toTaskEntity(savedTask)
+      };
+    });
+  }
+
+  async cleanTombstones(options?: CleanTombstonesOptions): Promise<CleanTombstonesResult> {
+    const retentionDays = options?.retentionDays ?? 30;
+    const now = options?.now ?? new Date();
+    const cutoffDate =
+      options?.cutoffDate ??
+      new Date(now.getTime() - retentionDays * 24 * 60 * 60 * 1000);
+    const cutoffIso = cutoffDate.toISOString();
+
+    return await this.dataSource.transaction(async (manager) => {
+      const qb = manager
+        .createQueryBuilder(TaskEntityModel, 'task')
+        .where('task.deletedAt IS NOT NULL')
+        .andWhere('task.deletedAt <= :cutoffIso', { cutoffIso });
+
+      if (options?.userId) {
+        qb.andWhere('task.userId = :userId', { userId: options.userId });
+      }
+
+      const eligibleTasks = await qb.getMany();
+
+      if (eligibleTasks.length === 0) {
+        if (options?.onBeforeCommit) {
+          await options.onBeforeCommit(manager);
+        }
+        return {
+          cleanedCount: 0,
+          cleanedTaskIds: []
+        };
+      }
+
+      const eligibleIds = eligibleTasks.map((t) => t.id);
+
+      // Record in cleaned_tombstones (idempotent with ON CONFLICT DO NOTHING)
+      const cleanedEntries = eligibleTasks.map((task) => {
+        const entry = new CleanedTombstoneEntity();
+        entry.id = randomUUID();
+        entry.userId = task.userId;
+        entry.entityId = task.id;
+        entry.deletedAt = task.deletedAt!;
+        entry.purgedAt = new Date();
+        return entry;
+      });
+
+      await manager
+        .createQueryBuilder()
+        .insert()
+        .into(CleanedTombstoneEntity)
+        .values(cleanedEntries)
+        .orIgnore()
+        .execute();
+
+      // Permanently remove eligible tombstones from tasks table
+      await manager
+        .createQueryBuilder()
+        .delete()
+        .from(TaskEntityModel)
+        .where('id IN (:...eligibleIds)', { eligibleIds })
+        .execute();
+
+      if (options?.onBeforeCommit) {
+        await options.onBeforeCommit(manager);
+      }
+
+      return {
+        cleanedCount: eligibleTasks.length,
+        cleanedTaskIds: eligibleIds
       };
     });
   }
@@ -212,7 +311,7 @@ export class PostgresSyncRepository implements SyncRepository {
   }
 
   async clear(): Promise<void> {
-    await this.dataSource.query('TRUNCATE TABLE sync_mutations, tasks CASCADE');
+    await this.dataSource.query('TRUNCATE TABLE sync_mutations, tasks, cleaned_tombstones CASCADE');
     try {
       await this.dataSource.query("SELECT setval('tasks_cursor_seq', 1, false)");
     } catch {
