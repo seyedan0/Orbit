@@ -177,6 +177,32 @@ describe('MemoryLocalStore', () => {
     expect(retry).toMatchObject({ id: 'm1', attemptCount: 1, lastError: 'timeout' });
   });
 
+  // ---- in-flight mutations ----
+
+  it('marks mutations in flight and lists in-flight mutations', async () => {
+    const store = new MemoryLocalStore(() => NOW);
+    await store.enqueueMutation(mutation('m1', '2026-09-29T10:00:01.000Z'));
+    await store.enqueueMutation(mutation('m2', '2026-09-29T10:00:02.000Z'));
+
+    await store.markMutationInFlight('m1', '2026-09-29T10:05:00.000Z');
+
+    expect(await store.listPendingMutations(10)).toHaveLength(1);
+    expect((await store.listPendingMutations(10))[0]?.id).toBe('m2');
+
+    const inFlight = await store.listInFlightMutations();
+    expect(inFlight).toHaveLength(1);
+    expect(inFlight[0]?.id).toBe('m1');
+    expect(inFlight[0]?.status).toBe('IN_FLIGHT');
+    expect(inFlight[0]?.inFlightSince).toBe('2026-09-29T10:05:00.000Z');
+
+    // Succeeded clears in-flight state
+    await store.markMutationSucceeded('m1');
+    expect(await store.listInFlightMutations()).toHaveLength(0);
+    const m1 = await store.getMutation('m1');
+    expect(m1?.status).toBe('SUCCEEDED');
+    expect(m1?.inFlightSince).toBeUndefined();
+  });
+
   // ---- cursor ----
 
   it('persists the pull cursor', async () => {

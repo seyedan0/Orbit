@@ -8,6 +8,8 @@ export type {
 
 export { SyncRuntime } from './sync-runtime.js';
 export type {
+  InFlightRecoveryOptions,
+  InFlightRecoveryResult,
   PullRunResult,
   PushRunResult,
   SyncRunResult,

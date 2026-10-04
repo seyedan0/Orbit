@@ -195,6 +195,35 @@ describe('IndexedDbLocalStore', () => {
     expect(await store.listPendingMutations(10)).toEqual([]);
   });
 
+  // ---- markMutationInFlight / listInFlightMutations ----
+
+  it('marks mutations in flight and lists in-flight mutations in IndexedDB', async () => {
+    const t = makeTask();
+    const m1 = makeMutation(t, { id: 'm-idb-f1', idempotencyKey: 'k-f1' });
+    const m2 = makeMutation(t, { id: 'm-idb-f2', idempotencyKey: 'k-f2' });
+    await store.enqueueMutation(m1);
+    await store.enqueueMutation(m2);
+
+    await store.markMutationInFlight('m-idb-f1', '2026-10-04T12:00:00.000Z');
+
+    expect(await store.listPendingMutations(10)).toHaveLength(1);
+    expect((await store.listPendingMutations(10))[0]?.id).toBe('m-idb-f2');
+
+    const inFlight = await store.listInFlightMutations();
+    expect(inFlight).toHaveLength(1);
+    expect(inFlight[0]?.id).toBe('m-idb-f1');
+    expect(inFlight[0]?.status).toBe('IN_FLIGHT');
+    expect(inFlight[0]?.inFlightSince).toBe('2026-10-04T12:00:00.000Z');
+
+    // markMutationFailed resets in-flight state
+    await store.markMutationFailed('m-idb-f1', 'Timeout', '2099-01-01T00:00:00.000Z', 'PENDING');
+    expect(await store.listInFlightMutations()).toHaveLength(0);
+    const m1After = await store.getMutation('m-idb-f1');
+    expect(m1After?.status).toBe('PENDING');
+    expect(m1After?.inFlightSince).toBeUndefined();
+    expect(m1After?.attemptCount).toBe(1);
+  });
+
   // ---- cursor ----
 
   it('returns undefined when no cursor has been saved', async () => {

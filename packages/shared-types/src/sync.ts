@@ -27,7 +27,8 @@ export interface SyncQueueEntry extends MutationPayload {
   status: QueueStatus;
   attemptCount: number;
   nextAttemptAt: string;
-  lastError?: string;
+  lastError?: string | undefined;
+  inFlightSince?: string | undefined;
 }
 
 export interface PullResponse {

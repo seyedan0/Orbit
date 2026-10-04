@@ -37,7 +37,10 @@ const CURRENT_VERSION = 1;
 export class IndexedDbLocalStore implements AtomicTaskStore {
   private db: OrbitDB | undefined;
 
-  constructor(private readonly dbName: string = 'orbit-local') {}
+  constructor(
+    private readonly dbName: string = 'orbit-local',
+    private readonly now: () => Date = () => new Date()
+  ) {}
 
   private async getDb(): Promise<OrbitDB> {
     if (this.db !== undefined) return this.db;
@@ -118,7 +121,7 @@ export class IndexedDbLocalStore implements AtomicTaskStore {
   async listPendingMutations(limit: number): Promise<SyncQueueEntry[]> {
     const db = await this.getDb();
     const all = await db.getAll('mutations');
-    const nowMs = Date.now();
+    const nowMs = this.now().getTime();
     return all
       .filter(
         (entry) =>
@@ -132,11 +135,38 @@ export class IndexedDbLocalStore implements AtomicTaskStore {
       .slice(0, Math.max(0, limit));
   }
 
+  async markMutationInFlight(id: string, inFlightSince?: string): Promise<void> {
+    const db = await this.getDb();
+    const entry = await db.get('mutations', id);
+    if (entry === undefined) return;
+    await db.put('mutations', {
+      ...entry,
+      status: 'IN_FLIGHT',
+      inFlightSince: inFlightSince ?? this.now().toISOString()
+    });
+  }
+
+  async listInFlightMutations(): Promise<SyncQueueEntry[]> {
+    const db = await this.getDb();
+    const all = await db.getAll('mutations');
+    return all
+      .filter((entry) => entry.status === 'IN_FLIGHT')
+      .sort(
+        (a, b) =>
+          Date.parse(a.createdAt) - Date.parse(b.createdAt) ||
+          a.id.localeCompare(b.id)
+      );
+  }
+
   async markMutationSucceeded(id: string): Promise<void> {
     const db = await this.getDb();
     const entry = await db.get('mutations', id);
     if (entry === undefined) return;
-    await db.put('mutations', { ...entry, status: 'SUCCEEDED' });
+    const { inFlightSince: _discard, ...rest } = entry;
+    await db.put('mutations', {
+      ...rest,
+      status: 'SUCCEEDED'
+    });
   }
 
   async markMutationFailed(
@@ -148,8 +178,9 @@ export class IndexedDbLocalStore implements AtomicTaskStore {
     const db = await this.getDb();
     const entry = await db.get('mutations', id);
     if (entry === undefined) return;
+    const { inFlightSince: _discard, ...rest } = entry;
     await db.put('mutations', {
-      ...entry,
+      ...rest,
       status,
       attemptCount: entry.attemptCount + 1,
       nextAttemptAt,

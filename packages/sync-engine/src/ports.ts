@@ -17,6 +17,9 @@ export interface LocalStore {
   saveTask(task: TaskEntity): Promise<void>;
   enqueueMutation(mutation: SyncQueueEntry): Promise<void>;
   listPendingMutations(limit: number): Promise<SyncQueueEntry[]>;
+  markMutationInFlight(id: string, inFlightSince?: string): Promise<void>;
+  listInFlightMutations(): Promise<SyncQueueEntry[]>;
+  getMutation(id: string): Promise<SyncQueueEntry | undefined>;
   markMutationSucceeded(id: string): Promise<void>;
   markMutationFailed(
     id: string,
@@ -26,7 +29,7 @@ export interface LocalStore {
   ): Promise<void>;
   getCursor(): Promise<string | undefined>;
   saveCursor(cursor: string): Promise<void>;
-  listTasks(projectId: string): Promise<TaskEntity[]>;
+  listTasks(projectId: string, options?: { includeDeleted?: boolean }): Promise<TaskEntity[]>;
 }
 
 /**

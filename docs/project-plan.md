@@ -91,8 +91,8 @@
 - [x] mutation queue، idempotency و retry (پروتکل همگام‌سازی و جهش‌های اتمیک)
 - [x] push، pull و cursor (اندپوینت‌های همگام‌سازی و کلاینت HTTP)
 - [x] field-level conflict resolution (حل تعارض در سطح فیلد با استراتژی LWW و tie-breaker و وضعیت CONFLICT_MERGED)
-- tombstone و retention policy
-- recovery بعد از crash، timeout و نصب مجدد
+- [x] tombstone و retention policy (نگهداری ۳۰ روزه، پاک‌سازی اتمیک و جلوگیری قطعی از احیای تسک در cleaned_tombstones)
+- [x] recovery بعد از crash، timeout و نصب مجدد (بازیابی جهش‌های IN_FLIGHT، بازگشت امن به PENDING با backoff، حفظ کرسر و اتمیسیتی pull، سقف retry و ثبت FAILED برای خطاهای دائمی)
 - telemetry حداقلی برای sync health
 
 **دروازه خروج:** سناریوی دو دستگاه آفلاین/آنلاین بدون duplicate یا از دست‌رفتن تغییرات قبول می‌شود.
