@@ -1,0 +1,214 @@
+.agendaViewContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e0e0e5;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  max-height: 750px;
+  overflow-y: auto;
+}
+
+.daySectionCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.daySectionCard:hover {
+  border-color: #cbd5e1;
+}
+
+.todaySectionCard {
+  background: #f0f7ff;
+  border-color: #4f7cff;
+  box-shadow: 0 0 0 1px #4f7cff;
+}
+
+.dayHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.4rem;
+}
+
+.todaySectionCard .dayHeader {
+  border-bottom-color: #bfdbfe;
+}
+
+.dayTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.weekdayName {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.dateLabel {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.todayBadge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  background: #4f7cff;
+  color: #ffffff;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.addTaskBtn {
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.addTaskBtn:hover {
+  background: #4f7cff;
+  border-color: #4f7cff;
+  color: #ffffff;
+}
+
+.taskList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.taskItemCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  border-left: 3px solid #94a3b8;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: background-color 0.1s ease;
+}
+
+.taskItemCard:hover {
+  background: #fbfcfd;
+}
+
+.taskLeftCol {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+}
+
+.taskCheckbox {
+  cursor: pointer;
+  accent-color: #4f7cff;
+  width: 15px;
+  height: 15px;
+  margin: 0;
+}
+
+.taskTitle {
+  font-size: 0.9rem;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.taskCompleted {
+  opacity: 0.6;
+}
+
+.taskCompleted .taskTitle {
+  text-decoration: line-through;
+  color: #64748b;
+}
+
+.taskRightCol {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.timeTag {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.4rem;
+  background: #f1f5f9;
+  color: #475569;
+  border-radius: 4px;
+}
+
+.allDayTag {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.4rem;
+  background: #e0f2fe;
+  color: #0369a1;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.priorityBadge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.15rem 0.35rem;
+  border-radius: 3px;
+}
+
+.priorityP1 {
+  border-left-color: #ef4444;
+}
+
+.priorityP1 .priorityBadge {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.priorityP2 {
+  border-left-color: #f59e0b;
+}
+
+.priorityP2 .priorityBadge {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.priorityP3 {
+  border-left-color: #3b82f6;
+}
+
+.priorityP3 .priorityBadge {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.emptyDayMsg {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  padding: 0.35rem 0.5rem;
+  font-style: italic;
+}
+
+.emptyAgendaState {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.95rem;
+}

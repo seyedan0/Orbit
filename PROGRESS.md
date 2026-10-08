@@ -7,18 +7,18 @@
 - **مرحله:** فاز ۴، مدیریت زمان و تقویم
 - **آخرین به‌روزرسانی:** 2026-10-08
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 35% (فاز ۴)
-- **Branch فعال:** `feature/web-calendar-views`
+- **درصد تقریبی پیشرفت:** 45% (فاز ۴)
+- **Branch فعال:** `feature/web-calendar-day-agenda`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-پیاده‌سازی نماهای تعاملی ماهانه (`MonthView`) و هفتگی (`WeekView`) با پشتیبانی دوگانه شمسی (جلالی) و میلادی در وب (`CalendarPage`)، ناوبری بازه‌های زمانی، نمایش تسک‌های زمان‌بندی‌شده، ایجاد سریع تسک و تغییر وضعیت تکمیل مستقیم از روی تقویم.
+پیاده‌سازی نمای روزانه با تایم‌لاین ۲۴ ساعته (`DayView`) و نمای دستورکار با جریان ترتیبی (`AgendaView`) در تقویم وب با پشتیبانی دوگانه شمسی/میلادی، نشانگر زمان جاری ("هم‌اکنون")، ناوبری روزانه و جهش به امروز، فیلتر تسک‌های تمام‌روز و زمان‌دار، و اعتبارسنجی ۱۰۰ درصدی آزمون‌ها.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی و PR شاخه `feature/web-calendar-views` به `develop`
-- [ ] گام بعدی فاز ۴: نماهای روزانه (Day View)، Agenda و Time Blocking با Drag & Drop
+- [ ] بازبینی شاخه `feature/web-calendar-day-agenda` توسط کاربر
+- [ ] گام بعدی فاز ۴: قابلیت Time Blocking و کشیدن و رها کردن (Drag & Drop) روی تایم‌لاین تقویم
 
 ## کارهای انجام‌شده
 
@@ -71,8 +71,41 @@
 - [x] ادغام PR شماره ۱۹ (`feature/calendar-jalali-foundation`) در `develop`
 - [x] **P4-DOC-001:** تدوین سند جامع معماری محصول و استراتژی فنی (`docs/product-architecture.md`) بر پایه بنچ‌مارک تیک‌تیک، فلسفه FOSS و رایگان‌سازی امکانات پولی، چرخه بهره‌وری ۶ مرحله‌ای، هوش مصنوعی باز BYOK/MCP، رتبه‌بندی LexoRank، و به‌روزرسانی سراسری اسناد `vision`، `architecture`، `feature-catalog`، `roadmap`، `project-plan` و `README`
 - [x] **P4-CAL-002:** پیاده‌سازی نماهای تعاملی ماهانه و هفتگی با پشتیبانی دوگانه تقویم شمسی/میلادی در وب، افزودن مسیر `/calendar` و لینک ناوبری سایدبار، ایجاد سریع تسک و مدیریت تکمیل تسک از تقویم
+- [x] **P4-CAL-003:** پیاده‌سازی نمای روزانه با تایم‌لاین ساعتی (Day View) و نمای ترتیبی دستورکار (Agenda View) در وب با بخش پین‌شده تسک‌های تمام‌روز، خط قرمز زمان جاری ("هم‌اکنون")، ناوبری روزانه، ایجاد سریع تسک و تغییر وضعیت تکمیل مستقیم
 
 ## فعالیت AIها
+
+### 2026-10-08 | P4-CAL-003 | نمای روزانه (تایم‌لاین ساعتی) و نمای دستورکار (Agenda) در تقویم وب
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی نماهای تعاملی روزانه (`DayView`) و دستورکار (`AgendaView`) با پشتیبانی کامل از سیستم‌های تقویم شمسی و میلادی در تقویم وب
+- **انجام‌شده:**
+  - ارتقای تایپ `CalendarViewMode` به `'month' | 'week' | 'day' | 'agenda'` در `apps/web/src/features/calendar/calendar-utils.ts`.
+  - افزودن توابع کمکی `getDayHourSlots` (تولید اسلات‌های ۰ تا ۲۳ با برچسب‌های فارسی/انگلیسی)، `getAgendaDayGroups` (گروه‌بندی تسک‌ها در روزهای ترتیبی با مرتب‌سازی اولویت و زمان)، `navigateDay` و `navigateAgenda`.
+  - پیاده‌سازی کامپوننت `DayView` با بخش بالایی پین‌شده تسک‌های تمام‌روز ("تمام روز")، گرید تایم‌لاین ۲۴ ساعته با جای‌گذاری دقیق کارت‌های تسک در اسلات ساعت، خط قرمز زمان جاری پویا ("هم‌اکنون")، کلید سریع افزودن تسک و امکان تیک زدن اتمام تسک.
+  - پیاده‌سازی کامپوننت `AgendaView` با فهرست ترتیبی کارت‌های روزانه، برچسب‌های تقویم دوگانه، کارت‌های تسک با برچسب اولویت و زمان، وضعیت خالی تمیز برای روزهای بدون تسک یا بازه خالی.
+  - یکپارچه‌سازی نوار ابزار `CalendarPage` با تب‌های جدید "روز" و "دستورکار"، ناوبری ۱ روزه در نمای روز و جهش به امروز/۱۴ روز در نمای دستورکار، و باز شدن مدال تسک با ساعت پیش‌فرض انتخاب‌شده.
+  - صادرات کامپوننت‌ها در `apps/web/src/features/calendar/index.ts`.
+  - افزودن آزمون‌های کامپوننت در `CalendarPage.test.tsx` (مجموعاً ۲۲۸ آزمون سبز در کلاینت وب).
+- **فایل‌ها:**
+  - `apps/web/src/features/calendar/calendar-utils.ts`
+  - `apps/web/src/features/calendar/components/DayView.module.css`
+  - `apps/web/src/features/calendar/components/DayView.tsx`
+  - `apps/web/src/features/calendar/components/AgendaView.module.css`
+  - `apps/web/src/features/calendar/components/AgendaView.tsx`
+  - `apps/web/src/features/calendar/pages/CalendarPage.tsx`
+  - `apps/web/src/features/calendar/pages/CalendarPage.test.tsx`
+  - `apps/web/src/features/calendar/index.ts`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npm run lint`: موفق با ۰ خطا و ۰ هشدار
+  - `npm run typecheck`: موفق با ۰ خطا در کل مونو‌ریپو
+  - `npm run test --workspace @orbit/web`: موفق؛ تمام ۲۲۸ آزمون پاس شدند
+  - `npm run build`: موفق؛ بیلد کامل تمام پکیج‌ها و اپلیکیشن‌ها
+  - `git diff --check`: تمیز و بدون خطای فاصله‌گذاری
+- **وضعیت:** آماده در شاخه `feature/web-calendar-day-agenda` جهت بازبینی کاربر
+- **گام بعدی:** پیاده‌سازی قابلیت Time Blocking و جابه‌جایی Drag & Drop تسک‌ها در تقویم
 
 ### 2026-10-08 | P4-CAL-002 | نماهای ماهانه و هفتگی تقویم در وب با پشتیبانی شمسی و میلادی
 

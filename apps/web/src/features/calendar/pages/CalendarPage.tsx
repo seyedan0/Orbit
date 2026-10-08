@@ -4,17 +4,23 @@ import { useSession } from '../../../core/auth/session-context';
 import { useStore } from '../../../core/storage/store-context';
 import {
   formatJalaliDate,
-  dateToJalali
+  dateToJalali,
+  toPersianDigits
 } from '../../../core/calendar/jalali';
 import {
   getCalendarMonthTitle,
+  getCalendarDayTitle,
   navigateMonth,
   navigateWeek,
+  navigateDay,
+  navigateAgenda,
   type CalendarType,
   type CalendarViewMode
 } from '../calendar-utils';
 import { MonthView } from '../components/MonthView';
 import { WeekView } from '../components/WeekView';
+import { DayView } from '../components/DayView';
+import { AgendaView } from '../components/AgendaView';
 import {
   createTask,
   completeTask,
@@ -53,6 +59,7 @@ export const CalendarPage: FC<CalendarPageProps> = ({
   const [selectedDay, setSelectedDay] = useState<{
     date: Date;
     isoDate: string;
+    hour?: number | undefined;
   } | null>(null);
   const [modalTaskTitle, setModalTaskTitle] = useState('');
 
@@ -73,21 +80,32 @@ export const CalendarPage: FC<CalendarPageProps> = ({
     void reload();
   }, [reload]);
 
-  const monthYearTitle = getCalendarMonthTitle(currentDate, calendarType);
+  const headerTitle =
+    viewMode === 'day'
+      ? getCalendarDayTitle(currentDate, calendarType)
+      : getCalendarMonthTitle(currentDate, calendarType);
 
   const handlePrev = () => {
     if (viewMode === 'month') {
       setCurrentDate((prev) => navigateMonth(prev, -1, calendarType));
-    } else {
+    } else if (viewMode === 'week') {
       setCurrentDate((prev) => navigateWeek(prev, -1));
+    } else if (viewMode === 'day') {
+      setCurrentDate((prev) => navigateDay(prev, -1));
+    } else if (viewMode === 'agenda') {
+      setCurrentDate((prev) => navigateAgenda(prev, -1));
     }
   };
 
   const handleNext = () => {
     if (viewMode === 'month') {
       setCurrentDate((prev) => navigateMonth(prev, 1, calendarType));
-    } else {
+    } else if (viewMode === 'week') {
       setCurrentDate((prev) => navigateWeek(prev, 1));
+    } else if (viewMode === 'day') {
+      setCurrentDate((prev) => navigateDay(prev, 1));
+    } else if (viewMode === 'agenda') {
+      setCurrentDate((prev) => navigateAgenda(prev, 1));
     }
   };
 
@@ -130,8 +148,8 @@ export const CalendarPage: FC<CalendarPageProps> = ({
     }
   };
 
-  const handleOpenAddTaskModal = (date: Date, isoDate: string) => {
-    setSelectedDay({ date, isoDate });
+  const handleOpenAddTaskModal = (date: Date, isoDate: string, hour?: number) => {
+    setSelectedDay(hour !== undefined ? { date, isoDate, hour } : { date, isoDate });
     setModalTaskTitle('');
     setIsModalOpen(true);
   };
@@ -153,7 +171,7 @@ export const CalendarPage: FC<CalendarPageProps> = ({
         {
           title: modalTaskTitle.trim(),
           dueDate: selectedDay.isoDate,
-          isAllDay: true
+          isAllDay: selectedDay.hour === undefined
         },
         { store, userId }
       );
@@ -168,16 +186,23 @@ export const CalendarPage: FC<CalendarPageProps> = ({
 
   const getModalDateFormatted = (): string => {
     if (!selectedDay) return '';
-    if (calendarType === 'jalali') {
-      const j = dateToJalali(selectedDay.date);
-      return formatJalaliDate(j, { format: 'full' });
+    const dateStr =
+      calendarType === 'jalali'
+        ? formatJalaliDate(dateToJalali(selectedDay.date), { format: 'full' })
+        : selectedDay.date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+
+    if (selectedDay.hour !== undefined) {
+      const hh = String(selectedDay.hour).padStart(2, '0') + ':00';
+      const timeStr = calendarType === 'jalali' ? toPersianDigits(hh) : hh;
+      return `${dateStr} - ${timeStr}`;
     }
-    return selectedDay.date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+
+    return dateStr;
   };
 
   return (
@@ -192,7 +217,7 @@ export const CalendarPage: FC<CalendarPageProps> = ({
             className={styles.monthYearHeading}
             data-testid="calendar-month-year-label"
           >
-            {monthYearTitle}
+            {headerTitle}
           </h2>
 
           <div className={styles.navGroup} role="group" aria-label="پیمایش تقویم">
@@ -255,6 +280,28 @@ export const CalendarPage: FC<CalendarPageProps> = ({
             >
               هفته
             </button>
+            <button
+              type="button"
+              className={`${styles.toggleBtn} ${
+                viewMode === 'day' ? styles.toggleBtnActive : ''
+              }`}
+              onClick={() => setViewMode('day')}
+              aria-pressed={viewMode === 'day'}
+              data-testid="view-day-btn"
+            >
+              روز
+            </button>
+            <button
+              type="button"
+              className={`${styles.toggleBtn} ${
+                viewMode === 'agenda' ? styles.toggleBtnActive : ''
+              }`}
+              onClick={() => setViewMode('agenda')}
+              aria-pressed={viewMode === 'agenda'}
+              data-testid="view-agenda-btn"
+            >
+              دستورکار
+            </button>
           </div>
 
           {/* Calendar System Switch */}
@@ -304,21 +351,45 @@ export const CalendarPage: FC<CalendarPageProps> = ({
       )}
 
       {/* Main View Area */}
-      {viewMode === 'month' ? (
+      {viewMode === 'month' && (
         <MonthView
           currentDate={currentDate}
           calendarType={calendarType}
           tasks={tasks}
           onToggleCompletion={handleToggleCompletion}
-          onAddTask={handleOpenAddTaskModal}
+          onAddTask={(date, isoDate) => handleOpenAddTaskModal(date, isoDate)}
         />
-      ) : (
+      )}
+
+      {viewMode === 'week' && (
         <WeekView
           currentDate={currentDate}
           calendarType={calendarType}
           tasks={tasks}
           onToggleCompletion={handleToggleCompletion}
-          onAddTask={handleOpenAddTaskModal}
+          onAddTask={(date, isoDate) => handleOpenAddTaskModal(date, isoDate)}
+        />
+      )}
+
+      {viewMode === 'day' && (
+        <DayView
+          currentDate={currentDate}
+          calendarType={calendarType}
+          tasks={tasks}
+          onToggleCompletion={handleToggleCompletion}
+          onAddTask={(date, isoDate, hour) =>
+            handleOpenAddTaskModal(date, isoDate, hour)
+          }
+        />
+      )}
+
+      {viewMode === 'agenda' && (
+        <AgendaView
+          currentDate={currentDate}
+          calendarType={calendarType}
+          tasks={tasks}
+          onToggleCompletion={handleToggleCompletion}
+          onAddTask={(date, isoDate) => handleOpenAddTaskModal(date, isoDate)}
         />
       )}
 

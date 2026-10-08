@@ -5,6 +5,7 @@ import {
   PERSIAN_MONTH_NAMES,
   PERSIAN_WEEKDAY_NAMES,
   dateToJalali,
+  formatJalaliDate,
   getJalaliMonthLength,
   getPersianWeekday,
   jalaliToDate,
@@ -14,7 +15,7 @@ import {
 import { getLocalDateKey } from '../tasks/services/task-service';
 
 export type CalendarType = 'jalali' | 'gregorian';
-export type CalendarViewMode = 'month' | 'week';
+export type CalendarViewMode = 'month' | 'week' | 'day' | 'agenda';
 
 export interface CalendarDayItem {
   date: Date;
@@ -30,6 +31,20 @@ export interface WeekDayItem extends CalendarDayItem {
   dateLabel: string;
 }
 
+export interface HourSlot {
+  hour: number;
+  label: string;
+}
+
+export interface AgendaDayGroup {
+  date: Date;
+  isoDate: string;
+  dayLabel: string;
+  weekdayName: string;
+  isToday: boolean;
+  tasks: TaskEntity[];
+}
+
 /**
  * Returns formatted month and year label according to calendar type (e.g. «مهر ۱۴۰۵» or "October 2026").
  */
@@ -39,6 +54,22 @@ export function getCalendarMonthTitle(date: Date, type: CalendarType): string {
     return `${PERSIAN_MONTH_NAMES[j.month - 1]} ${toPersianDigits(j.year)}`;
   }
   return `${GREGORIAN_MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+/**
+ * Returns formatted full day label according to calendar type (e.g. «دوشنبه، ۱۳ مهر ۱۴۰۵» or "Monday, October 5, 2026").
+ */
+export function getCalendarDayTitle(date: Date, type: CalendarType): string {
+  if (type === 'jalali') {
+    const j = dateToJalali(date);
+    return formatJalaliDate(j, { format: 'full' });
+  }
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
 }
 
 /**
@@ -82,6 +113,24 @@ export function navigateWeek(currentDate: Date, direction: 1 | -1): Date {
 }
 
 /**
+ * Navigates by a single day forward or backward.
+ */
+export function navigateDay(currentDate: Date, direction: 1 | -1): Date {
+  const next = new Date(currentDate);
+  next.setDate(next.getDate() + direction);
+  return next;
+}
+
+/**
+ * Navigates agenda view forward or backward by 14 days.
+ */
+export function navigateAgenda(currentDate: Date, direction: 1 | -1): Date {
+  const next = new Date(currentDate);
+  next.setDate(next.getDate() + direction * 14);
+  return next;
+}
+
+/**
  * Checks whether an active, non-deleted task is scheduled on a given target calendar date.
  */
 export function isTaskOnDate(task: TaskEntity, targetDate: Date): boolean {
@@ -106,6 +155,34 @@ export function isTaskOnDate(task: TaskEntity, targetDate: Date): boolean {
   }
 
   return getLocalDateKey(taskDate) === getLocalDateKey(targetDate);
+}
+
+/**
+ * Extracts hour (0..23) from a task's scheduled time, or null if all-day or unscheduled.
+ */
+export function getTaskHour(task: TaskEntity): number | null {
+  if (task.isAllDay) return null;
+  const iso = task.dueDate || task.startDate;
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  return d.getHours();
+}
+
+/**
+ * Generates the 24 hourly slots (00:00 to 23:00) with localized digits.
+ */
+export function getDayHourSlots(type: CalendarType): HourSlot[] {
+  const slots: HourSlot[] = [];
+  for (let h = 0; h < 24; h++) {
+    const hh = String(h).padStart(2, '0');
+    const label = `${hh}:00`;
+    slots.push({
+      hour: h,
+      label: type === 'jalali' ? toPersianDigits(label) : label
+    });
+  }
+  return slots;
 }
 
 /**
@@ -264,4 +341,72 @@ export function getWeekViewDays(
     });
   }
   return items;
+}
+
+/**
+ * Filters and groups tasks into chronological days for Agenda view.
+ */
+export function getAgendaDayGroups(
+  tasks: TaskEntity[],
+  startDate: Date,
+  daysCount: number = 14,
+  type: CalendarType = 'jalali',
+  today: Date = new Date()
+): AgendaDayGroup[] {
+  const groups: AgendaDayGroup[] = [];
+  const base = new Date(startDate);
+  base.setHours(12, 0, 0, 0);
+
+  for (let i = 0; i < daysCount; i++) {
+    const d = new Date(base);
+    d.setDate(d.getDate() + i);
+
+    const isToday =
+      d.getFullYear() === today.getFullYear() &&
+      d.getMonth() === today.getMonth() &&
+      d.getDate() === today.getDate();
+
+    const dayTasks = tasks
+      .filter((t) => isTaskOnDate(t, d))
+      .sort((a, b) => {
+        // Uncompleted tasks first
+        const aCompleted = a.completedAt != null;
+        const bCompleted = b.completedAt != null;
+        if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
+
+        // Higher priority first
+        if (b.priority !== a.priority) return b.priority - a.priority;
+
+        // Time comparison
+        const aTime = a.dueDate ? new Date(a.dueDate).getTime() : 0;
+        const bTime = b.dueDate ? new Date(b.dueDate).getTime() : 0;
+        return aTime - bTime;
+      });
+
+    let dayLabel: string;
+    let weekdayName: string;
+    let isoDate: string;
+
+    if (type === 'jalali') {
+      const jd = dateToJalali(d);
+      dayLabel = `${toPersianDigits(jd.day)} ${PERSIAN_MONTH_NAMES[jd.month - 1]} ${toPersianDigits(jd.year)}`;
+      weekdayName = PERSIAN_WEEKDAY_NAMES[getPersianWeekday(d)] ?? '';
+      isoDate = jalaliToIso(jd.year, jd.month, jd.day, 0, 0, true);
+    } else {
+      dayLabel = `${GREGORIAN_MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+      weekdayName = GREGORIAN_WEEKDAY_NAMES[d.getDay()] ?? '';
+      isoDate = d.toISOString();
+    }
+
+    groups.push({
+      date: d,
+      isoDate,
+      dayLabel,
+      weekdayName,
+      isToday,
+      tasks: dayTasks
+    });
+  }
+
+  return groups;
 }
