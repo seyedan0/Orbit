@@ -1,0 +1,229 @@
+.weekViewContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e0e0e5;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.weekColumnsGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+  min-height: 400px;
+}
+
+.dayColumn {
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.15s ease;
+}
+
+.dayColumn:hover {
+  border-color: #cbd5e1;
+}
+
+.todayColumn {
+  background: #f0f7ff;
+  border-color: #4f7cff;
+  box-shadow: 0 0 0 1px #4f7cff;
+}
+
+.columnHeader {
+  display: flex;
+  flex-direction: column;
+  padding: 0.6rem 0.5rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 0.25rem;
+}
+
+.todayColumn .columnHeader {
+  background: #e8f2ff;
+}
+
+.headerTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.weekdayTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.dateBadge {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.todayColumn .weekdayTitle {
+  color: #1e3bb3;
+}
+
+.todayColumn .dateBadge {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.addTaskBtn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.addTaskBtn:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.columnTasksList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.taskItemCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.45rem 0.55rem;
+  background: #ffffff;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  border-left: 3px solid #94a3b8;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.taskItemCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.taskHeaderRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.taskCheckbox {
+  cursor: pointer;
+  accent-color: #4f7cff;
+  width: 15px;
+  height: 15px;
+  margin: 0;
+}
+
+.taskTitle {
+  font-size: 0.85rem;
+  color: #1e293b;
+  font-weight: 500;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.taskCompleted {
+  opacity: 0.6;
+}
+
+.taskCompleted .taskTitle {
+  text-decoration: line-through;
+  color: #64748b;
+}
+
+.taskMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.timeBadge {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.35rem;
+  background: #f1f5f9;
+  color: #475569;
+  border-radius: 4px;
+}
+
+.allDayBadge {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.35rem;
+  background: #e0f2fe;
+  color: #0369a1;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.priorityBadge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+}
+
+.priorityP1 {
+  border-left-color: #ef4444;
+}
+
+.priorityP1 .priorityBadge {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.priorityP2 {
+  border-left-color: #f59e0b;
+}
+
+.priorityP2 .priorityBadge {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.priorityP3 {
+  border-left-color: #3b82f6;
+}
+
+.priorityP3 .priorityBadge {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.emptyColumnMsg {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+@media (max-width: 900px) {
+  .weekColumnsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .weekColumnsGrid {
+    grid-template-columns: 1fr;
+  }
+}

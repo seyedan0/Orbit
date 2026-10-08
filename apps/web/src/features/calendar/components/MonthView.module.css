@@ -1,0 +1,173 @@
+.monthViewContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e0e0e5;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.weekdayHeaderGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+  border-bottom: 1px solid #eaeaea;
+  padding-bottom: 0.6rem;
+}
+
+.weekdayHeader {
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #636e72;
+}
+
+.daysGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+}
+
+.emptyCell {
+  min-height: 105px;
+  background: #fafafc;
+  border-radius: 8px;
+  border: 1px dashed #efefef;
+}
+
+.dayCell {
+  min-height: 105px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.dayCell:hover {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+}
+
+.todayCell {
+  background-color: #f0f7ff;
+  border-color: #4f7cff;
+  box-shadow: 0 0 0 1px #4f7cff;
+}
+
+.dayCellHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dayNumber {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+}
+
+.todayNumber {
+  background-color: #4f7cff;
+  color: #ffffff;
+}
+
+.addTaskBtn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.12s ease;
+}
+
+.addTaskBtn:hover {
+  background-color: #e2e8f0;
+  color: #1e293b;
+  opacity: 1;
+}
+
+.dayTasksList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow-y: auto;
+  max-height: 120px;
+}
+
+.taskItemCard {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.4rem;
+  background: #f1f5f9;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  border-left: 3px solid #94a3b8;
+  transition: background-color 0.1s ease;
+}
+
+.taskItemCard:hover {
+  background: #e2e8f0;
+}
+
+.taskCompleted {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
+.taskCheckbox {
+  cursor: pointer;
+  accent-color: #4f7cff;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+}
+
+.taskTitle {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #334155;
+}
+
+.priorityP1 {
+  border-left-color: #ef4444;
+}
+
+.priorityP2 {
+  border-left-color: #f59e0b;
+}
+
+.priorityP3 {
+  border-left-color: #3b82f6;
+}
+
+@media (max-width: 768px) {
+  .dayCell {
+    min-height: 80px;
+    padding: 0.25rem;
+  }
+
+  .dayNumber {
+    font-size: 0.75rem;
+  }
+}
