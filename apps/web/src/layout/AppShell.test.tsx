@@ -28,6 +28,7 @@ describe('AppShell with sync status integration', () => {
     // Verify nav items
     expect(html).toContain('امروز');
     expect(html).toContain('فردا');
+    expect(html).toContain('تقویم');
     expect(html).toContain('صندوق ورودی');
     expect(html).toContain('تنظیمات');
 

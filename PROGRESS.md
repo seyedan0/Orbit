@@ -5,19 +5,20 @@
 ## وضعیت کلی
 
 - **مرحله:** فاز ۴، مدیریت زمان و تقویم
-- **آخرین به‌روزرسانی:** 2026-10-05
+- **آخرین به‌روزرسانی:** 2026-10-08
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 20% (فاز ۴)
-- **Branch فعال:** `feature/calendar-jalali-foundation`
+- **درصد تقریبی پیشرفت:** 35% (فاز ۴)
+- **Branch فعال:** `feature/web-calendar-views`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-پیاده‌سازی زیرساخت تقویم، موتور محاسباتی تقویم شمسی (جلالی / هجری خورشیدی) بدون وابستگی خارجی با الگوریتم دقیق ۳۳ ساله برکوفسکی، کامپوننت DatePicker دوگانه با پشتیبانی از سوئیچ تقویم شمسی و میلادی و زمان‌بندی تمام‌روز/ساعت، یکپارچه‌سازی با TaskForm و سرویس task-service جهت زمان‌بندی تسک‌ها و صدور جهش‌های PARTIAL UPDATE با fieldTimestamps، و پیاده‌سازی نماهای زمانی «امروز» (Today) و «فردا» (Tomorrow) همراه با لینک‌های ناوبری سایدبار.
+پیاده‌سازی نماهای تعاملی ماهانه (`MonthView`) و هفتگی (`WeekView`) با پشتیبانی دوگانه شمسی (جلالی) و میلادی در وب (`CalendarPage`)، ناوبری بازه‌های زمانی، نمایش تسک‌های زمان‌بندی‌شده، ایجاد سریع تسک و تغییر وضعیت تکمیل مستقیم از روی تقویم.
 
 ## کارهای در حال انجام
 
-- [ ] طراحی و پیاده‌سازی نماهای تقویم هفتگی و ماهانه (P4-CAL-002)
+- [ ] بازبینی و PR شاخه `feature/web-calendar-views` به `develop`
+- [ ] گام بعدی فاز ۴: نماهای روزانه (Day View)، Agenda و Time Blocking با Drag & Drop
 
 ## کارهای انجام‌شده
 
@@ -69,8 +70,45 @@
 - [x] **P4-CAL-001:** پیاده‌سازی زیرساخت تقویم، موتور بدون وابستگی محاسباتی شمسی (Jalali)، کامپوننت انتخاب تاریخ و زمان (DatePicker دوگانه شمسی/میلادی)، یکپارچه‌سازی زمان‌بندی تسک‌ها در سرویس و فرم تسک، و نماهای زمانی «امروز» (Today) و «فردا» (Tomorrow) همراه با لینک‌های سایدبار
 - [x] ادغام PR شماره ۱۹ (`feature/calendar-jalali-foundation`) در `develop`
 - [x] **P4-DOC-001:** تدوین سند جامع معماری محصول و استراتژی فنی (`docs/product-architecture.md`) بر پایه بنچ‌مارک تیک‌تیک، فلسفه FOSS و رایگان‌سازی امکانات پولی، چرخه بهره‌وری ۶ مرحله‌ای، هوش مصنوعی باز BYOK/MCP، رتبه‌بندی LexoRank، و به‌روزرسانی سراسری اسناد `vision`، `architecture`، `feature-catalog`، `roadmap`، `project-plan` و `README`
+- [x] **P4-CAL-002:** پیاده‌سازی نماهای تعاملی ماهانه و هفتگی با پشتیبانی دوگانه تقویم شمسی/میلادی در وب، افزودن مسیر `/calendar` و لینک ناوبری سایدبار، ایجاد سریع تسک و مدیریت تکمیل تسک از تقویم
 
 ## فعالیت AIها
+
+### 2026-10-08 | P4-CAL-002 | نماهای ماهانه و هفتگی تقویم در وب با پشتیبانی شمسی و میلادی
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی نماهای تعاملی ماهانه و هفتگی تقویم با پشتیبانی کامل از سیستم‌های تقویم شمسی و میلادی در رابط کاربری وب
+- **انجام‌شده:**
+  - ایجاد توابع کمکی تقویم در `apps/web/src/features/calendar/calendar-utils.ts` شامل ناوبری ماهانه و هفتگی، تطبیق تسک‌ها بر اساس سررسید/شروع، و تولید خانه‌های تقویم ماهانه و ستون‌های هفتگی.
+  - پیاده‌سازی کامپوننت `MonthView` در `apps/web/src/features/calendar/components/MonthView.tsx` با گرید ۷ ستونه (شنبه تا جمعه برای شمسی و یکشنبه تا شنبه برای میلادی)، نمایش کارت‌های تسک با رنگ اولویت، برجسته‌سازی امروز، و کلید افزودن تسک.
+  - پیاده‌سازی کامپوننت `WeekView` در `apps/web/src/features/calendar/components/WeekView.tsx` با ۷ ستون روزهای هفته جاری، نمایش نشانگرهای زمانی و تمام‌روز، برچسب اولویت و امکان تکمیل مستقیم تسک‌ها.
+  - پیاده‌سازی صفحه `CalendarPage` در `apps/web/src/features/calendar/pages/CalendarPage.tsx` با نوار ابزار کامل شامل سوئیچ بین نماهای ماه/هفته، سوئیچ بین تقویم شمسی/میلادی، کلیدهای ناوبری «قبلی»، «بعدی» و «امروز»، عنوان پویای ماه و سال، و مدال ایجاد سریع تسک با تاریخ از پیش تعیین‌شده.
+  - افزودن مسیر `/calendar` در `apps/web/src/app/routes.tsx` و لینک «تقویم» در ناوبری `AppShell.tsx` همراه با `aria-label` و `data-testid`.
+  - صادرات کامپوننت‌ها و توابع در `apps/web/src/features/calendar/index.ts`.
+  - افزودن آزمون‌های جامع کامپوننت و صفحه در `apps/web/src/features/calendar/pages/CalendarPage.test.tsx` (۸ تست جدید).
+- **فایل‌ها:**
+  - `apps/web/src/features/calendar/calendar-utils.ts`
+  - `apps/web/src/features/calendar/components/MonthView.module.css`
+  - `apps/web/src/features/calendar/components/MonthView.tsx`
+  - `apps/web/src/features/calendar/components/WeekView.module.css`
+  - `apps/web/src/features/calendar/components/WeekView.tsx`
+  - `apps/web/src/features/calendar/pages/CalendarPage.module.css`
+  - `apps/web/src/features/calendar/pages/CalendarPage.tsx`
+  - `apps/web/src/features/calendar/pages/CalendarPage.test.tsx`
+  - `apps/web/src/features/calendar/index.ts`
+  - `apps/web/src/app/routes.tsx`
+  - `apps/web/src/layout/AppShell.tsx`
+  - `apps/web/src/layout/AppShell.test.tsx`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npm run lint`: موفق با ۰ خطا و ۰ هشدار
+  - `npm run typecheck`: موفق با ۰ خطا در تمام پکیج‌ها و اپلیکیشن‌ها
+  - `npm run test --workspace @orbit/web`: موفق؛ تمام ۲۲۰ تست کلاینت وب با موفقیت پاس شدند
+  - `npm run build`: موفق؛ کامپایل و بیلد بدون خطای Vite و TypeScript
+  - `git diff --check`: بدون خطای فاصله‌گذاری
+- **وضعیت:** آماده در شاخه `feature/web-calendar-views` جهت بازبینی کاربر
+- **گام بعدی:** پیاده‌سازی نمای روزانه (Day View)، نمای Agenda و قابلیت Time Blocking
 
 ### 2026-10-05 | تدوین سند جامع معماری محصول و همگام‌سازی مستندات
 

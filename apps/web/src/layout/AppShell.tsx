@@ -6,6 +6,7 @@ import styles from './AppShell.module.css';
 const NAV_ITEMS = [
   { to: '/today', label: 'امروز' },
   { to: '/tomorrow', label: 'فردا' },
+  { to: '/calendar', label: 'تقویم' },
   { to: '/inbox', label: 'صندوق ورودی' },
   { to: '/settings', label: 'تنظیمات' }
 ] as const;
@@ -29,7 +30,13 @@ export function AppShell() {
           <ul>
             {NAV_ITEMS.map((item) => (
               <li key={item.to}>
-                <NavLink to={item.to}>{item.label}</NavLink>
+                <NavLink
+                  to={item.to}
+                  aria-label={item.label}
+                  data-testid={`nav-${item.to.replace('/', '')}`}
+                >
+                  {item.label}
+                </NavLink>
               </li>
             ))}
           </ul>
