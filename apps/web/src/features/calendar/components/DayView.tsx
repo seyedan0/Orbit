@@ -1,5 +1,5 @@
 import type { TaskEntity } from '@orbit/shared-types';
-import type { FC } from 'react';
+import { useState, type FC } from 'react';
 import {
   getDayHourSlots,
   getTaskHour,
@@ -15,6 +15,8 @@ export interface DayViewProps {
   tasks: TaskEntity[];
   onToggleCompletion?: (task: TaskEntity) => void;
   onAddTask?: (date: Date, isoDate: string, hour?: number) => void;
+  onRescheduleTaskHour?: (taskId: string, hour: number, isAllDay?: boolean) => void;
+  onResizeTaskDuration?: (taskId: string, newDurationMinutes: number) => void;
   today?: Date;
 }
 
@@ -24,8 +26,14 @@ export const DayView: FC<DayViewProps> = ({
   tasks,
   onToggleCompletion,
   onAddTask,
+  onRescheduleTaskHour,
+  onResizeTaskDuration,
   today = new Date()
 }) => {
+  const [dragOverHour, setDragOverHour] = useState<number | null>(null);
+  const [isAllDayDragOver, setIsAllDayDragOver] = useState(false);
+  const [resizingTask, setResizingTask] = useState<{ id: string; duration: number } | null>(null);
+
   const isToday =
     currentDate.getFullYear() === today.getFullYear() &&
     currentDate.getMonth() === today.getMonth() &&
@@ -65,6 +73,35 @@ export const DayView: FC<DayViewProps> = ({
     return calendarType === 'jalali' ? toPersianDigits(str) : str;
   };
 
+  const handleResizeMouseDown = (e: React.MouseEvent, task: TaskEntity) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const startY = e.clientY;
+    const initialDuration = task.duration ?? 60;
+
+    const onMouseMove = (moveEvt: MouseEvent) => {
+      const deltaY = moveEvt.clientY - startY;
+      const deltaSteps = Math.round(deltaY / 14);
+      const newDuration = Math.max(15, initialDuration + deltaSteps * 15);
+      setResizingTask({ id: task.id, duration: newDuration });
+    };
+
+    const onMouseUp = (upEvt: MouseEvent) => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      const deltaY = upEvt.clientY - startY;
+      const deltaSteps = Math.round(deltaY / 14);
+      const finalDuration = Math.max(15, initialDuration + deltaSteps * 15);
+      setResizingTask(null);
+      if (finalDuration !== initialDuration) {
+        onResizeTaskDuration?.(task.id, finalDuration);
+      }
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  };
+
   return (
     <div
       className={styles.dayViewContainer}
@@ -73,7 +110,29 @@ export const DayView: FC<DayViewProps> = ({
       data-testid="day-view"
     >
       {/* Pinned All-Day Section */}
-      <div className={styles.allDaySection} data-testid="day-allday-section">
+      <div
+        className={`${styles.allDaySection} ${
+          isAllDayDragOver ? styles.allDaySectionDragOver : ''
+        }`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          setIsAllDayDragOver(true);
+        }}
+        onDragLeave={(e) => {
+          if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+          setIsAllDayDragOver(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsAllDayDragOver(false);
+          const taskId = e.dataTransfer.getData('text/plain');
+          if (taskId) {
+            onRescheduleTaskHour?.(taskId, 0, true);
+          }
+        }}
+        data-testid="day-allday-section"
+      >
         <div className={styles.allDayHeader}>
           <span className={styles.allDayTitle}>
             <span>تمام روز</span>
@@ -117,6 +176,15 @@ export const DayView: FC<DayViewProps> = ({
                   className={`${styles.allDayCard} ${
                     isCompleted ? styles.taskCompleted : ''
                   } ${priorityClass}`}
+                  draggable={true}
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('text/plain', task.id);
+                    e.dataTransfer.setData(
+                      'application/json',
+                      JSON.stringify({ taskId: task.id, isAllDay: true })
+                    );
+                    e.dataTransfer.effectAllowed = 'move';
+                  }}
                   data-testid={`day-task-${task.id}`}
                 >
                   <input
@@ -171,6 +239,7 @@ export const DayView: FC<DayViewProps> = ({
           const slotTasks = timedTasks.filter(
             (t) => getTaskHour(t) === slot.hour
           );
+          const isSlotDragOver = dragOverHour === slot.hour;
 
           return (
             <div
@@ -183,10 +252,31 @@ export const DayView: FC<DayViewProps> = ({
               </div>
 
               <div
-                className={styles.slotTrack}
+                className={`${styles.slotTrack} ${
+                  isSlotDragOver ? styles.slotTrackDragOver : ''
+                }`}
                 onClick={() => {
                   const slotIso = getSlotIsoDate(slot.hour);
                   onAddTask?.(currentDate, slotIso, slot.hour);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                  if (dragOverHour !== slot.hour) {
+                    setDragOverHour(slot.hour);
+                  }
+                }}
+                onDragLeave={(e) => {
+                  if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                  setDragOverHour(null);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOverHour(null);
+                  const taskId = e.dataTransfer.getData('text/plain');
+                  if (taskId) {
+                    onRescheduleTaskHour?.(taskId, slot.hour, false);
+                  }
                 }}
                 data-testid={`slot-track-${slot.hour}`}
               >
@@ -201,43 +291,94 @@ export const DayView: FC<DayViewProps> = ({
                           ? styles.priorityP3
                           : '';
 
+                  const effectiveDuration =
+                    task.id === resizingTask?.id
+                      ? resizingTask.duration
+                      : (task.duration ?? 60);
+
+                  const cardMinHeight = Math.max(
+                    42,
+                    Math.round((effectiveDuration / 60) * 56)
+                  );
+
                   return (
                     <div
                       key={task.id}
                       className={`${styles.timedTaskCard} ${
                         isCompleted ? styles.taskCompleted : ''
                       } ${priorityClass}`}
+                      style={{ minHeight: `${cardMinHeight}px` }}
+                      draggable={true}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', task.id);
+                        e.dataTransfer.setData(
+                          'application/json',
+                          JSON.stringify({
+                            taskId: task.id,
+                            isAllDay: false,
+                            hour: slot.hour
+                          })
+                        );
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
                       onClick={(e) => e.stopPropagation()}
                       data-testid={`day-task-${task.id}`}
                     >
-                      <input
-                        type="checkbox"
-                        className={styles.taskCheckbox}
-                        checked={isCompleted}
-                        onChange={() => onToggleCompletion?.(task)}
-                        aria-label={`تکمیل ${task.title}`}
-                        data-testid={`day-task-checkbox-${task.id}`}
-                      />
-                      <span
-                        className={styles.taskTitle}
-                        data-testid={`day-task-title-${task.id}`}
-                      >
-                        {task.title}
-                      </span>
-                      <span
-                        className={styles.timeTag}
-                        data-testid={`day-task-time-${task.id}`}
-                      >
-                        {formatTaskTime(task)}
-                      </span>
-                      {task.priority > 0 && (
+                      <div className={styles.timedCardContent}>
+                        <input
+                          type="checkbox"
+                          className={styles.taskCheckbox}
+                          checked={isCompleted}
+                          onChange={() => onToggleCompletion?.(task)}
+                          aria-label={`تکمیل ${task.title}`}
+                          data-testid={`day-task-checkbox-${task.id}`}
+                        />
                         <span
-                          className={styles.priorityBadge}
-                          data-testid={`day-task-priority-${task.id}`}
+                          className={styles.taskTitle}
+                          data-testid={`day-task-title-${task.id}`}
                         >
-                          P{task.priority}
+                          {task.title}
                         </span>
-                      )}
+                        <span
+                          className={styles.timeTag}
+                          data-testid={`day-task-time-${task.id}`}
+                        >
+                          {formatTaskTime(task)}
+                        </span>
+                        <span
+                          className={styles.durationBadge}
+                          data-testid={`day-task-duration-${task.id}`}
+                        >
+                          {calendarType === 'jalali'
+                            ? `${toPersianDigits(effectiveDuration)} دقیقه`
+                            : `${effectiveDuration}m`}
+                        </span>
+                        {task.priority > 0 && (
+                          <span
+                            className={styles.priorityBadge}
+                            data-testid={`day-task-priority-${task.id}`}
+                          >
+                            P{task.priority}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Bottom Resize Handle */}
+                      <div
+                        className={styles.resizeHandle}
+                        onMouseDown={(e) => handleResizeMouseDown(e, task)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const nextDuration =
+                            effectiveDuration >= 120 ? 30 : effectiveDuration + 15;
+                          onResizeTaskDuration?.(task.id, nextDuration);
+                        }}
+                        role="separator"
+                        aria-label={`تغییر مدت‌زمان تسک ${task.title}`}
+                        aria-valuenow={effectiveDuration}
+                        data-testid={`resize-handle-${task.id}`}
+                        title="تغییر مدت‌زمان (بکشید یا کلیک کنید)"
+                      />
                     </div>
                   );
                 })}

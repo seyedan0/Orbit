@@ -170,6 +170,53 @@ export function getTaskHour(task: TaskEntity): number | null {
 }
 
 /**
+ * Takes an original ISO timestamp and shifts its calendar date to targetDate,
+ * preserving existing hours, minutes, seconds, and milliseconds.
+ */
+export function rescheduleDatePreservingTime(
+  originalIso: string | null | undefined,
+  targetDate: Date
+): string {
+  const target = new Date(targetDate);
+  if (!originalIso) {
+    target.setHours(0, 0, 0, 0);
+    return target.toISOString();
+  }
+  const orig = new Date(originalIso);
+  if (isNaN(orig.getTime())) {
+    target.setHours(0, 0, 0, 0);
+    return target.toISOString();
+  }
+  target.setHours(
+    orig.getHours(),
+    orig.getMinutes(),
+    orig.getSeconds(),
+    orig.getMilliseconds()
+  );
+  return target.toISOString();
+}
+
+/**
+ * Computes startDate and dueDate for scheduling a task onto a target day and hour.
+ */
+export function rescheduleTaskToHour(
+  targetDate: Date,
+  hour: number,
+  durationMinutes: number = 60
+): { startDate: string; dueDate: string } {
+  const start = new Date(targetDate);
+  start.setHours(hour, 0, 0, 0);
+
+  const durationMs = Math.max(15, durationMinutes) * 60 * 1000;
+  const due = new Date(start.getTime() + durationMs);
+
+  return {
+    startDate: start.toISOString(),
+    dueDate: due.toISOString()
+  };
+}
+
+/**
  * Generates the 24 hourly slots (00:00 to 23:00) with localized digits.
  */
 export function getDayHourSlots(type: CalendarType): HourSlot[] {

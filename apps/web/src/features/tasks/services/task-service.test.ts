@@ -12,6 +12,7 @@ import {
   deleteTask,
   restoreTask,
   scheduleTask,
+  rescheduleTask,
   isDueToday,
   isDueTomorrow,
   filterTasksDueToday,
@@ -937,6 +938,165 @@ describe('Task Scheduling (P4-CAL-001)', () => {
 
     const mutations = await store.listPendingMutations(10);
     expect(mutations).toHaveLength(1); // Only CREATE mutation
+  });
+});
+
+describe('rescheduleTask (P4-CAL-004)', () => {
+  it('reschedules dueDate, startDate, duration, and isAllDay atomically', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      { title: 'Time block task' },
+      { store, userId: 'user-1' }
+    );
+
+    const nowIso = '2026-10-05T08:30:00.000Z';
+    const updated = await rescheduleTask(
+      store,
+      task.id,
+      {
+        startDate: '2026-10-05T09:00:00.000Z',
+        dueDate: '2026-10-05T10:00:00.000Z',
+        duration: 60,
+        isAllDay: false
+      },
+      {
+        now: () => new Date(nowIso),
+        newId: () => 'mut-reschedule-1'
+      }
+    );
+
+    expect(updated.startDate).toBe('2026-10-05T09:00:00.000Z');
+    expect(updated.dueDate).toBe('2026-10-05T10:00:00.000Z');
+    expect(updated.duration).toBe(60);
+    expect(updated.isAllDay).toBe(false);
+    expect(updated.allDay).toBe(false);
+    expect(updated.updatedAt).toBe(nowIso);
+    expect(updated.localStatus).toBe('CREATED'); // version is 0
+
+    // Verify stored entity
+    const inStore = await store.getTask(task.id);
+    expect(inStore?.startDate).toBe('2026-10-05T09:00:00.000Z');
+    expect(inStore?.dueDate).toBe('2026-10-05T10:00:00.000Z');
+    expect(inStore?.duration).toBe(60);
+    expect(inStore?.isAllDay).toBe(false);
+
+    // Verify sync mutation
+    const mutations = await store.listPendingMutations(10);
+    const updateMut = mutations.find((m) => m.id === 'mut-reschedule-1');
+    expect(updateMut).toBeDefined();
+    expect(updateMut?.operation).toBe('UPDATE');
+    expect(updateMut?.payloadType).toBe('PARTIAL');
+    expect(updateMut?.payload).toEqual({
+      startDate: '2026-10-05T09:00:00.000Z',
+      dueDate: '2026-10-05T10:00:00.000Z',
+      duration: 60,
+      isAllDay: false,
+      allDay: false
+    });
+    expect(updateMut?.fieldTimestamps).toEqual({
+      startDate: nowIso,
+      dueDate: nowIso,
+      duration: nowIso,
+      isAllDay: nowIso
+    });
+  });
+
+  it('updates localStatus to UPDATED when version > 0', async () => {
+    const store = makeStore();
+    const task = await createTask({ title: 'Synced task' }, { store, userId: 'user-1' });
+    const syncedTask = { ...task, version: 1, localStatus: 'SYNCED' as const };
+    await store.saveTask(syncedTask);
+
+    const updated = await rescheduleTask(
+      store,
+      task.id,
+      { isAllDay: true },
+      { newId: () => 'mut-reschedule-2' }
+    );
+
+    expect(updated.version).toBe(1);
+    expect(updated.localStatus).toBe('UPDATED');
+    expect(updated.isAllDay).toBe(true);
+  });
+
+  it('allows clearing scheduling fields with null', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      {
+        title: 'Task with dates',
+        startDate: '2026-10-05T09:00:00.000Z',
+        dueDate: '2026-10-05T10:00:00.000Z',
+        duration: 60
+      },
+      { store, userId: 'user-1' }
+    );
+
+    const updated = await rescheduleTask(
+      store,
+      task.id,
+      {
+        startDate: null,
+        dueDate: null,
+        duration: null
+      },
+      { newId: () => 'mut-clear-1' }
+    );
+
+    expect(updated.startDate).toBeNull();
+    expect(updated.dueDate).toBeNull();
+    expect(updated.duration).toBeNull();
+
+    const mutations = await store.listPendingMutations(10);
+    const updateMut = mutations.find((m) => m.id === 'mut-clear-1');
+    expect(updateMut?.payload).toEqual({
+      startDate: null,
+      dueDate: null,
+      duration: null
+    });
+  });
+
+  it('throws TaskValidationError if startDate > dueDate', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      {
+        title: 'Validation task',
+        dueDate: '2026-10-05T09:00:00.000Z'
+      },
+      { store, userId: 'user-1' }
+    );
+
+    await expect(
+      rescheduleTask(store, task.id, {
+        startDate: '2026-10-05T10:00:00.000Z' // start > due
+      })
+    ).rejects.toThrow(TaskValidationError);
+  });
+
+  it('throws TaskValidationError if duration is negative', async () => {
+    const store = makeStore();
+    const task = await createTask({ title: 'Duration test' }, { store, userId: 'user-1' });
+
+    await expect(
+      rescheduleTask(store, task.id, { duration: -15 })
+    ).rejects.toThrow(TaskValidationError);
+  });
+
+  it('throws TaskNotFoundError if task does not exist', async () => {
+    const store = makeStore();
+    await expect(
+      rescheduleTask(store, 'unknown-task-id', { duration: 30 })
+    ).rejects.toThrow(TaskNotFoundError);
+  });
+
+  it('returns unchanged task if no reschedule updates are provided', async () => {
+    const store = makeStore();
+    const task = await createTask({ title: 'No changes' }, { store, userId: 'user-1' });
+
+    const updated = await rescheduleTask(store, task.id, {});
+    expect(updated).toEqual(task);
+
+    const mutations = await store.listPendingMutations(10);
+    expect(mutations).toHaveLength(1); // Only initial CREATE mutation
   });
 });
 

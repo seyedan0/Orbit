@@ -13,7 +13,9 @@ import {
   navigateDay,
   getDayHourSlots,
   getAgendaDayGroups,
-  isTaskOnDate
+  isTaskOnDate,
+  rescheduleDatePreservingTime,
+  rescheduleTaskToHour
 } from '../calendar-utils';
 
 function makeTask(overrides: Partial<TaskEntity> = {}): TaskEntity {
@@ -444,5 +446,169 @@ describe('CalendarPage (P4-CAL-002 & P4-CAL-003)', () => {
 
     const otherDate = new Date('2026-10-06T12:00:00.000Z');
     expect(isTaskOnDate(activeTask, otherDate)).toBe(false);
+  });
+});
+
+describe('Time Blocking and Drag-and-Drop Task Scheduling (P4-CAL-004)', () => {
+  const baseDate = new Date('2026-10-05T12:00:00.000Z');
+
+  it('rescheduleDatePreservingTime preserves original time when changing dates', () => {
+    const origIso = '2026-10-01T14:30:15.000Z';
+    const targetDate = new Date('2026-10-12T00:00:00.000Z');
+
+    const resultIso = rescheduleDatePreservingTime(origIso, targetDate);
+    const result = new Date(resultIso);
+    const orig = new Date(origIso);
+
+    expect(result.getFullYear()).toBe(2026);
+    expect(result.getMonth()).toBe(9); // October
+    expect(result.getDate()).toBe(12);
+    expect(result.getHours()).toBe(orig.getHours());
+    expect(result.getMinutes()).toBe(orig.getMinutes());
+    expect(result.getSeconds()).toBe(orig.getSeconds());
+  });
+
+  it('rescheduleDatePreservingTime falls back to midnight when original date is missing or invalid', () => {
+    const targetDate = new Date('2026-10-15T12:00:00.000Z');
+
+    const nullResult = rescheduleDatePreservingTime(null, targetDate);
+    const nullDate = new Date(nullResult);
+    expect(nullDate.getDate()).toBe(15);
+    expect(nullDate.getHours()).toBe(0);
+    expect(nullDate.getMinutes()).toBe(0);
+
+    const invalidResult = rescheduleDatePreservingTime('invalid-date', targetDate);
+    const invalidDate = new Date(invalidResult);
+    expect(invalidDate.getDate()).toBe(15);
+    expect(invalidDate.getHours()).toBe(0);
+  });
+
+  it('rescheduleTaskToHour calculates accurate start and due dates with duration', () => {
+    const targetDate = new Date('2026-10-05T00:00:00.000Z');
+    const { startDate, dueDate } = rescheduleTaskToHour(targetDate, 14, 90);
+
+    const start = new Date(startDate);
+    const due = new Date(dueDate);
+
+    expect(start.getHours()).toBe(14);
+    expect(start.getMinutes()).toBe(0);
+    expect(due.getHours()).toBe(15);
+    expect(due.getMinutes()).toBe(30);
+    expect(due.getTime() - start.getTime()).toBe(90 * 60 * 1000);
+  });
+
+  it('renders task cards with draggable attribute in Month view', () => {
+    const store = new MemoryLocalStore();
+    const task = makeTask({
+      id: 'task-drag-month',
+      title: 'تسک قابل درگ در ماه',
+      dueDate: '2026-10-05T00:00:00.000Z'
+    });
+
+    const html = renderToStaticMarkup(
+      <SessionProvider>
+        <StoreProvider store={store}>
+          <CalendarPage
+            initialDate={baseDate}
+            initialCalendarType="jalali"
+            initialViewMode="month"
+            initialTasks={[task]}
+          />
+        </StoreProvider>
+      </SessionProvider>
+    );
+
+    expect(html).toContain('data-testid="calendar-task-task-drag-month"');
+    expect(html).toContain('draggable="true"');
+  });
+
+  it('renders draggable timed tasks with resize handles and duration badges in Day view', () => {
+    const store = new MemoryLocalStore();
+    const timedTask = makeTask({
+      id: 'task-timed-block',
+      title: 'جلسه بازبینی کد',
+      dueDate: '2026-10-05T11:00:00.000Z',
+      isAllDay: false,
+      duration: 45
+    });
+
+    const html = renderToStaticMarkup(
+      <SessionProvider>
+        <StoreProvider store={store}>
+          <CalendarPage
+            initialDate={baseDate}
+            initialCalendarType="jalali"
+            initialViewMode="day"
+            initialTasks={[timedTask]}
+          />
+        </StoreProvider>
+      </SessionProvider>
+    );
+
+    // Assert timed task renders draggable
+    expect(html).toContain('data-testid="day-task-task-timed-block"');
+    expect(html).toContain('draggable="true"');
+
+    // Assert resize handle exists with separator role and test ID
+    expect(html).toContain('data-testid="resize-handle-task-timed-block"');
+    expect(html).toContain('role="separator"');
+    expect(html).toContain('aria-label="تغییر مدت‌زمان تسک جلسه بازبینی کد"');
+
+    // Assert duration badge displays Persian formatted minutes
+    expect(html).toContain('data-testid="day-task-duration-task-timed-block"');
+    expect(html).toContain('۴۵ دقیقه');
+  });
+
+  it('renders duration badge in English when calendar is Gregorian', () => {
+    const store = new MemoryLocalStore();
+    const timedTask = makeTask({
+      id: 'task-greg-block',
+      title: 'Team Sync',
+      dueDate: '2026-10-05T14:00:00.000Z',
+      isAllDay: false,
+      duration: 90
+    });
+
+    const html = renderToStaticMarkup(
+      <SessionProvider>
+        <StoreProvider store={store}>
+          <CalendarPage
+            initialDate={baseDate}
+            initialCalendarType="gregorian"
+            initialViewMode="day"
+            initialTasks={[timedTask]}
+          />
+        </StoreProvider>
+      </SessionProvider>
+    );
+
+    expect(html).toContain('data-testid="day-task-duration-task-greg-block"');
+    expect(html).toContain('90m');
+  });
+
+  it('renders all-day tasks as draggable in Day view', () => {
+    const store = new MemoryLocalStore();
+    const allDayTask = makeTask({
+      id: 'task-allday-drag',
+      title: 'رویداد تمام‌روز برای درگ',
+      dueDate: '2026-10-05T00:00:00.000Z',
+      isAllDay: true
+    });
+
+    const html = renderToStaticMarkup(
+      <SessionProvider>
+        <StoreProvider store={store}>
+          <CalendarPage
+            initialDate={baseDate}
+            initialCalendarType="jalali"
+            initialViewMode="day"
+            initialTasks={[allDayTask]}
+          />
+        </StoreProvider>
+      </SessionProvider>
+    );
+
+    expect(html).toContain('data-testid="day-task-task-allday-drag"');
+    expect(html).toContain('draggable="true"');
   });
 });

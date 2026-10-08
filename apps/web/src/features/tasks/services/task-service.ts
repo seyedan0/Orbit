@@ -11,6 +11,7 @@ export interface CreateTaskInput {
   title: string;
   dueDate?: string | null;
   startDate?: string | null;
+  duration?: number | null | undefined;
   isAllDay?: boolean;
   allDay?: boolean;
   timeZone?: string;
@@ -85,6 +86,7 @@ export async function createTask(
   const isAllDay = Boolean(input.isAllDay ?? input.allDay ?? false);
   const startDate = input.startDate ?? null;
   const dueDate = input.dueDate ?? null;
+  const duration = input.duration ?? null;
   const timeZone =
     input.timeZone ??
     input.timezone ??
@@ -106,6 +108,7 @@ export async function createTask(
     allDay: isAllDay,
     startDate,
     dueDate,
+    duration,
     timeZone,
     timezone: timeZone,
     reminders: [],
@@ -136,7 +139,8 @@ export async function createTask(
       reminders: timestamp,
       items: timestamp,
       ...(startDate !== null ? { startDate: timestamp } : {}),
-      ...(dueDate !== null ? { dueDate: timestamp } : {})
+      ...(dueDate !== null ? { dueDate: timestamp } : {}),
+      ...(duration !== null ? { duration: timestamp } : {})
     },
     createdAt: timestamp,
     status: 'PENDING',
@@ -409,6 +413,7 @@ export async function restoreTask(
 export interface ScheduleTaskInput {
   dueDate?: string | null;
   startDate?: string | null;
+  duration?: number | null;
   isAllDay?: boolean;
   allDay?: boolean;
   timeZone?: string;
@@ -469,12 +474,16 @@ export async function scheduleTask(
     ? (input.timeZone ?? input.timezone ?? task.timeZone)
     : task.timeZone;
 
+  const nextDuration: number | null =
+    input.duration !== undefined ? input.duration : (task.duration ?? null);
+
   // Check if anything actually changed
   if (
     !isAllDayChanged &&
     !timeZoneChanged &&
     input.startDate === undefined &&
-    input.dueDate === undefined
+    input.dueDate === undefined &&
+    input.duration === undefined
   ) {
     return task;
   }
@@ -493,6 +502,7 @@ export async function scheduleTask(
     allDay: nextIsAllDay,
     startDate: nextStartDate,
     dueDate: nextDueDate,
+    duration: nextDuration,
     timeZone: nextTimeZone,
     timezone: nextTimeZone,
     updatedAt: timestamp,
@@ -509,6 +519,10 @@ export async function scheduleTask(
   if (input.startDate !== undefined) {
     payload.startDate = nextStartDate;
     fieldTimestamps.startDate = timestamp;
+  }
+  if (input.duration !== undefined) {
+    payload.duration = nextDuration;
+    fieldTimestamps.duration = timestamp;
   }
   if (isAllDayChanged) {
     payload.isAllDay = nextIsAllDay;
@@ -538,6 +552,138 @@ export async function scheduleTask(
   };
 
   await deps.store.saveTaskWithMutation(updatedTask, mutation);
+  return updatedTask;
+}
+
+export interface RescheduleTaskUpdates {
+  dueDate?: string | null | undefined;
+  startDate?: string | null | undefined;
+  duration?: number | null | undefined;
+  isAllDay?: boolean | undefined;
+}
+
+export interface RescheduleTaskDeps {
+  userId?: string;
+  idempotencyKey?: string;
+  now?: () => Date;
+  newId?: () => string;
+}
+
+/**
+ * Atomically reschedules a task (updating dueDate, startDate, duration, and isAllDay):
+ * 1. Verifies that the task exists in storage.
+ * 2. Validates that startDate <= dueDate when both are non-null.
+ * 3. Validates duration is non-negative when provided.
+ * 4. Generates a partial UPDATE mutation with precise fieldTimestamps for LWW sync protocol.
+ * 5. Saves atomically via store.saveTaskWithMutation.
+ */
+export async function rescheduleTask(
+  store: AtomicTaskStore,
+  taskId: string,
+  updates: RescheduleTaskUpdates,
+  deps: RescheduleTaskDeps = {}
+): Promise<TaskEntity> {
+  const task = await store.getTask(taskId);
+  if (!task) {
+    throw new TaskNotFoundError(taskId);
+  }
+
+  const nextStartDate: string | null =
+    updates.startDate !== undefined ? updates.startDate : (task.startDate ?? null);
+  const nextDueDate: string | null =
+    updates.dueDate !== undefined ? updates.dueDate : (task.dueDate ?? null);
+
+  if (
+    nextStartDate &&
+    nextDueDate &&
+    new Date(nextStartDate).getTime() > new Date(nextDueDate).getTime()
+  ) {
+    throw new TaskValidationError(
+      'تاریخ سررسید نمی‌تواند قبل از تاریخ شروع باشد'
+    );
+  }
+
+  if (
+    updates.duration !== undefined &&
+    updates.duration !== null &&
+    updates.duration < 0
+  ) {
+    throw new TaskValidationError('مدت‌زمان نمی‌تواند منفی باشد');
+  }
+
+  const isAllDayChanged = updates.isAllDay !== undefined;
+  const nextIsAllDay = isAllDayChanged ? Boolean(updates.isAllDay) : task.isAllDay;
+
+  const nextDuration: number | null =
+    updates.duration !== undefined ? updates.duration : (task.duration ?? null);
+
+  // Check if anything actually changed
+  if (
+    !isAllDayChanged &&
+    updates.startDate === undefined &&
+    updates.dueDate === undefined &&
+    updates.duration === undefined
+  ) {
+    return task;
+  }
+
+  const now = deps.now ?? (() => new Date());
+  const timestamp = now().toISOString();
+  const newId = deps.newId ?? (() => crypto.randomUUID());
+  const mutationId = newId();
+  const idempotencyKey = deps.idempotencyKey ?? mutationId;
+
+  const nextLocalStatus = task.version === 0 ? 'CREATED' : 'UPDATED';
+
+  const updatedTask: TaskEntity = {
+    ...task,
+    isAllDay: nextIsAllDay,
+    allDay: nextIsAllDay,
+    startDate: nextStartDate,
+    dueDate: nextDueDate,
+    duration: nextDuration,
+    updatedAt: timestamp,
+    localStatus: nextLocalStatus
+  };
+
+  const payload: Partial<TaskEntity> = {};
+  const fieldTimestamps: Record<string, string> = {};
+
+  if (updates.dueDate !== undefined) {
+    payload.dueDate = nextDueDate;
+    fieldTimestamps.dueDate = timestamp;
+  }
+  if (updates.startDate !== undefined) {
+    payload.startDate = nextStartDate;
+    fieldTimestamps.startDate = timestamp;
+  }
+  if (updates.duration !== undefined) {
+    payload.duration = nextDuration;
+    fieldTimestamps.duration = timestamp;
+  }
+  if (isAllDayChanged) {
+    payload.isAllDay = nextIsAllDay;
+    payload.allDay = nextIsAllDay;
+    fieldTimestamps.isAllDay = timestamp;
+  }
+
+  const mutation: SyncQueueEntry = {
+    id: mutationId,
+    idempotencyKey,
+    entityType: 'TASK',
+    entityId: task.id,
+    operation: 'UPDATE',
+    baseVersion: task.version,
+    payloadType: 'PARTIAL',
+    payload,
+    fieldTimestamps,
+    createdAt: timestamp,
+    status: 'PENDING',
+    attemptCount: 0,
+    nextAttemptAt: timestamp
+  };
+
+  await store.saveTaskWithMutation(updatedTask, mutation);
   return updatedTask;
 }
 

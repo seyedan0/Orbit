@@ -14,6 +14,8 @@ import {
   navigateWeek,
   navigateDay,
   navigateAgenda,
+  rescheduleDatePreservingTime,
+  rescheduleTaskToHour,
   type CalendarType,
   type CalendarViewMode
 } from '../calendar-utils';
@@ -24,7 +26,8 @@ import { AgendaView } from '../components/AgendaView';
 import {
   createTask,
   completeTask,
-  reopenTask
+  reopenTask,
+  rescheduleTask
 } from '../../tasks/services/task-service';
 import styles from './CalendarPage.module.css';
 
@@ -144,6 +147,185 @@ export const CalendarPage: FC<CalendarPageProps> = ({
       setTasks(previousTasks);
       setActionError(
         err instanceof Error ? err.message : 'خطا در به‌روزرسانی وضعیت تسک'
+      );
+    }
+  };
+
+  const handleRescheduleMonth = async (
+    taskId: string,
+    targetDate: Date,
+    _targetIsoDate: string
+  ) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    setActionError(null);
+
+    const previousTasks = tasks;
+    const nowIso = new Date().toISOString();
+
+    const newDueDate = rescheduleDatePreservingTime(task.dueDate, targetDate);
+    const newStartDate = task.startDate
+      ? rescheduleDatePreservingTime(task.startDate, targetDate)
+      : (task.startDate ?? null);
+
+    // Optimistic UI update (<50ms)
+    setTasks((current) =>
+      current.map((t) => {
+        if (t.id !== taskId) return t;
+        return {
+          ...t,
+          dueDate: newDueDate,
+          startDate: newStartDate,
+          updatedAt: nowIso
+        };
+      })
+    );
+
+    try {
+      await rescheduleTask(
+        store,
+        taskId,
+        {
+          dueDate: newDueDate,
+          startDate: newStartDate
+        },
+        { userId: session?.userId ?? 'user-default' }
+      );
+      await reload();
+    } catch (err) {
+      setTasks(previousTasks);
+      setActionError(
+        err instanceof Error ? err.message : 'خطا در جابه‌جایی تاریخ تسک'
+      );
+    }
+  };
+
+  const handleRescheduleDayHour = async (
+    taskId: string,
+    hour: number,
+    toAllDay: boolean = false
+  ) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    setActionError(null);
+
+    const previousTasks = tasks;
+    const nowIso = new Date().toISOString();
+
+    let newIsAllDay = toAllDay;
+    let newStartDate: string | null = null;
+    let newDueDate: string | null = null;
+    let newDuration: number | null = null;
+
+    if (toAllDay) {
+      newIsAllDay = true;
+      const base = new Date(currentDate);
+      base.setHours(0, 0, 0, 0);
+      newDueDate = base.toISOString();
+      newStartDate = null;
+      newDuration = null;
+    } else {
+      newIsAllDay = false;
+      const durationMinutes = task.duration ?? 60;
+      const scheduled = rescheduleTaskToHour(currentDate, hour, durationMinutes);
+      newStartDate = scheduled.startDate;
+      newDueDate = scheduled.dueDate;
+      newDuration = durationMinutes;
+    }
+
+    // Optimistic update (<50ms)
+    setTasks((current) =>
+      current.map((t) => {
+        if (t.id !== taskId) return t;
+        return {
+          ...t,
+          isAllDay: newIsAllDay,
+          allDay: newIsAllDay,
+          startDate: newStartDate,
+          dueDate: newDueDate,
+          duration: newDuration,
+          updatedAt: nowIso
+        };
+      })
+    );
+
+    try {
+      await rescheduleTask(
+        store,
+        taskId,
+        {
+          isAllDay: newIsAllDay,
+          startDate: newStartDate,
+          dueDate: newDueDate,
+          duration: newDuration
+        },
+        { userId: session?.userId ?? 'user-default' }
+      );
+      await reload();
+    } catch (err) {
+      setTasks(previousTasks);
+      setActionError(
+        err instanceof Error ? err.message : 'خطا در تنظیم ساعت تسک'
+      );
+    }
+  };
+
+  const handleResizeDayDuration = async (
+    taskId: string,
+    newDurationMinutes: number
+  ) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    setActionError(null);
+
+    const previousTasks = tasks;
+    const nowIso = new Date().toISOString();
+
+    let newDueDate: string | null = task.dueDate ?? null;
+    if (task.startDate) {
+      const s = new Date(task.startDate);
+      if (!isNaN(s.getTime())) {
+        newDueDate = new Date(
+          s.getTime() + newDurationMinutes * 60 * 1000
+        ).toISOString();
+      }
+    } else if (task.dueDate) {
+      const d = new Date(task.dueDate);
+      if (!isNaN(d.getTime())) {
+        newDueDate = new Date(
+          d.getTime() + newDurationMinutes * 60 * 1000
+        ).toISOString();
+      }
+    }
+
+    // Optimistic update (<50ms)
+    setTasks((current) =>
+      current.map((t) => {
+        if (t.id !== taskId) return t;
+        return {
+          ...t,
+          duration: newDurationMinutes,
+          dueDate: newDueDate,
+          updatedAt: nowIso
+        };
+      })
+    );
+
+    try {
+      await rescheduleTask(
+        store,
+        taskId,
+        {
+          duration: newDurationMinutes,
+          dueDate: newDueDate
+        },
+        { userId: session?.userId ?? 'user-default' }
+      );
+      await reload();
+    } catch (err) {
+      setTasks(previousTasks);
+      setActionError(
+        err instanceof Error ? err.message : 'خطا در تغییر مدت‌زمان تسک'
       );
     }
   };
@@ -338,7 +520,11 @@ export const CalendarPage: FC<CalendarPageProps> = ({
 
       {/* Action Error Banner */}
       {actionError && (
-        <div className={styles.actionError} role="alert">
+        <div
+          className={styles.actionError}
+          role="alert"
+          data-testid="calendar-action-error"
+        >
           {actionError}
         </div>
       )}
@@ -358,6 +544,7 @@ export const CalendarPage: FC<CalendarPageProps> = ({
           tasks={tasks}
           onToggleCompletion={handleToggleCompletion}
           onAddTask={(date, isoDate) => handleOpenAddTaskModal(date, isoDate)}
+          onRescheduleTask={handleRescheduleMonth}
         />
       )}
 
@@ -380,6 +567,8 @@ export const CalendarPage: FC<CalendarPageProps> = ({
           onAddTask={(date, isoDate, hour) =>
             handleOpenAddTaskModal(date, isoDate, hour)
           }
+          onRescheduleTaskHour={handleRescheduleDayHour}
+          onResizeTaskDuration={handleResizeDayDuration}
         />
       )}
 

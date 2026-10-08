@@ -7,18 +7,18 @@
 - **مرحله:** فاز ۴، مدیریت زمان و تقویم
 - **آخرین به‌روزرسانی:** 2026-10-08
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 45% (فاز ۴)
-- **Branch فعال:** `feature/web-calendar-day-agenda`
+- **درصد تقریبی پیشرفت:** 50% (فاز ۴)
+- **Branch فعال:** `feature/web-calendar-time-blocking`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-پیاده‌سازی نمای روزانه با تایم‌لاین ۲۴ ساعته (`DayView`) و نمای دستورکار با جریان ترتیبی (`AgendaView`) در تقویم وب با پشتیبانی دوگانه شمسی/میلادی، نشانگر زمان جاری ("هم‌اکنون")، ناوبری روزانه و جهش به امروز، فیلتر تسک‌های تمام‌روز و زمان‌دار، و اعتبارسنجی ۱۰۰ درصدی آزمون‌ها.
+پیاده‌سازی مسدودسازی زمان (Time Blocking) و کشیدن و رها کردن (Drag & Drop) در تقویم وب شامل جابه‌جایی تسک‌ها در نمای ماهانه با حفظ زمان، جابه‌جایی بین اسلات‌های ساعتی و بخش تمام‌روز در نمای روزانه، تغییر مدت‌زمان (Duration Resizing) با دستگیره اختصاصی، به‌روزرسانی خوش‌بینانه (<50ms) با بازگشت امن در صورت خطا، و ثبت mutationهای جزئی با fieldTimestamps دقیق.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی شاخه `feature/web-calendar-day-agenda` توسط کاربر
-- [ ] گام بعدی فاز ۴: قابلیت Time Blocking و کشیدن و رها کردن (Drag & Drop) روی تایم‌لاین تقویم
+- [ ] بازبینی شاخه `feature/web-calendar-time-blocking` توسط کاربر
+- [ ] گام بعدی فاز ۴: موتور تکرار تسک‌ها (Recurrence با قوانین ماه‌های شمسی و RRULE) یا یادآورها (Reminders)
 
 ## کارهای انجام‌شده
 
@@ -72,8 +72,55 @@
 - [x] **P4-DOC-001:** تدوین سند جامع معماری محصول و استراتژی فنی (`docs/product-architecture.md`) بر پایه بنچ‌مارک تیک‌تیک، فلسفه FOSS و رایگان‌سازی امکانات پولی، چرخه بهره‌وری ۶ مرحله‌ای، هوش مصنوعی باز BYOK/MCP، رتبه‌بندی LexoRank، و به‌روزرسانی سراسری اسناد `vision`، `architecture`، `feature-catalog`، `roadmap`، `project-plan` و `README`
 - [x] **P4-CAL-002:** پیاده‌سازی نماهای تعاملی ماهانه و هفتگی با پشتیبانی دوگانه تقویم شمسی/میلادی در وب، افزودن مسیر `/calendar` و لینک ناوبری سایدبار، ایجاد سریع تسک و مدیریت تکمیل تسک از تقویم
 - [x] **P4-CAL-003:** پیاده‌سازی نمای روزانه با تایم‌لاین ساعتی (Day View) و نمای ترتیبی دستورکار (Agenda View) در وب با بخش پین‌شده تسک‌های تمام‌روز، خط قرمز زمان جاری ("هم‌اکنون")، ناوبری روزانه، ایجاد سریع تسک و تغییر وضعیت تکمیل مستقیم
+- [x] **P4-CAL-004:** پیاده‌سازی مسدودسازی زمان (Time Blocking)، کشیدن و رها کردن (Drag & Drop) و تغییر مدت‌زمان تسک‌ها (Duration Resizing) در تقویم وب با به‌روزرسانی خوش‌بینانه (<50ms)، اعتبارسنجی LWW و آزمون‌های دامنه و کامپوننت
 
 ## فعالیت AIها
+
+### 2026-10-08 | P4-CAL-004 | مسدودسازی زمان (Time Blocking) و کشیدن و رها کردن (Drag & Drop) در تقویم وب
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی قابلیت مسدودسازی زمانی تسک‌ها (Time Blocking)، کشیدن و رها کردن (Drag and Drop) تسک‌ها در نماهای ماهانه و روزانه تقویم، تغییر مدت‌زمان (Duration Resizing) با دستگیره اختصاصی و به‌روزرسانی خوش‌بینانه با بازگشت امن در صورت بروز خطا.
+- **انجام‌شده:**
+  - توسعه موجودیت `TaskEntity` در `packages/shared-types/src/task.ts` با افزودن فیلد اختیاری `duration?: number | null | undefined`.
+  - توسعه سرویس دامنه در `apps/web/src/features/tasks/services/task-service.ts`:
+    - پیاده‌سازی تابع `rescheduleTask(store, taskId, updates, deps)` با پشتیبانی از تغییر `dueDate`، `startDate`، `duration` و `isAllDay`.
+    - اعتبارسنجی تقدم تاریخ شروع نسبت به سررسید (`startDate <= dueDate`) و عدم پذیرش مدت‌زمان منفی (`TaskValidationError`).
+    - ثبت اتمیک جهش همگام‌سازی از نوع `UPDATE` با `fieldTimestamps` دقیق برای هر فیلد تغییریافته جهت هماهنگی با پروتکل حل تعارض LWW.
+    - ارتقای `CreateTaskInput` و `scheduleTask` جهت پشتیبانی یکپارچه از `duration`.
+  - ایجاد توابع محاسباتی در `apps/web/src/features/calendar/calendar-utils.ts`:
+    - `rescheduleDatePreservingTime(originalIso, targetDate)` جهت حفظ ساعت، دقیقه و ثانیه هنگام جابه‌جایی روزها در تقویم ماهانه.
+    - `rescheduleTaskToHour(targetDate, hour, durationMinutes)` جهت محاسبه اتمیک `startDate` و `dueDate` بر اساس ساعت مقصد و طول بازه.
+  - تعاملات در نمای ماهانه (`MonthView.tsx` و `MonthView.module.css`):
+    - امکان کشیدن کارت تسک‌ها (`draggable={true}`) با بارگذاری شناسه تسک.
+    - پشتیبانی سلول‌های روز به عنوان مقصد رها کردن (Drop Target) همراه با استایل بصری `dayCellDragOver` و فراخوانی `onRescheduleTask`.
+  - تعاملات در نمای روزانه (`DayView.tsx` و `DayView.module.css`):
+    - امکان کشیدن تسک‌های تمام‌روز و تسک‌های زمان‌دار ساعتی.
+    - پشتیبانی اسلات‌های ساعتی (۰ تا ۲۳) و بخش بالایی تسک‌های تمام‌روز به عنوان مقصد رها کردن با استایل هایلایت فعال.
+    - رها کردن تسک تمام‌روز روی اسلات ساعتی، صفت `isAllDay` را حذف کرده و ساعت را تخصیص می‌دهد.
+    - اضافه شدن دستگیره اختصاصی تغییر اندازه در پایین کارت‌های زمان‌دار (`resizeHandle` با `data-testid="resize-handle-<taskId>"` و `role="separator"`).
+    - پشتیبانی از درگ ماوس برای تغییر پیوسته مدت‌زمان با گام‌های ۱۵ و ۳۰ دقیقه‌ای و کلیک جایگزین (Fallback) برای افزایش سریع زمان.
+    - نمایش برچسب مدت‌زمان تسک (`durationBadge` با اعداد فارسی/انگلیسی) و تنظیم پویای ارتفاع کارت متناسب با بازه زمانی.
+  - به‌روزرسانی خوش‌بینانه در `CalendarPage.tsx`:
+    - توابع `handleRescheduleMonth`، `handleRescheduleDayHour` و `handleResizeDayDuration` با اعمال فوری روی استیت (<50ms).
+    - برگرداندن خودکار تغییرات (Rollback) به استیت قبلی در صورت بروز خطای دیتابیس یا اعتبارسنجی و نمایش بنر خطا با `data-testid="calendar-action-error"`.
+  - آزمون‌های جامع:
+    - آزمون‌های واحد برای `rescheduleTask` در `task-service.test.ts` شامل تغییر اتمیک، اعتبارسنجی‌ها، پاک‌سازی فیلدها و ثبت جهش‌ها.
+    - آزمون‌های کامپوننت و توابع تقویم در `CalendarPage.test.tsx` (تعداد تست‌های پاس‌شده کلاینت وب به ۲۴۲ تست رسید).
+- **فایل‌ها:**
+  - `packages/shared-types/src/task.ts`
+  - `apps/web/src/features/tasks/services/task-service.ts`
+  - `apps/web/src/features/tasks/services/task-service.test.ts`
+  - `apps/web/src/features/calendar/calendar-utils.ts`
+  - `apps/web/src/features/calendar/components/MonthView.tsx`
+  - `apps/web/src/features/calendar/components/MonthView.module.css`
+  - `apps/web/src/features/calendar/components/DayView.tsx`
+  - `apps/web/src/features/calendar/components/DayView.module.css`
+  - `apps/web/src/features/calendar/pages/CalendarPage.tsx`
+  - `apps/web/src/features/calendar/pages/CalendarPage.test.tsx`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:** اجرای موفق `npm run lint`، `npm run typecheck`، `npm run test` (مجموعاً ۳۳۵ آزمون بدون خطا) و `npm run build`.
+- **گام بعدی:** بازبینی توسط کاربر و پیاده‌سازی قابلیت‌های بعدی تقویم (قوانین تکرار RRULE / یادآورها).
 
 ### 2026-10-08 | P4-CAL-003 | نمای روزانه (تایم‌لاین ساعتی) و نمای دستورکار (Agenda) در تقویم وب
 

@@ -1,5 +1,5 @@
 import type { TaskEntity } from '@orbit/shared-types';
-import type { FC } from 'react';
+import { useState, type FC } from 'react';
 import {
   getMonthViewDays,
   isTaskOnDate,
@@ -13,6 +13,7 @@ export interface MonthViewProps {
   tasks: TaskEntity[];
   onToggleCompletion?: (task: TaskEntity) => void;
   onAddTask?: (date: Date, isoDate: string) => void;
+  onRescheduleTask?: (taskId: string, targetDate: Date, targetIsoDate: string) => void;
   today?: Date;
 }
 
@@ -22,8 +23,11 @@ export const MonthView: FC<MonthViewProps> = ({
   tasks,
   onToggleCompletion,
   onAddTask,
+  onRescheduleTask,
   today = new Date()
 }) => {
+  const [dragOverIsoDate, setDragOverIsoDate] = useState<string | null>(null);
+
   const { weekdayHeaders, days } = getMonthViewDays(
     currentDate,
     calendarType,
@@ -64,15 +68,37 @@ export const MonthView: FC<MonthViewProps> = ({
           }
 
           const dayTasks = tasks.filter((t) => isTaskOnDate(t, item.date));
+          const isDragOver = dragOverIsoDate === item.isoDate;
 
           return (
             <div
               key={item.isoDate}
-              className={`${styles.dayCell} ${item.isToday ? styles.todayCell : ''}`}
+              className={`${styles.dayCell} ${item.isToday ? styles.todayCell : ''} ${
+                isDragOver ? styles.dayCellDragOver : ''
+              }`}
               role="gridcell"
               aria-label={`${item.dayNumber} ${item.monthName}`}
               aria-current={item.isToday ? 'date' : undefined}
               data-testid={`month-day-cell-${item.dayNum}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (dragOverIsoDate !== item.isoDate) {
+                  setDragOverIsoDate(item.isoDate);
+                }
+              }}
+              onDragLeave={(e) => {
+                if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                setDragOverIsoDate(null);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOverIsoDate(null);
+                const taskId = e.dataTransfer.getData('text/plain');
+                if (taskId) {
+                  onRescheduleTask?.(taskId, item.date, item.isoDate);
+                }
+              }}
             >
               <div className={styles.dayCellHeader}>
                 <span
@@ -117,6 +143,15 @@ export const MonthView: FC<MonthViewProps> = ({
                         className={`${styles.taskItemCard} ${
                           isCompleted ? styles.taskCompleted : ''
                         } ${priorityClass}`}
+                        draggable={true}
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('text/plain', task.id);
+                          e.dataTransfer.setData(
+                            'application/json',
+                            JSON.stringify({ taskId: task.id })
+                          );
+                          e.dataTransfer.effectAllowed = 'move';
+                        }}
                         data-testid={`calendar-task-${task.id}`}
                       >
                         <input

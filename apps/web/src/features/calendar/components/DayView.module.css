@@ -19,6 +19,13 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  transition: all 0.15s ease;
+}
+
+.allDaySectionDragOver {
+  background-color: #eff6ff !important;
+  outline: 2px dashed #3b82f6;
+  outline-offset: -2px;
 }
 
 .allDayHeader {
@@ -62,6 +69,13 @@
   font-size: 0.85rem;
   border-left: 3px solid #94a3b8;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.allDayCard:active {
+  cursor: grabbing;
 }
 
 /* Timeline grid */
@@ -108,7 +122,7 @@
 
 .hourSlotRow {
   display: flex;
-  min-height: 52px;
+  min-height: 56px;
   border-bottom: 1px solid #f1f5f9;
   position: relative;
   transition: background-color 0.12s ease;
@@ -133,11 +147,18 @@
   flex: 1;
   padding: 0.25rem 0.5rem;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   flex-wrap: wrap;
   position: relative;
   cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.slotTrackDragOver {
+  background-color: #eff6ff !important;
+  outline: 2px dashed #3b82f6;
+  outline-offset: -2px;
 }
 
 .slotTrack:hover .quickAddBtn {
@@ -168,9 +189,10 @@
 
 .timedTaskCard {
   display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.3rem 0.6rem;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.25rem;
+  padding: 0.35rem 0.6rem 0.15rem 0.6rem;
   background: #ffffff;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
@@ -178,6 +200,58 @@
   font-size: 0.85rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   z-index: 2;
+  cursor: grab;
+  user-select: none;
+  position: relative;
+  min-width: 180px;
+  transition: box-shadow 0.1s ease;
+}
+
+.timedTaskCard:active {
+  cursor: grabbing;
+}
+
+.timedCardContent {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.resizeHandle {
+  width: 100%;
+  height: 8px;
+  margin-top: 2px;
+  background: transparent;
+  cursor: ns-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 0 4px 4px;
+}
+
+.resizeHandle::after {
+  content: '';
+  width: 24px;
+  height: 3px;
+  background: #cbd5e1;
+  border-radius: 2px;
+  transition: background-color 0.15s ease;
+}
+
+.resizeHandle:hover::after,
+.resizeHandle:active::after {
+  background: #3b82f6;
+  height: 4px;
+}
+
+.durationBadge {
+  font-size: 0.68rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  white-space: nowrap;
 }
 
 .taskCheckbox {

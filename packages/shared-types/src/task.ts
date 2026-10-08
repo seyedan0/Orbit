@@ -14,25 +14,26 @@ export interface TaskEntity {
   projectId: string;
   userId: string;
   title: string;
-  content?: string;
-  desc?: string;
+  content?: string | undefined;
+  desc?: string | undefined;
   kind: TaskKind;
   priority: TaskPriority;
   isAllDay: boolean;
-  allDay?: boolean;
-  startDate?: string | null;
-  dueDate?: string | null;
+  allDay?: boolean | undefined;
+  startDate?: string | null | undefined;
+  dueDate?: string | null | undefined;
+  duration?: number | null | undefined;
   timeZone: string;
-  timezone?: string | null;
-  repeatFlag?: string;
+  timezone?: string | null | undefined;
+  repeatFlag?: string | null | undefined;
   reminders: string[];
   items: SubTaskItem[];
   version: number;
   localStatus: LocalStatus;
   createdAt: string;
   updatedAt: string;
-  completedAt?: string | null;
-  deletedAt?: string | null;
+  completedAt?: string | null | undefined;
+  deletedAt?: string | null | undefined;
 }
 
 export function isTaskCompleted(task: Pick<TaskEntity, 'completedAt'>): boolean {
