@@ -18,6 +18,7 @@ export interface CreateTaskInput {
   timeZone?: string | undefined;
   timezone?: string | null | undefined;
   repeatFlag?: string | null | undefined;
+  reminders?: string[] | undefined;
 }
 
 export interface TaskServiceDeps {
@@ -115,7 +116,7 @@ export async function createTask(
     timeZone,
     timezone: timeZone,
     repeatFlag,
-    reminders: [],
+    reminders: input.reminders ? [...input.reminders] : [],
     items: [],
     version: 0,
     localStatus: 'CREATED',
@@ -501,6 +502,7 @@ export interface ScheduleTaskInput {
   timeZone?: string | undefined;
   timezone?: string | null | undefined;
   repeatFlag?: string | null | undefined;
+  reminders?: string[] | undefined;
 }
 
 export interface ScheduleTaskDeps extends TaskServiceDeps {
@@ -565,11 +567,17 @@ export async function scheduleTask(
     ? (input.repeatFlag ?? null)
     : (task.repeatFlag ?? null);
 
+  const remindersChanged = input.reminders !== undefined;
+  const nextReminders: string[] = remindersChanged
+    ? (input.reminders ? [...input.reminders] : [])
+    : (task.reminders ?? []);
+
   // Check if anything actually changed
   if (
     !isAllDayChanged &&
     !timeZoneChanged &&
     !repeatFlagChanged &&
+    !remindersChanged &&
     input.startDate === undefined &&
     input.dueDate === undefined &&
     input.duration === undefined
@@ -595,6 +603,7 @@ export async function scheduleTask(
     timeZone: nextTimeZone,
     timezone: nextTimeZone,
     repeatFlag: nextRepeatFlag,
+    reminders: nextReminders,
     updatedAt: timestamp,
     localStatus: nextLocalStatus
   };
@@ -628,6 +637,10 @@ export async function scheduleTask(
     payload.repeatFlag = nextRepeatFlag;
     fieldTimestamps.repeatFlag = timestamp;
   }
+  if (remindersChanged) {
+    payload.reminders = nextReminders;
+    fieldTimestamps.reminders = timestamp;
+  }
 
   const mutation: SyncQueueEntry = {
     id: mutationId,
@@ -655,6 +668,7 @@ export interface RescheduleTaskUpdates {
   duration?: number | null | undefined;
   isAllDay?: boolean | undefined;
   repeatFlag?: string | null | undefined;
+  reminders?: string[] | undefined;
 }
 
 export interface RescheduleTaskDeps {
@@ -717,10 +731,16 @@ export async function rescheduleTask(
     ? (updates.repeatFlag ?? null)
     : (task.repeatFlag ?? null);
 
+  const remindersChanged = updates.reminders !== undefined;
+  const nextReminders: string[] = remindersChanged
+    ? (updates.reminders ? [...updates.reminders] : [])
+    : (task.reminders ?? []);
+
   // Check if anything actually changed
   if (
     !isAllDayChanged &&
     !repeatFlagChanged &&
+    !remindersChanged &&
     updates.startDate === undefined &&
     updates.dueDate === undefined &&
     updates.duration === undefined
@@ -744,6 +764,7 @@ export async function rescheduleTask(
     dueDate: nextDueDate,
     duration: nextDuration,
     repeatFlag: nextRepeatFlag,
+    reminders: nextReminders,
     updatedAt: timestamp,
     localStatus: nextLocalStatus
   };
@@ -771,6 +792,10 @@ export async function rescheduleTask(
   if (repeatFlagChanged) {
     payload.repeatFlag = nextRepeatFlag;
     fieldTimestamps.repeatFlag = timestamp;
+  }
+  if (remindersChanged) {
+    payload.reminders = nextReminders;
+    fieldTimestamps.reminders = timestamp;
   }
 
   const mutation: SyncQueueEntry = {

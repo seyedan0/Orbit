@@ -127,6 +127,7 @@ export const WeekView: FC<WeekViewProps> = ({
                             data-testid={`week-task-title-${task.id}`}
                           >
                             {task.repeatFlag && '🔁 '}
+                            {task.reminders && task.reminders.length > 0 && '🔔 '}
                             {task.title}
                           </span>
                         </div>

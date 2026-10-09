@@ -200,6 +200,7 @@ export const DayView: FC<DayViewProps> = ({
                     data-testid={`day-task-title-${task.id}`}
                   >
                     {task.repeatFlag && '🔁 '}
+                    {task.reminders && task.reminders.length > 0 && '🔔 '}
                     {task.title}
                   </span>
                   {task.priority > 0 && (
@@ -339,6 +340,7 @@ export const DayView: FC<DayViewProps> = ({
                           data-testid={`day-task-title-${task.id}`}
                         >
                           {task.repeatFlag && '🔁 '}
+                          {task.reminders && task.reminders.length > 0 && '🔔 '}
                           {task.title}
                         </span>
                         <span

@@ -155,6 +155,7 @@ export const AgendaView: FC<AgendaViewProps> = ({
                         data-testid={`agenda-task-title-${task.id}`}
                       >
                         {task.repeatFlag && '🔁 '}
+                        {task.reminders && task.reminders.length > 0 && '🔔 '}
                         {task.title}
                       </span>
                     </div>

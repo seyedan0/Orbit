@@ -43,7 +43,8 @@ export function InboxPage() {
         title,
         dueDate: options?.dueDate,
         isAllDay: options?.isAllDay,
-        repeatFlag: options?.repeatFlag
+        repeatFlag: options?.repeatFlag,
+        reminders: options?.reminders
       },
       { store, userId: session.userId }
     );

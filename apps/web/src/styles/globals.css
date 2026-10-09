@@ -62,6 +62,28 @@ body {
   outline-offset: 1px;
 }
 
+.task-reminder-select {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #d0d0d5;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background-color: #fff;
+  color: #333;
+  cursor: pointer;
+}
+
+.task-reminder-select:focus {
+  outline: 2px solid #4f7cff;
+  outline-offset: 1px;
+}
+
+.task-reminder-select:disabled {
+  opacity: 0.55;
+  background-color: #f5f5f7;
+  cursor: not-allowed;
+}
+
 .btn-primary {
   padding: 0.55rem 1.1rem;
   background: #4f7cff;
@@ -142,6 +164,12 @@ body {
 }
 
 .task-repeat-badge {
+  font-size: 0.85rem;
+  margin-inline-start: 0.35rem;
+  vertical-align: middle;
+}
+
+.task-reminder-badge {
   font-size: 0.85rem;
   margin-inline-start: 0.35rem;
   vertical-align: middle;

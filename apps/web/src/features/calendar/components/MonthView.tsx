@@ -168,6 +168,7 @@ export const MonthView: FC<MonthViewProps> = ({
                           data-testid={`calendar-task-title-${task.id}`}
                         >
                           {task.repeatFlag && '🔁 '}
+                          {task.reminders && task.reminders.length > 0 && '🔔 '}
                           {task.title}
                         </span>
                       </div>

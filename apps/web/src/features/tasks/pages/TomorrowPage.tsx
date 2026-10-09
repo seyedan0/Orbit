@@ -54,7 +54,8 @@ export function TomorrowPage() {
         title,
         dueDate,
         isAllDay,
-        repeatFlag: options?.repeatFlag
+        repeatFlag: options?.repeatFlag,
+        reminders: options?.reminders
       },
       { store, userId: session.userId }
     );

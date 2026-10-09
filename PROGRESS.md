@@ -7,18 +7,18 @@
 - **مرحله:** فاز ۴، مدیریت زمان و تقویم
 - **آخرین به‌روزرسانی:** 2026-10-09
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 70% (فاز ۴)
-- **Branch فعال:** `feature/web-task-recurrence`
+- **درصد تقریبی پیشرفت:** 80% (فاز ۴)
+- **Branch فعال:** `feature/web-task-reminders`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-پیاده‌سازی موتور تکرار تسک‌ها (Recurring Tasks Engine بر پایه RFC 5545 RRULE) با پشتیبانی جامع از تقویم شمسی و میلادی، پیش‌تنظیم‌های استاندارد (روزانه، روزهای کاری شنبه-چهارشنبه، هفتگی، ماهانه، سالانه)، محاسبات دقیق سال‌های کبیسه و طول ماه‌ها، ادغام در چرخه حیات تکمیل تسک و نشانگرهای بصری در تمام نماهای تقویم و فهرست تسک.
+پیاده‌سازی موتور یادآورهای درون‌برنامه‌ای و مرورگر (In-App and Browser Reminders Engine) با پیش‌تنظیم‌های استاندارد (سر وقت، ۱۵ دقیقه، ۳۰ دقیقه، ۱ ساعت و ۱ روز قبل)، درخواست مجوزهای مرورگر (`Notification.requestPermission`)، آلارم صوتی دو صدایی وب (`Web Audio API Chime`)، بنر و اعلان تعاملی درون‌برنامه‌ای در AppShell با عملیات تکمیل سریع تسک و به تعویق انداختن (Snooze +10 min)، انتخاب‌گر یادآور در فرم تسک و نشانگر زنگوله (🔔) در لیست تسک‌ها و تقویم.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی شاخه `feature/web-task-recurrence` توسط کاربر
-- [ ] گام بعدی فاز ۴: یادآورها (Reminders بر پایه زمان و اعلان‌ها) یا پردازش متن طبیعی زبان تاریخ (Natural Language Date Parsing)
+- [ ] بازبینی شاخه `feature/web-task-reminders` توسط کاربر
+- [ ] گام بعدی فاز ۴: پردازش متن طبیعی زبان تاریخ (Natural Language Date Parsing) یا ورود به فاز ۵ (سازمان‌دهی، فیلترها و نماهای پیشرفته)
 
 ## کارهای انجام‌شده
 
@@ -74,8 +74,74 @@
 - [x] **P4-CAL-003:** پیاده‌سازی نمای روزانه با تایم‌لاین ساعتی (Day View) و نمای ترتیبی دستورکار (Agenda View) در وب با بخش پین‌شده تسک‌های تمام‌روز، خط قرمز زمان جاری ("هم‌اکنون")، ناوبری روزانه، ایجاد سریع تسک و تغییر وضعیت تکمیل مستقیم
 - [x] **P4-CAL-004:** پیاده‌سازی مسدودسازی زمان (Time Blocking)، کشیدن و رها کردن (Drag & Drop) و تغییر مدت‌زمان تسک‌ها (Duration Resizing) در تقویم وب با به‌روزرسانی خوش‌بینانه (<50ms)، اعتبارسنجی LWW و آزمون‌های دامنه و کامپوننت
 - [x] **P4-REC-001:** پیاده‌سازی موتور تکرار تسک‌ها (Recurring Tasks Engine بر پایه RRULE) با پشتیبانی دوگانه تقویم شمسی/میلادی، محاسبات سال‌های کبیسه، چرخه حیات تکمیل تسک و نشانگرهای بصری UI
+- [x] **P4-REM-001:** پیاده‌سازی موتور یادآورهای درون‌برنامه‌ای و مرورگر (Reminders Engine) با اسنوز (+10 دقیقه)، کنترل‌های تکمیل تسک، پیش‌تنظیم‌های استاندارد، هشدارهای صوتی و دسکتاپ، و نشانگرهای زنگوله 🔔 در تسک‌ها و تقویم
 
 ## فعالیت AIها
+
+### 2026-10-09 | P4-REM-001 | پیاده‌سازی موتور یادآورهای درون‌برنامه‌ای و مرورگر با اسنوز و کنترل‌های تکمیل
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی موتور جامع یادآورها (In-App and Browser Reminders Engine) شامل پیش‌تنظیم‌های استاندارد، محاسبات دقیق زمان یادآوری بر اساس سررسید، مدیریت مجوزهای مرورگر (`Notification`)، هشدارهای صوتی دو صدایی (Web Audio API)، بنر تعاملی درون‌برنامه‌ای در `AppShell` با قابلیت تکمیل آنی تسک و اسنوز ۱۰ دقیقه‌ای، ردگیری هشدارهای فعال در نشست کاربری جهت جلوگیری از تکرار، انتخاب‌گر یادآور در فرم تسک و نشانگر زنگوله (`🔔`) در لیست تسک‌ها و تمام نماهای تقویم.
+- **انجام‌شده:**
+  - ایجاد ماژول محاسبات و پیش‌تنظیم‌های یادآور در `apps/web/src/core/reminders/reminder-utils.ts`:
+    - تعریف پیش‌تنظیم‌های استاندارد `REMINDER_PRESETS` (`NONE`, `AT_TIME` 0m, `15_MIN_BEFORE` -15m, `30_MIN_BEFORE` -30m, `1_HOUR_BEFORE` -60m, `1_DAY_BEFORE` -1440m).
+    - توابع محاسباتی `calculateReminderTimestamp` جهت تبدیل سررسید و آفست دقیقه به زمان دقیق ISO-8601.
+    - تابع فرمت‌بندی متن یادآور (`formatReminderText`) به دو زبان فارسی («در زمان سررسید»، «۱۵ دقیقه قبل»، «۳۰ دقیقه قبل»، «۱ ساعت قبل»، «۱ روز قبل») و انگلیسی.
+    - تابع محاسبه زمان اسنوز (`calculateSnoozeDueDate`) با مقدار پیش‌فرض ۱۰ دقیقه.
+    - تابع ارزیابی زمان شلیک هشدار (`shouldFireReminder`) با پنجره تلورانس و بازه موثر.
+  - پیاده‌سازی سرویس و مدیریت اعلان‌ها در `apps/web/src/core/reminders/reminder-service.ts`:
+    - درخواست مجوز اعلان‌های بومی مرورگر (`requestNotificationPermission`).
+    - نمایش اعلان دسکتاپ بومی (`showNativeNotification`) با پشتیبانی از آیکون و بستن خودکار.
+    - تولید افکت صوتی زنگ دو صدایی (Two-Tone Chime در فرکانس‌های ۵۸۷Hz و ۸۸۰Hz) با استفاده از Web Audio API بدون نیاز به فایل صوتی خارجی.
+    - مدیریت کلیدهای هشدار شلیک‌شده در `sessionStorage` جهت جلوگیری قطعی از هشدارهای تکراری یا اسپم در حین اسکن مکرر.
+  - پیاده‌سازی زمینه و اسکنر پس‌زمینه در `apps/web/src/core/reminders/reminder-context.tsx`:
+    - هوک `useReminders()` و کامپوننت ارائه‌دهنده `ReminderProvider`.
+    - چرخه اسکن دوره‌ای (Polling Loop هر ۵ ثانیه) روی تسک‌های زمان‌بندی‌شده و فعال استور محلی.
+    - مدیریت صف هشدارهای فعال (`activeAlerts`) با پشتیبانی از چندین یادآور همزمان.
+    - اکشن‌های تعاملی کاربر:
+      - تکمیل تسک (`completeAlert`): فراخوانی `completeTask` از سرویس دامنه، حذف هشدار و بستن بنر.
+      - به تعویق انداختن تسک (`snoozeAlert`): محاسبه تاریخ جدید با +10 دقیقه و فراخوانی `rescheduleTask`.
+      - رد کردن هشدار (`dismissAlert`): ثبت در حافظه نشست و پاکسازی از بنر.
+  - یکپارچه‌سازی رابط کاربری و پوسته اپلیکیشن:
+    - `AppShell.tsx` و `AppShell.module.css`: تعبیه بنر شناور با دسترسی‌پذیری کامل (`role="alert"`، دکمه‌های "تکمیل"، "به تعویق انداختن (+۱۰ دقیقه)" و "بستن").
+    - `TaskForm.tsx`: افزودن فیلد دراپ‌داون یادآور (`task-reminder-select`) با فعال‌سازی مشروط در صورت داشتن تاریخ سررسید.
+    - `TaskItem.tsx`: نمایش بج زنگوله (`🔔`) با `data-testid="task-reminder-<id>"` در صورت وجود یادآور در تسک.
+    - نماهای تقویم (`MonthView.tsx`، `WeekView.tsx`، `DayView.tsx`، `AgendaView.tsx`): نمایش نشانگر زنگوله در کنار عناوین تسک‌ها.
+    - سرویس دامنه `task-service.ts`: ارتقای `createTask`، `scheduleTask` و `rescheduleTask` جهت ثبت و نگهداری اتمیک آرایه `reminders` و جهش‌های LWW.
+  - آزمون‌های جامع:
+    - ۱۶ آزمون واحد در `reminder-utils.test.ts` برای تمام پیش‌تنظیم‌ها، محاسبات زمانی، آفست‌های سفارشی و اسنوز.
+    - ۹ آزمون در `reminder-service.test.ts` برای مجوزهای نوتیفیکیشن، تولید صدا، نشست کلیدها و فیلتر هشدارهای شلیک‌شده.
+    - آزمون‌های یکپارچگی دامنه در `task-service.test.ts` برای ایجاد و زمان‌بندی مجدد تسک‌های دارای یادآور با جهش‌های اتمیک.
+    - آزمون‌های کامپوننت در `TaskItem.test.tsx`، `TaskForm.test.tsx` و `AppShell.test.tsx`.
+- **فایل‌ها:**
+  - `apps/web/src/core/reminders/reminder-utils.ts`
+  - `apps/web/src/core/reminders/reminder-utils.test.ts`
+  - `apps/web/src/core/reminders/reminder-service.ts`
+  - `apps/web/src/core/reminders/reminder-service.test.ts`
+  - `apps/web/src/core/reminders/reminder-context.tsx`
+  - `apps/web/src/core/reminders/index.ts`
+  - `apps/web/src/app/App.tsx`
+  - `apps/web/src/layout/AppShell.tsx`
+  - `apps/web/src/layout/AppShell.module.css`
+  - `apps/web/src/layout/AppShell.test.tsx`
+  - `apps/web/src/styles/globals.css`
+  - `apps/web/src/features/tasks/components/TaskForm.tsx`
+  - `apps/web/src/features/tasks/components/TaskForm.test.tsx`
+  - `apps/web/src/features/tasks/components/TaskItem.tsx`
+  - `apps/web/src/features/tasks/components/TaskItem.test.tsx`
+  - `apps/web/src/features/tasks/pages/InboxPage.tsx`
+  - `apps/web/src/features/tasks/pages/TodayPage.tsx`
+  - `apps/web/src/features/tasks/pages/TomorrowPage.tsx`
+  - `apps/web/src/features/tasks/services/task-service.ts`
+  - `apps/web/src/features/tasks/services/task-service.test.ts`
+  - `apps/web/src/features/calendar/components/MonthView.tsx`
+  - `apps/web/src/features/calendar/components/WeekView.tsx`
+  - `apps/web/src/features/calendar/components/DayView.tsx`
+  - `apps/web/src/features/calendar/components/AgendaView.tsx`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:** اجرای کامل `npm run lint`، `npm run typecheck`، `npm run test --workspace @orbit/web` (۲۹۸ آزمون پاس‌شده بدون خطا)، `npm run build` و `git diff --check`.
+- **گام بعدی:** بازبینی توسط کاربر و پیاده‌سازی پردازش متن طبیعی زبان تاریخ (Natural Language Date Parsing) یا ورود به فاز ۵.
 
 ### 2026-10-09 | P4-REC-001 | پیاده‌سازی موتور تکرار تسک‌ها (RRULE) با تقویم شمسی و چرخه حیات تکمیل
 

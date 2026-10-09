@@ -61,6 +61,15 @@ export function TaskItem({
             🔁
           </span>
         )}
+        {task.reminders && task.reminders.length > 0 && !isDeleted && (
+          <span
+            className="task-reminder-badge"
+            data-testid={`task-reminder-${task.id}`}
+            title="دارای یادآور"
+          >
+            🔔
+          </span>
+        )}
         {formattedDueDate && !isDeleted && (
           <span className="task-due-badge" data-testid={`task-due-${task.id}`}>
             📅 {formattedDueDate}

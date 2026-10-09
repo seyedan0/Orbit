@@ -2,11 +2,13 @@ import { useState, type FormEvent } from 'react';
 import { DatePicker } from '../../calendar/components/DatePicker';
 import { TaskValidationError } from '../services/task-service';
 import { RECURRENCE_PRESETS } from '../../../core/recurrence/recurrence';
+import { REMINDER_PRESETS } from '../../../core/reminders/reminder-utils';
 
 export interface TaskFormSubmitOptions {
-  dueDate?: string | null;
-  isAllDay?: boolean;
-  repeatFlag?: string | null;
+  dueDate?: string | null | undefined;
+  isAllDay?: boolean | undefined;
+  repeatFlag?: string | null | undefined;
+  reminders?: string[] | undefined;
 }
 
 export interface TaskFormProps {
@@ -14,18 +16,21 @@ export interface TaskFormProps {
   defaultDueDate?: string | null;
   defaultIsAllDay?: boolean;
   defaultRepeatFlag?: string | null;
+  defaultReminder?: string;
 }
 
 export function TaskForm({
   onSubmit,
   defaultDueDate = null,
   defaultIsAllDay = true,
-  defaultRepeatFlag = null
+  defaultRepeatFlag = null,
+  defaultReminder = 'NONE'
 }: TaskFormProps) {
   const [title, setTitle] = useState('');
   const [dueDate, setDueDate] = useState<string | null>(defaultDueDate);
   const [isAllDay, setIsAllDay] = useState<boolean>(defaultIsAllDay);
   const [repeatFlag, setRepeatFlag] = useState<string>(defaultRepeatFlag ?? '');
+  const [reminder, setReminder] = useState<string>(defaultReminder);
   const [error, setError] = useState<string | undefined>();
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -35,12 +40,14 @@ export function TaskForm({
       await onSubmit(title, {
         dueDate,
         isAllDay,
-        repeatFlag: repeatFlag.trim() ? repeatFlag : null
+        repeatFlag: repeatFlag.trim() ? repeatFlag : null,
+        reminders: reminder !== 'NONE' && dueDate ? [reminder] : []
       });
       setTitle('');
       setDueDate(defaultDueDate);
       setIsAllDay(defaultIsAllDay);
       setRepeatFlag(defaultRepeatFlag ?? '');
+      setReminder(defaultReminder);
     };
 
     run().catch((err: unknown) => {
@@ -82,6 +89,21 @@ export function TaskForm({
         >
           {RECURRENCE_PRESETS.map((preset) => (
             <option key={preset.id} value={preset.rrule}>
+              {preset.labelFa}
+            </option>
+          ))}
+        </select>
+        <select
+          className="task-reminder-select"
+          value={dueDate ? reminder : 'NONE'}
+          onChange={(e) => setReminder(e.target.value)}
+          disabled={!dueDate}
+          aria-label="یادآور"
+          data-testid="task-reminder-select"
+          title={!dueDate ? 'ابتدا تاریخ سررسید را انتخاب کنید' : 'انتخاب یادآور'}
+        >
+          {REMINDER_PRESETS.map((preset) => (
+            <option key={preset.id} value={preset.id}>
               {preset.labelFa}
             </option>
           ))}

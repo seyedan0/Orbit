@@ -1338,3 +1338,59 @@ describe('Today and Tomorrow Date Filtering (P4-CAL-001)', () => {
     expect(tomorrowList.map((t) => t.id)).toEqual(['d']);
   });
 });
+
+describe('Task Reminders (P4-REM-001)', () => {
+  it('creates a task with reminders and records them in entity and mutation', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      {
+        title: 'Task with reminder',
+        dueDate: '2026-10-15T12:00:00.000Z',
+        reminders: ['15_MIN_BEFORE']
+      },
+      { store, userId: 'user-1' }
+    );
+
+    expect(task.reminders).toEqual(['15_MIN_BEFORE']);
+    const inStore = await store.getTask(task.id);
+    expect(inStore?.reminders).toEqual(['15_MIN_BEFORE']);
+
+    const mutations = await store.listPendingMutations(10);
+    expect(mutations[0]?.payloadType).toBe('FULL');
+    expect((mutations[0]?.payload as TaskEntity).reminders).toEqual(['15_MIN_BEFORE']);
+  });
+
+  it('updates reminders via rescheduleTask with partial UPDATE mutation', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      { title: 'Initial task' },
+      { store, userId: 'user-1' }
+    );
+
+    const nowIso = '2026-10-05T10:00:00.000Z';
+    const updated = await rescheduleTask(
+      store,
+      task.id,
+      {
+        reminders: ['30_MIN_BEFORE', 'AT_TIME']
+      },
+      {
+        now: () => new Date(nowIso),
+        newId: () => 'mut-reminder-1'
+      }
+    );
+
+    expect(updated.reminders).toEqual(['30_MIN_BEFORE', 'AT_TIME']);
+    const inStore = await store.getTask(task.id);
+    expect(inStore?.reminders).toEqual(['30_MIN_BEFORE', 'AT_TIME']);
+
+    const mutations = await store.listPendingMutations(10);
+    const updateMut = mutations.find((m) => m.id === 'mut-reminder-1');
+    expect(updateMut?.payload).toEqual({
+      reminders: ['30_MIN_BEFORE', 'AT_TIME']
+    });
+    expect(updateMut?.fieldTimestamps).toEqual({
+      reminders: nowIso
+    });
+  });
+});

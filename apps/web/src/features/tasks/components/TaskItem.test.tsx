@@ -134,4 +134,15 @@ describe('TaskItem', () => {
     expect(html).toContain('data-testid="task-repeat-test-task-1"');
     expect(html).toContain('🔁');
   });
+
+  it('renders reminder bell badge indicator when reminders is non-empty', () => {
+    const task = makeTask({
+      reminders: ['15_MIN_BEFORE']
+    });
+    const html = renderToStaticMarkup(<TaskItem task={task} />);
+
+    expect(html).toContain('task-reminder-badge');
+    expect(html).toContain('data-testid="task-reminder-test-task-1"');
+    expect(html).toContain('🔔');
+  });
 });
