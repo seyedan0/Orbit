@@ -167,6 +167,7 @@ export const MonthView: FC<MonthViewProps> = ({
                           title={task.title}
                           data-testid={`calendar-task-title-${task.id}`}
                         >
+                          {task.repeatFlag && '🔁 '}
                           {task.title}
                         </span>
                       </div>

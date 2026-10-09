@@ -52,6 +52,15 @@ export function TaskItem({
       )}
       <span className={`task-title ${isCompleted ? 'completed' : ''}`}>
         {task.title}
+        {task.repeatFlag && !isDeleted && (
+          <span
+            className="task-repeat-badge"
+            data-testid={`task-repeat-${task.id}`}
+            title="تکرارشونده"
+          >
+            🔁
+          </span>
+        )}
         {formattedDueDate && !isDeleted && (
           <span className="task-due-badge" data-testid={`task-due-${task.id}`}>
             📅 {formattedDueDate}

@@ -1,5 +1,6 @@
 import type { SyncQueueEntry, TaskEntity } from '@orbit/shared-types';
 import type { AtomicTaskStore } from '@orbit/sync-engine';
+import { getNextOccurrenceDate, parseRRule } from '../../../core/recurrence/recurrence';
 
 /**
  * Well-known projectId for the user's default Inbox.
@@ -9,13 +10,14 @@ export const INBOX_PROJECT_ID = 'inbox';
 
 export interface CreateTaskInput {
   title: string;
-  dueDate?: string | null;
-  startDate?: string | null;
+  dueDate?: string | null | undefined;
+  startDate?: string | null | undefined;
   duration?: number | null | undefined;
-  isAllDay?: boolean;
-  allDay?: boolean;
-  timeZone?: string;
-  timezone?: string | null;
+  isAllDay?: boolean | undefined;
+  allDay?: boolean | undefined;
+  timeZone?: string | undefined;
+  timezone?: string | null | undefined;
+  repeatFlag?: string | null | undefined;
 }
 
 export interface TaskServiceDeps {
@@ -87,6 +89,7 @@ export async function createTask(
   const startDate = input.startDate ?? null;
   const dueDate = input.dueDate ?? null;
   const duration = input.duration ?? null;
+  const repeatFlag = input.repeatFlag ?? null;
   const timeZone =
     input.timeZone ??
     input.timezone ??
@@ -111,6 +114,7 @@ export async function createTask(
     duration,
     timeZone,
     timezone: timeZone,
+    repeatFlag,
     reminders: [],
     items: [],
     version: 0,
@@ -140,7 +144,8 @@ export async function createTask(
       items: timestamp,
       ...(startDate !== null ? { startDate: timestamp } : {}),
       ...(dueDate !== null ? { dueDate: timestamp } : {}),
-      ...(duration !== null ? { duration: timestamp } : {})
+      ...(duration !== null ? { duration: timestamp } : {}),
+      ...(repeatFlag !== null ? { repeatFlag: timestamp } : {})
     },
     createdAt: timestamp,
     status: 'PENDING',
@@ -186,6 +191,83 @@ export async function completeTask(
 
   const nextLocalStatus = task.localStatus === 'CREATED' ? 'CREATED' : 'UPDATED';
 
+  // Recurring task lifecycle handling:
+  // If task has a repeatFlag, advance to the next occurrence instead of terminating.
+  if (task.repeatFlag && task.repeatFlag.trim() !== '') {
+    const rruleOptions = parseRRule(task.repeatFlag);
+    const baseDate = task.dueDate
+      ? new Date(task.dueDate)
+      : task.startDate
+        ? new Date(task.startDate)
+        : now();
+
+    const nextDueDateObj = getNextOccurrenceDate(baseDate, rruleOptions);
+    if (nextDueDateObj) {
+      const nextDueIso = nextDueDateObj.toISOString();
+      let nextStartIso: string | null = null;
+
+      if (task.startDate && task.dueDate) {
+        const diffMs =
+          new Date(task.dueDate).getTime() - new Date(task.startDate).getTime();
+        nextStartIso = new Date(nextDueDateObj.getTime() - diffMs).toISOString();
+      } else if (task.startDate && task.duration != null) {
+        nextStartIso = new Date(
+          nextDueDateObj.getTime() - task.duration * 60 * 1000
+        ).toISOString();
+      } else if (task.startDate) {
+        const deltaMs = nextDueDateObj.getTime() - baseDate.getTime();
+        nextStartIso = new Date(
+          new Date(task.startDate).getTime() + deltaMs
+        ).toISOString();
+      }
+
+      const updatedTask: TaskEntity = {
+        ...task,
+        dueDate: nextDueIso,
+        startDate: nextStartIso,
+        completedAt: null, // Reset completion for next occurrence cycle
+        updatedAt: timestamp,
+        localStatus: nextLocalStatus
+      };
+
+      const payload: Partial<TaskEntity> = {
+        dueDate: nextDueIso,
+        completedAt: null,
+        updatedAt: timestamp
+      };
+      const fieldTimestamps: Record<string, string> = {
+        dueDate: timestamp,
+        completedAt: timestamp,
+        updatedAt: timestamp
+      };
+
+      if (nextStartIso !== null) {
+        payload.startDate = nextStartIso;
+        fieldTimestamps.startDate = timestamp;
+      }
+
+      const mutation: SyncQueueEntry = {
+        id: mutationId,
+        idempotencyKey,
+        entityType: 'TASK',
+        entityId: task.id,
+        operation: 'UPDATE',
+        baseVersion: task.version,
+        payloadType: 'PARTIAL',
+        payload,
+        fieldTimestamps,
+        createdAt: timestamp,
+        status: 'PENDING',
+        attemptCount: 0,
+        nextAttemptAt: timestamp
+      };
+
+      await deps.store.saveTaskWithMutation(updatedTask, mutation);
+      return updatedTask;
+    }
+  }
+
+  // Regular non-recurring task completion:
   const updatedTask: TaskEntity = {
     ...task,
     completedAt: timestamp,
@@ -411,13 +493,14 @@ export async function restoreTask(
 }
 
 export interface ScheduleTaskInput {
-  dueDate?: string | null;
-  startDate?: string | null;
-  duration?: number | null;
-  isAllDay?: boolean;
-  allDay?: boolean;
-  timeZone?: string;
-  timezone?: string | null;
+  dueDate?: string | null | undefined;
+  startDate?: string | null | undefined;
+  duration?: number | null | undefined;
+  isAllDay?: boolean | undefined;
+  allDay?: boolean | undefined;
+  timeZone?: string | undefined;
+  timezone?: string | null | undefined;
+  repeatFlag?: string | null | undefined;
 }
 
 export interface ScheduleTaskDeps extends TaskServiceDeps {
@@ -477,10 +560,16 @@ export async function scheduleTask(
   const nextDuration: number | null =
     input.duration !== undefined ? input.duration : (task.duration ?? null);
 
+  const repeatFlagChanged = input.repeatFlag !== undefined;
+  const nextRepeatFlag: string | null = repeatFlagChanged
+    ? (input.repeatFlag ?? null)
+    : (task.repeatFlag ?? null);
+
   // Check if anything actually changed
   if (
     !isAllDayChanged &&
     !timeZoneChanged &&
+    !repeatFlagChanged &&
     input.startDate === undefined &&
     input.dueDate === undefined &&
     input.duration === undefined
@@ -505,6 +594,7 @@ export async function scheduleTask(
     duration: nextDuration,
     timeZone: nextTimeZone,
     timezone: nextTimeZone,
+    repeatFlag: nextRepeatFlag,
     updatedAt: timestamp,
     localStatus: nextLocalStatus
   };
@@ -534,6 +624,10 @@ export async function scheduleTask(
     payload.timezone = nextTimeZone;
     fieldTimestamps.timeZone = timestamp;
   }
+  if (repeatFlagChanged) {
+    payload.repeatFlag = nextRepeatFlag;
+    fieldTimestamps.repeatFlag = timestamp;
+  }
 
   const mutation: SyncQueueEntry = {
     id: mutationId,
@@ -560,6 +654,7 @@ export interface RescheduleTaskUpdates {
   startDate?: string | null | undefined;
   duration?: number | null | undefined;
   isAllDay?: boolean | undefined;
+  repeatFlag?: string | null | undefined;
 }
 
 export interface RescheduleTaskDeps {
@@ -617,9 +712,15 @@ export async function rescheduleTask(
   const nextDuration: number | null =
     updates.duration !== undefined ? updates.duration : (task.duration ?? null);
 
+  const repeatFlagChanged = updates.repeatFlag !== undefined;
+  const nextRepeatFlag: string | null = repeatFlagChanged
+    ? (updates.repeatFlag ?? null)
+    : (task.repeatFlag ?? null);
+
   // Check if anything actually changed
   if (
     !isAllDayChanged &&
+    !repeatFlagChanged &&
     updates.startDate === undefined &&
     updates.dueDate === undefined &&
     updates.duration === undefined
@@ -642,6 +743,7 @@ export async function rescheduleTask(
     startDate: nextStartDate,
     dueDate: nextDueDate,
     duration: nextDuration,
+    repeatFlag: nextRepeatFlag,
     updatedAt: timestamp,
     localStatus: nextLocalStatus
   };
@@ -665,6 +767,10 @@ export async function rescheduleTask(
     payload.isAllDay = nextIsAllDay;
     payload.allDay = nextIsAllDay;
     fieldTimestamps.isAllDay = timestamp;
+  }
+  if (repeatFlagChanged) {
+    payload.repeatFlag = nextRepeatFlag;
+    fieldTimestamps.repeatFlag = timestamp;
   }
 
   const mutation: SyncQueueEntry = {

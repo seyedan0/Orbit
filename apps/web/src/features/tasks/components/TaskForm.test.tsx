@@ -26,4 +26,15 @@ describe('TaskForm Component (P4-CAL-001)', () => {
 
     expect(html).toContain('۱۳ مهر');
   });
+
+  it('renders repeat selector dropdown with standard presets', () => {
+    const onSubmit = vi.fn();
+    const html = renderToStaticMarkup(<TaskForm onSubmit={onSubmit} />);
+
+    expect(html).toContain('task-repeat-select');
+    expect(html).toContain('data-testid="task-repeat-select"');
+    expect(html).toContain('روزانه');
+    expect(html).toContain('هفتگی');
+    expect(html).toContain('بدون تکرار');
+  });
 });

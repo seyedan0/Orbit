@@ -123,4 +123,15 @@ describe('TaskItem', () => {
     expect(onRestore).toHaveBeenCalledTimes(1);
     expect(onRestore).toHaveBeenCalledWith(task);
   });
+
+  it('renders repeat badge indicator when repeatFlag is present', () => {
+    const task = makeTask({
+      repeatFlag: 'FREQ=DAILY;INTERVAL=1;CAL=JALALI'
+    });
+    const html = renderToStaticMarkup(<TaskItem task={task} />);
+
+    expect(html).toContain('task-repeat-badge');
+    expect(html).toContain('data-testid="task-repeat-test-task-1"');
+    expect(html).toContain('🔁');
+  });
 });

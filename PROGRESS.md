@@ -5,20 +5,20 @@
 ## وضعیت کلی
 
 - **مرحله:** فاز ۴، مدیریت زمان و تقویم
-- **آخرین به‌روزرسانی:** 2026-10-08
+- **آخرین به‌روزرسانی:** 2026-10-09
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 50% (فاز ۴)
-- **Branch فعال:** `feature/web-calendar-time-blocking`
+- **درصد تقریبی پیشرفت:** 70% (فاز ۴)
+- **Branch فعال:** `feature/web-task-recurrence`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-پیاده‌سازی مسدودسازی زمان (Time Blocking) و کشیدن و رها کردن (Drag & Drop) در تقویم وب شامل جابه‌جایی تسک‌ها در نمای ماهانه با حفظ زمان، جابه‌جایی بین اسلات‌های ساعتی و بخش تمام‌روز در نمای روزانه، تغییر مدت‌زمان (Duration Resizing) با دستگیره اختصاصی، به‌روزرسانی خوش‌بینانه (<50ms) با بازگشت امن در صورت خطا، و ثبت mutationهای جزئی با fieldTimestamps دقیق.
+پیاده‌سازی موتور تکرار تسک‌ها (Recurring Tasks Engine بر پایه RFC 5545 RRULE) با پشتیبانی جامع از تقویم شمسی و میلادی، پیش‌تنظیم‌های استاندارد (روزانه، روزهای کاری شنبه-چهارشنبه، هفتگی، ماهانه، سالانه)، محاسبات دقیق سال‌های کبیسه و طول ماه‌ها، ادغام در چرخه حیات تکمیل تسک و نشانگرهای بصری در تمام نماهای تقویم و فهرست تسک.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی شاخه `feature/web-calendar-time-blocking` توسط کاربر
-- [ ] گام بعدی فاز ۴: موتور تکرار تسک‌ها (Recurrence با قوانین ماه‌های شمسی و RRULE) یا یادآورها (Reminders)
+- [ ] بازبینی شاخه `feature/web-task-recurrence` توسط کاربر
+- [ ] گام بعدی فاز ۴: یادآورها (Reminders بر پایه زمان و اعلان‌ها) یا پردازش متن طبیعی زبان تاریخ (Natural Language Date Parsing)
 
 ## کارهای انجام‌شده
 
@@ -73,8 +73,58 @@
 - [x] **P4-CAL-002:** پیاده‌سازی نماهای تعاملی ماهانه و هفتگی با پشتیبانی دوگانه تقویم شمسی/میلادی در وب، افزودن مسیر `/calendar` و لینک ناوبری سایدبار، ایجاد سریع تسک و مدیریت تکمیل تسک از تقویم
 - [x] **P4-CAL-003:** پیاده‌سازی نمای روزانه با تایم‌لاین ساعتی (Day View) و نمای ترتیبی دستورکار (Agenda View) در وب با بخش پین‌شده تسک‌های تمام‌روز، خط قرمز زمان جاری ("هم‌اکنون")، ناوبری روزانه، ایجاد سریع تسک و تغییر وضعیت تکمیل مستقیم
 - [x] **P4-CAL-004:** پیاده‌سازی مسدودسازی زمان (Time Blocking)، کشیدن و رها کردن (Drag & Drop) و تغییر مدت‌زمان تسک‌ها (Duration Resizing) در تقویم وب با به‌روزرسانی خوش‌بینانه (<50ms)، اعتبارسنجی LWW و آزمون‌های دامنه و کامپوننت
+- [x] **P4-REC-001:** پیاده‌سازی موتور تکرار تسک‌ها (Recurring Tasks Engine بر پایه RRULE) با پشتیبانی دوگانه تقویم شمسی/میلادی، محاسبات سال‌های کبیسه، چرخه حیات تکمیل تسک و نشانگرهای بصری UI
 
 ## فعالیت AIها
+
+### 2026-10-09 | P4-REC-001 | پیاده‌سازی موتور تکرار تسک‌ها (RRULE) با تقویم شمسی و چرخه حیات تکمیل
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی موتور تکرار تسک‌ها بر پایه RFC 5545 RRULE با پشتیبانی اختصاصی از تقویم شمسی (ماه‌های ۳۱، ۳۰ و ۲۹ روزه، سال‌های کبیسه، روزهای کاری شنبه تا چهارشنبه)، ادغام در چرخه حیات تکمیل تسک (`completeTask`) با محاسبه اتمیک رخداد بعدی، تغییر شیفت `startDate` بر اساس مدت‌زمان، ثبت جهش‌های جزئی همگام‌سازی، و نمایش نشانگرهای تکرار (`🔁`) در فرم و نماهای تقویم.
+- **انجام‌شده:**
+  - ایجاد ماژول موتور تکرار در `apps/web/src/core/recurrence/recurrence.ts`:
+    - تعریف تایپ‌های `RecurrenceFrequency`، `RecurrenceOptions` و تبدیل‌های کد روزهای هفته در تقویم شمسی (`CODE_TO_JALALI_DAY` با نگاشت شنبه `SA` تا جمعه `FR`) و میلادی.
+    - پیاده‌سازی پارسر و سریالایزر RFC 5545 RRULE (`parseRRule` و `buildRRule`) با پشتیبانی از پارامترهای `FREQ`، `INTERVAL`، `BYDAY`، `BYMONTHDAY`، `UNTIL`، `COUNT` و پارامتر سفارشی `CAL=JALALI` / `CAL=GREGORIAN`.
+    - پیاده‌سازی تولید توصیف متنی محلی (`formatRRuleText`) به دو زبان فارسی («روزانه»، «روزهای کاری»، «هفتگی»، «ماهانه»، «سالانه») و انگلیسی.
+    - پیاده‌سازی تابع محاسباتی تاریخ رخداد بعدی (`getNextOccurrenceDate`):
+      - محاسبات بدون اثر جانبی (Pure) با حفظ ساعت، دقیقه و ثانیه.
+      - پشتیبانی از توالی روزهای انتخابی در هفته (`BYDAY`)، جهش‌های چند هفته‌ای (`INTERVAL`).
+      - محاسبات دقیق روز در ماه شمسی (`BYMONTHDAY`) با مدیریت طول ماه‌ها (شش ماه نخست ۳۱ روز، پنج ماه دوم ۳۰ روز، و اسفند ۲۹ روز در سال‌های عادی یا ۳۰ روز در سال‌های کبیسه نظیر ۱۴۰۸).
+      - پشتیبانی از فرمت‌های استاندارد ISO-8601 و فرمت فشرده RFC 5545 (`YYYYMMDDTHHMMSSZ`) برای سقف زمانی `UNTIL`.
+    - تعریف پیش‌تنظیم‌های استاندارد (`RECURRENCE_PRESETS`) برای رابط کاربری (بدون تکرار، روزانه، روزهای کاری، هفتگی، ماهانه، سالانه).
+  - ادغام در سرویس دامنه در `apps/web/src/features/tasks/services/task-service.ts`:
+    - پشتیبانی از فیلد `repeatFlag` در ورودی‌ها و توابع `createTask`، `scheduleTask` و `rescheduleTask`.
+    - یکپارچه‌سازی چرخه حیات تکمیل در `completeTask`: بررسی `repeatFlag`؛ در صورت وجود و امکان محاسبه تاریخ بعدی، تاریخ سررسید (`dueDate`) به جلو هدایت می‌شود، در صورت وجود تاریخ شروع (`startDate`) با حفظ بازه زمانی شیفت پیدا می‌کند، وضعیت تکمیل به `completedAt: null` ریست می‌شود، و جهش همگام‌سازی جزئی (`UPDATE`) با `fieldTimestamps` برای پروتکل LWW ثبت می‌گردد. در صورت رسیدن به سقف `UNTIL`، تسک به‌صورت عادی خاتمه می‌یابد.
+  - به‌روزرسانی رابط کاربری وب:
+    - `TaskForm.tsx`: افزودن دراپ‌داون انتخاب تکرار (`task-repeat-select`) با برچسب‌های فارسی و ثبت مقدار استاندارد RRULE در ایجاد تسک.
+    - صفحات `InboxPage.tsx`، `TodayPage.tsx` و `TomorrowPage.tsx`: دریافت و انتقال `repeatFlag` به سرویس ایجاد تسک.
+    - `TaskItem.tsx`: نمایش برچسب بصری تسک تکرارشونده (`🔁`) با استایل و `data-testid="task-repeat-<id>"`.
+    - نماهای تقویم (`MonthView.tsx`، `WeekView.tsx`، `DayView.tsx` و `AgendaView.tsx`): نمایش نشانگر تکرار در کنار عنوان تسک‌های تکرارشونده در همه بخش‌های ماهانه، هفتگی، تمام‌روز، اسلات ساعتی و دستورکار.
+  - آزمون‌های جامع:
+    - ۲۰ آزمون واحد برای موتور تکرار در `recurrence.test.ts` شامل آزمون‌های سال کبیسه ۱۴۰۸، جهش ماه‌های ۳۰/۳۱ روزه، روزهای کاری و فرمت متن.
+    - آزمون‌های چرخه حیات تکمیل تسک‌های تکرارشونده، شیفت `startDate`، سقف `UNTIL` و ثبت جهش‌ها در `task-service.test.ts`.
+    - آزمون‌های کامپوننت برای نشانگر تکرار در `TaskItem.test.tsx` و انتخاب‌گر تکرار در `TaskForm.test.tsx`.
+- **فایل‌ها:**
+  - `apps/web/src/core/recurrence/recurrence.ts`
+  - `apps/web/src/core/recurrence/recurrence.test.ts`
+  - `apps/web/src/styles/globals.css`
+  - `apps/web/src/features/tasks/services/task-service.ts`
+  - `apps/web/src/features/tasks/services/task-service.test.ts`
+  - `apps/web/src/features/tasks/components/TaskForm.tsx`
+  - `apps/web/src/features/tasks/components/TaskForm.test.tsx`
+  - `apps/web/src/features/tasks/components/TaskItem.tsx`
+  - `apps/web/src/features/tasks/components/TaskItem.test.tsx`
+  - `apps/web/src/features/tasks/pages/InboxPage.tsx`
+  - `apps/web/src/features/tasks/pages/TodayPage.tsx`
+  - `apps/web/src/features/tasks/pages/TomorrowPage.tsx`
+  - `apps/web/src/features/calendar/components/MonthView.tsx`
+  - `apps/web/src/features/calendar/components/WeekView.tsx`
+  - `apps/web/src/features/calendar/components/DayView.tsx`
+  - `apps/web/src/features/calendar/components/AgendaView.tsx`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:** اجرای موفق `npm run lint`، `npm run typecheck`، `npm run test --workspace @orbit/web` (۲۶۸ آزمون پاس‌شده بدون خطا)، `npm run build` و `git diff --check`.
+- **گام بعدی:** بازبینی توسط کاربر و پیاده‌سازی یادآورها (Reminders) یا پردازش متن طبیعی زبان تاریخ.
 
 ### 2026-10-08 | P4-CAL-004 | مسدودسازی زمان (Time Blocking) و کشیدن و رها کردن (Drag & Drop) در تقویم وب
 

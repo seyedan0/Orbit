@@ -389,6 +389,153 @@ describe('completeTask', () => {
   });
 });
 
+describe('completeTask with recurring tasks (P4-REC-001)', () => {
+  const COMPLETE_TIME = '2026-10-05T12:00:00.000Z';
+  const MUT_COMPLETE_ID = 'rec-complete-mutation-1';
+
+  it('advances dueDate and keeps completedAt null for recurring daily task', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      {
+        title: 'Daily routine',
+        dueDate: '2026-10-05T08:00:00.000Z',
+        repeatFlag: 'FREQ=DAILY;INTERVAL=1;CAL=JALALI'
+      },
+      { store, userId: 'user-1' }
+    );
+
+    const completed = await completeTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(COMPLETE_TIME),
+      newId: () => MUT_COMPLETE_ID
+    });
+
+    // Occurrence should advance by 1 day
+    expect(completed.completedAt).toBeNull();
+    expect(completed.dueDate).toBe('2026-10-06T08:00:00.000Z');
+    expect(completed.updatedAt).toBe(COMPLETE_TIME);
+
+    // Verify stored entity
+    const inStore = await store.getTask(task.id);
+    expect(inStore?.completedAt).toBeNull();
+    expect(inStore?.dueDate).toBe('2026-10-06T08:00:00.000Z');
+
+    // Verify sync mutation
+    const mutations = await store.listPendingMutations(10);
+    const updateMut = mutations.find((m) => m.id === MUT_COMPLETE_ID);
+    expect(updateMut).toBeDefined();
+    expect(updateMut?.operation).toBe('UPDATE');
+    expect(updateMut?.payloadType).toBe('PARTIAL');
+    expect(updateMut?.payload).toEqual({
+      dueDate: '2026-10-06T08:00:00.000Z',
+      completedAt: null,
+      updatedAt: COMPLETE_TIME
+    });
+    expect(updateMut?.fieldTimestamps).toEqual({
+      dueDate: COMPLETE_TIME,
+      completedAt: COMPLETE_TIME,
+      updatedAt: COMPLETE_TIME
+    });
+  });
+
+  it('shifts startDate by the same offset preserving time duration', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      {
+        title: 'Daily work block',
+        startDate: '2026-10-05T07:00:00.000Z',
+        dueDate: '2026-10-05T08:30:00.000Z',
+        repeatFlag: 'FREQ=DAILY;INTERVAL=1;CAL=JALALI'
+      },
+      { store, userId: 'user-1' }
+    );
+
+    const completed = await completeTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(COMPLETE_TIME),
+      newId: () => MUT_COMPLETE_ID
+    });
+
+    expect(completed.completedAt).toBeNull();
+    expect(completed.startDate).toBe('2026-10-06T07:00:00.000Z');
+    expect(completed.dueDate).toBe('2026-10-06T08:30:00.000Z');
+
+    const mutations = await store.listPendingMutations(10);
+    const updateMut = mutations.find((m) => m.id === MUT_COMPLETE_ID);
+    expect(updateMut?.payload).toEqual({
+      startDate: '2026-10-06T07:00:00.000Z',
+      dueDate: '2026-10-06T08:30:00.000Z',
+      completedAt: null,
+      updatedAt: COMPLETE_TIME
+    });
+    expect(updateMut?.fieldTimestamps).toEqual({
+      startDate: COMPLETE_TIME,
+      dueDate: COMPLETE_TIME,
+      completedAt: COMPLETE_TIME,
+      updatedAt: COMPLETE_TIME
+    });
+  });
+
+  it('falls back to normal task completion when UNTIL boundary is passed', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      {
+        title: 'Expiring task',
+        dueDate: '2026-10-05T08:00:00.000Z',
+        repeatFlag: 'FREQ=DAILY;INTERVAL=1;UNTIL=20261005T120000Z;CAL=JALALI'
+      },
+      { store, userId: 'user-1' }
+    );
+
+    const completed = await completeTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date(COMPLETE_TIME),
+      newId: () => MUT_COMPLETE_ID
+    });
+
+    // Next day (2026-10-06) is past UNTIL (2026-10-05T12:00:00Z)
+    expect(completed.completedAt).toBe(COMPLETE_TIME);
+    expect(completed.dueDate).toBe('2026-10-05T08:00:00.000Z');
+
+    const inStore = await store.getTask(task.id);
+    expect(inStore?.completedAt).toBe(COMPLETE_TIME);
+  });
+
+  it('supports creating and updating repeatFlag via createTask and rescheduleTask', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      {
+        title: 'Weekly sync',
+        repeatFlag: 'FREQ=WEEKLY;INTERVAL=1;CAL=JALALI'
+      },
+      { store, userId: 'user-1' }
+    );
+
+    expect(task.repeatFlag).toBe('FREQ=WEEKLY;INTERVAL=1;CAL=JALALI');
+
+    const updated = await rescheduleTask(
+      store,
+      task.id,
+      { repeatFlag: 'FREQ=MONTHLY;INTERVAL=1;CAL=JALALI' },
+      { now: () => new Date(COMPLETE_TIME), newId: () => 'mut-repeat-change' }
+    );
+
+    expect(updated.repeatFlag).toBe('FREQ=MONTHLY;INTERVAL=1;CAL=JALALI');
+
+    const mutations = await store.listPendingMutations(10);
+    const updateMut = mutations.find((m) => m.id === 'mut-repeat-change');
+    expect(updateMut?.payload).toEqual({
+      repeatFlag: 'FREQ=MONTHLY;INTERVAL=1;CAL=JALALI'
+    });
+    expect(updateMut?.fieldTimestamps).toEqual({
+      repeatFlag: COMPLETE_TIME
+    });
+  });
+});
+
 describe('reopenTask', () => {
   const COMPLETE_TIME = '2020-01-01T12:00:00.000Z';
   const REOPEN_TIME = '2020-01-01T14:00:00.000Z';
