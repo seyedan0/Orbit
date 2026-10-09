@@ -1,8 +1,12 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useMemo, type FormEvent } from 'react';
 import { DatePicker } from '../../calendar/components/DatePicker';
 import { TaskValidationError } from '../services/task-service';
 import { RECURRENCE_PRESETS } from '../../../core/recurrence/recurrence';
 import { REMINDER_PRESETS } from '../../../core/reminders/reminder-utils';
+import {
+  parseNaturalDate,
+  formatDetectedDateChip
+} from '../../../core/calendar/natural-date';
 
 export interface TaskFormSubmitOptions {
   dueDate?: string | null | undefined;
@@ -13,6 +17,7 @@ export interface TaskFormSubmitOptions {
 
 export interface TaskFormProps {
   onSubmit: (title: string, options?: TaskFormSubmitOptions) => Promise<void>;
+  defaultTitle?: string;
   defaultDueDate?: string | null;
   defaultIsAllDay?: boolean;
   defaultRepeatFlag?: string | null;
@@ -21,31 +26,61 @@ export interface TaskFormProps {
 
 export function TaskForm({
   onSubmit,
+  defaultTitle = '',
   defaultDueDate = null,
   defaultIsAllDay = true,
   defaultRepeatFlag = null,
   defaultReminder = 'NONE'
 }: TaskFormProps) {
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(defaultTitle);
   const [dueDate, setDueDate] = useState<string | null>(defaultDueDate);
   const [isAllDay, setIsAllDay] = useState<boolean>(defaultIsAllDay);
+  const [isManualDueDate, setIsManualDueDate] = useState(false);
   const [repeatFlag, setRepeatFlag] = useState<string>(defaultRepeatFlag ?? '');
   const [reminder, setReminder] = useState<string>(defaultReminder);
   const [error, setError] = useState<string | undefined>();
+
+  // Real-time natural language date and time parsing
+  const naturalResult = useMemo(() => {
+    if (!title.trim()) return null;
+    return parseNaturalDate(title);
+  }, [title]);
+
+  const detectedDate = naturalResult?.detectedDate ?? null;
+  const isSmartDateActive = Boolean(detectedDate && !isManualDueDate);
+
+  // Effective due date & all-day flag (smart date takes effect unless manually overridden)
+  const effectiveDueDate =
+    isSmartDateActive && detectedDate ? detectedDate.toISOString() : dueDate;
+  const effectiveIsAllDay =
+    isSmartDateActive && naturalResult ? naturalResult.isAllDay : isAllDay;
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const run = async () => {
       setError(undefined);
-      await onSubmit(title, {
-        dueDate,
-        isAllDay,
+
+      let submitTitle = title;
+      let submitDueDate = dueDate;
+      let submitIsAllDay = isAllDay;
+
+      if (isSmartDateActive && naturalResult?.detectedDate) {
+        submitDueDate = naturalResult.detectedDate.toISOString();
+        submitIsAllDay = naturalResult.isAllDay;
+        submitTitle = naturalResult.cleanTitle;
+      }
+
+      await onSubmit(submitTitle, {
+        dueDate: submitDueDate,
+        isAllDay: submitIsAllDay,
         repeatFlag: repeatFlag.trim() ? repeatFlag : null,
-        reminders: reminder !== 'NONE' && dueDate ? [reminder] : []
+        reminders: reminder !== 'NONE' && submitDueDate ? [reminder] : []
       });
+
       setTitle('');
       setDueDate(defaultDueDate);
       setIsAllDay(defaultIsAllDay);
+      setIsManualDueDate(false);
       setRepeatFlag(defaultRepeatFlag ?? '');
       setReminder(defaultReminder);
     };
@@ -62,19 +97,45 @@ export function TaskForm({
   return (
     <>
       <form className="task-form" onSubmit={handleSubmit}>
-        <input
-          className="task-input"
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="عنوان task جدید…"
-          aria-label="عنوان task"
-          autoComplete="off"
-        />
+        <div className="task-input-wrapper">
+          <input
+            className="task-input"
+            type="text"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (!e.target.value.trim()) {
+                setIsManualDueDate(false);
+              }
+            }}
+            placeholder="عنوان task جدید…"
+            aria-label="عنوان task"
+            autoComplete="off"
+          />
+            {isSmartDateActive && detectedDate && naturalResult && (
+            <div
+              className="smart-date-chip"
+              data-testid="smart-date-chip"
+              title="تاریخ تشخیص داده شده خودکار"
+            >
+              <span>{formatDetectedDateChip(detectedDate, naturalResult.isAllDay)}</span>
+              <button
+                type="button"
+                className="smart-date-dismiss"
+                onClick={() => setIsManualDueDate(true)}
+                aria-label="حذف تاریخ خودکار"
+                data-testid="smart-date-dismiss"
+              >
+                ×
+              </button>
+            </div>
+          )}
+        </div>
         <DatePicker
-          value={dueDate}
-          isAllDay={isAllDay}
+          value={effectiveDueDate}
+          isAllDay={effectiveIsAllDay}
           onChange={(newDate, allDay) => {
+            setIsManualDueDate(true);
             setDueDate(newDate);
             setIsAllDay(allDay);
           }}
@@ -95,12 +156,12 @@ export function TaskForm({
         </select>
         <select
           className="task-reminder-select"
-          value={dueDate ? reminder : 'NONE'}
+          value={effectiveDueDate ? reminder : 'NONE'}
           onChange={(e) => setReminder(e.target.value)}
-          disabled={!dueDate}
+          disabled={!effectiveDueDate}
           aria-label="یادآور"
           data-testid="task-reminder-select"
-          title={!dueDate ? 'ابتدا تاریخ سررسید را انتخاب کنید' : 'انتخاب یادآور'}
+          title={!effectiveDueDate ? 'ابتدا تاریخ سررسید را انتخاب کنید' : 'انتخاب یادآور'}
         >
           {REMINDER_PRESETS.map((preset) => (
             <option key={preset.id} value={preset.id}>
