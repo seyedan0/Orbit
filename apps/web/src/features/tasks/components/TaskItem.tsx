@@ -52,6 +52,24 @@ export function TaskItem({
       )}
       <span className={`task-title ${isCompleted ? 'completed' : ''}`}>
         {task.title}
+        {task.repeatFlag && !isDeleted && (
+          <span
+            className="task-repeat-badge"
+            data-testid={`task-repeat-${task.id}`}
+            title="تکرارشونده"
+          >
+            🔁
+          </span>
+        )}
+        {task.reminders && task.reminders.length > 0 && !isDeleted && (
+          <span
+            className="task-reminder-badge"
+            data-testid={`task-reminder-${task.id}`}
+            title="دارای یادآور"
+          >
+            🔔
+          </span>
+        )}
         {formattedDueDate && !isDeleted && (
           <span className="task-due-badge" data-testid={`task-due-${task.id}`}>
             📅 {formattedDueDate}

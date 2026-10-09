@@ -112,6 +112,12 @@
   max-height: 120px;
 }
 
+.dayCellDragOver {
+  border-color: #3b82f6 !important;
+  background-color: #eff6ff !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+}
+
 .taskItemCard {
   display: flex;
   align-items: center;
@@ -122,6 +128,12 @@
   font-size: 0.8rem;
   border-left: 3px solid #94a3b8;
   transition: background-color 0.1s ease;
+  cursor: grab;
+  user-select: none;
+}
+
+.taskItemCard:active {
+  cursor: grabbing;
 }
 
 .taskItemCard:hover {

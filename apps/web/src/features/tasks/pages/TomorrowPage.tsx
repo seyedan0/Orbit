@@ -50,7 +50,13 @@ export function TomorrowPage() {
     const dueDate = options?.dueDate !== undefined ? options.dueDate : tomorrowIso;
     const isAllDay = options?.isAllDay !== undefined ? options.isAllDay : true;
     await createTask(
-      { title, dueDate, isAllDay },
+      {
+        title,
+        dueDate,
+        isAllDay,
+        repeatFlag: options?.repeatFlag,
+        reminders: options?.reminders
+      },
       { store, userId: session.userId }
     );
     await reload();

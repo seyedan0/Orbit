@@ -1,5 +1,6 @@
 import type { SyncQueueEntry, TaskEntity } from '@orbit/shared-types';
 import type { AtomicTaskStore } from '@orbit/sync-engine';
+import { getNextOccurrenceDate, parseRRule } from '../../../core/recurrence/recurrence';
 
 /**
  * Well-known projectId for the user's default Inbox.
@@ -9,12 +10,15 @@ export const INBOX_PROJECT_ID = 'inbox';
 
 export interface CreateTaskInput {
   title: string;
-  dueDate?: string | null;
-  startDate?: string | null;
-  isAllDay?: boolean;
-  allDay?: boolean;
-  timeZone?: string;
-  timezone?: string | null;
+  dueDate?: string | null | undefined;
+  startDate?: string | null | undefined;
+  duration?: number | null | undefined;
+  isAllDay?: boolean | undefined;
+  allDay?: boolean | undefined;
+  timeZone?: string | undefined;
+  timezone?: string | null | undefined;
+  repeatFlag?: string | null | undefined;
+  reminders?: string[] | undefined;
 }
 
 export interface TaskServiceDeps {
@@ -85,6 +89,8 @@ export async function createTask(
   const isAllDay = Boolean(input.isAllDay ?? input.allDay ?? false);
   const startDate = input.startDate ?? null;
   const dueDate = input.dueDate ?? null;
+  const duration = input.duration ?? null;
+  const repeatFlag = input.repeatFlag ?? null;
   const timeZone =
     input.timeZone ??
     input.timezone ??
@@ -106,9 +112,11 @@ export async function createTask(
     allDay: isAllDay,
     startDate,
     dueDate,
+    duration,
     timeZone,
     timezone: timeZone,
-    reminders: [],
+    repeatFlag,
+    reminders: input.reminders ? [...input.reminders] : [],
     items: [],
     version: 0,
     localStatus: 'CREATED',
@@ -136,7 +144,9 @@ export async function createTask(
       reminders: timestamp,
       items: timestamp,
       ...(startDate !== null ? { startDate: timestamp } : {}),
-      ...(dueDate !== null ? { dueDate: timestamp } : {})
+      ...(dueDate !== null ? { dueDate: timestamp } : {}),
+      ...(duration !== null ? { duration: timestamp } : {}),
+      ...(repeatFlag !== null ? { repeatFlag: timestamp } : {})
     },
     createdAt: timestamp,
     status: 'PENDING',
@@ -182,6 +192,83 @@ export async function completeTask(
 
   const nextLocalStatus = task.localStatus === 'CREATED' ? 'CREATED' : 'UPDATED';
 
+  // Recurring task lifecycle handling:
+  // If task has a repeatFlag, advance to the next occurrence instead of terminating.
+  if (task.repeatFlag && task.repeatFlag.trim() !== '') {
+    const rruleOptions = parseRRule(task.repeatFlag);
+    const baseDate = task.dueDate
+      ? new Date(task.dueDate)
+      : task.startDate
+        ? new Date(task.startDate)
+        : now();
+
+    const nextDueDateObj = getNextOccurrenceDate(baseDate, rruleOptions);
+    if (nextDueDateObj) {
+      const nextDueIso = nextDueDateObj.toISOString();
+      let nextStartIso: string | null = null;
+
+      if (task.startDate && task.dueDate) {
+        const diffMs =
+          new Date(task.dueDate).getTime() - new Date(task.startDate).getTime();
+        nextStartIso = new Date(nextDueDateObj.getTime() - diffMs).toISOString();
+      } else if (task.startDate && task.duration != null) {
+        nextStartIso = new Date(
+          nextDueDateObj.getTime() - task.duration * 60 * 1000
+        ).toISOString();
+      } else if (task.startDate) {
+        const deltaMs = nextDueDateObj.getTime() - baseDate.getTime();
+        nextStartIso = new Date(
+          new Date(task.startDate).getTime() + deltaMs
+        ).toISOString();
+      }
+
+      const updatedTask: TaskEntity = {
+        ...task,
+        dueDate: nextDueIso,
+        startDate: nextStartIso,
+        completedAt: null, // Reset completion for next occurrence cycle
+        updatedAt: timestamp,
+        localStatus: nextLocalStatus
+      };
+
+      const payload: Partial<TaskEntity> = {
+        dueDate: nextDueIso,
+        completedAt: null,
+        updatedAt: timestamp
+      };
+      const fieldTimestamps: Record<string, string> = {
+        dueDate: timestamp,
+        completedAt: timestamp,
+        updatedAt: timestamp
+      };
+
+      if (nextStartIso !== null) {
+        payload.startDate = nextStartIso;
+        fieldTimestamps.startDate = timestamp;
+      }
+
+      const mutation: SyncQueueEntry = {
+        id: mutationId,
+        idempotencyKey,
+        entityType: 'TASK',
+        entityId: task.id,
+        operation: 'UPDATE',
+        baseVersion: task.version,
+        payloadType: 'PARTIAL',
+        payload,
+        fieldTimestamps,
+        createdAt: timestamp,
+        status: 'PENDING',
+        attemptCount: 0,
+        nextAttemptAt: timestamp
+      };
+
+      await deps.store.saveTaskWithMutation(updatedTask, mutation);
+      return updatedTask;
+    }
+  }
+
+  // Regular non-recurring task completion:
   const updatedTask: TaskEntity = {
     ...task,
     completedAt: timestamp,
@@ -407,12 +494,15 @@ export async function restoreTask(
 }
 
 export interface ScheduleTaskInput {
-  dueDate?: string | null;
-  startDate?: string | null;
-  isAllDay?: boolean;
-  allDay?: boolean;
-  timeZone?: string;
-  timezone?: string | null;
+  dueDate?: string | null | undefined;
+  startDate?: string | null | undefined;
+  duration?: number | null | undefined;
+  isAllDay?: boolean | undefined;
+  allDay?: boolean | undefined;
+  timeZone?: string | undefined;
+  timezone?: string | null | undefined;
+  repeatFlag?: string | null | undefined;
+  reminders?: string[] | undefined;
 }
 
 export interface ScheduleTaskDeps extends TaskServiceDeps {
@@ -469,12 +559,28 @@ export async function scheduleTask(
     ? (input.timeZone ?? input.timezone ?? task.timeZone)
     : task.timeZone;
 
+  const nextDuration: number | null =
+    input.duration !== undefined ? input.duration : (task.duration ?? null);
+
+  const repeatFlagChanged = input.repeatFlag !== undefined;
+  const nextRepeatFlag: string | null = repeatFlagChanged
+    ? (input.repeatFlag ?? null)
+    : (task.repeatFlag ?? null);
+
+  const remindersChanged = input.reminders !== undefined;
+  const nextReminders: string[] = remindersChanged
+    ? (input.reminders ? [...input.reminders] : [])
+    : (task.reminders ?? []);
+
   // Check if anything actually changed
   if (
     !isAllDayChanged &&
     !timeZoneChanged &&
+    !repeatFlagChanged &&
+    !remindersChanged &&
     input.startDate === undefined &&
-    input.dueDate === undefined
+    input.dueDate === undefined &&
+    input.duration === undefined
   ) {
     return task;
   }
@@ -493,8 +599,11 @@ export async function scheduleTask(
     allDay: nextIsAllDay,
     startDate: nextStartDate,
     dueDate: nextDueDate,
+    duration: nextDuration,
     timeZone: nextTimeZone,
     timezone: nextTimeZone,
+    repeatFlag: nextRepeatFlag,
+    reminders: nextReminders,
     updatedAt: timestamp,
     localStatus: nextLocalStatus
   };
@@ -510,6 +619,10 @@ export async function scheduleTask(
     payload.startDate = nextStartDate;
     fieldTimestamps.startDate = timestamp;
   }
+  if (input.duration !== undefined) {
+    payload.duration = nextDuration;
+    fieldTimestamps.duration = timestamp;
+  }
   if (isAllDayChanged) {
     payload.isAllDay = nextIsAllDay;
     payload.allDay = nextIsAllDay;
@@ -519,6 +632,14 @@ export async function scheduleTask(
     payload.timeZone = nextTimeZone;
     payload.timezone = nextTimeZone;
     fieldTimestamps.timeZone = timestamp;
+  }
+  if (repeatFlagChanged) {
+    payload.repeatFlag = nextRepeatFlag;
+    fieldTimestamps.repeatFlag = timestamp;
+  }
+  if (remindersChanged) {
+    payload.reminders = nextReminders;
+    fieldTimestamps.reminders = timestamp;
   }
 
   const mutation: SyncQueueEntry = {
@@ -538,6 +659,162 @@ export async function scheduleTask(
   };
 
   await deps.store.saveTaskWithMutation(updatedTask, mutation);
+  return updatedTask;
+}
+
+export interface RescheduleTaskUpdates {
+  dueDate?: string | null | undefined;
+  startDate?: string | null | undefined;
+  duration?: number | null | undefined;
+  isAllDay?: boolean | undefined;
+  repeatFlag?: string | null | undefined;
+  reminders?: string[] | undefined;
+}
+
+export interface RescheduleTaskDeps {
+  userId?: string;
+  idempotencyKey?: string;
+  now?: () => Date;
+  newId?: () => string;
+}
+
+/**
+ * Atomically reschedules a task (updating dueDate, startDate, duration, and isAllDay):
+ * 1. Verifies that the task exists in storage.
+ * 2. Validates that startDate <= dueDate when both are non-null.
+ * 3. Validates duration is non-negative when provided.
+ * 4. Generates a partial UPDATE mutation with precise fieldTimestamps for LWW sync protocol.
+ * 5. Saves atomically via store.saveTaskWithMutation.
+ */
+export async function rescheduleTask(
+  store: AtomicTaskStore,
+  taskId: string,
+  updates: RescheduleTaskUpdates,
+  deps: RescheduleTaskDeps = {}
+): Promise<TaskEntity> {
+  const task = await store.getTask(taskId);
+  if (!task) {
+    throw new TaskNotFoundError(taskId);
+  }
+
+  const nextStartDate: string | null =
+    updates.startDate !== undefined ? updates.startDate : (task.startDate ?? null);
+  const nextDueDate: string | null =
+    updates.dueDate !== undefined ? updates.dueDate : (task.dueDate ?? null);
+
+  if (
+    nextStartDate &&
+    nextDueDate &&
+    new Date(nextStartDate).getTime() > new Date(nextDueDate).getTime()
+  ) {
+    throw new TaskValidationError(
+      'تاریخ سررسید نمی‌تواند قبل از تاریخ شروع باشد'
+    );
+  }
+
+  if (
+    updates.duration !== undefined &&
+    updates.duration !== null &&
+    updates.duration < 0
+  ) {
+    throw new TaskValidationError('مدت‌زمان نمی‌تواند منفی باشد');
+  }
+
+  const isAllDayChanged = updates.isAllDay !== undefined;
+  const nextIsAllDay = isAllDayChanged ? Boolean(updates.isAllDay) : task.isAllDay;
+
+  const nextDuration: number | null =
+    updates.duration !== undefined ? updates.duration : (task.duration ?? null);
+
+  const repeatFlagChanged = updates.repeatFlag !== undefined;
+  const nextRepeatFlag: string | null = repeatFlagChanged
+    ? (updates.repeatFlag ?? null)
+    : (task.repeatFlag ?? null);
+
+  const remindersChanged = updates.reminders !== undefined;
+  const nextReminders: string[] = remindersChanged
+    ? (updates.reminders ? [...updates.reminders] : [])
+    : (task.reminders ?? []);
+
+  // Check if anything actually changed
+  if (
+    !isAllDayChanged &&
+    !repeatFlagChanged &&
+    !remindersChanged &&
+    updates.startDate === undefined &&
+    updates.dueDate === undefined &&
+    updates.duration === undefined
+  ) {
+    return task;
+  }
+
+  const now = deps.now ?? (() => new Date());
+  const timestamp = now().toISOString();
+  const newId = deps.newId ?? (() => crypto.randomUUID());
+  const mutationId = newId();
+  const idempotencyKey = deps.idempotencyKey ?? mutationId;
+
+  const nextLocalStatus = task.version === 0 ? 'CREATED' : 'UPDATED';
+
+  const updatedTask: TaskEntity = {
+    ...task,
+    isAllDay: nextIsAllDay,
+    allDay: nextIsAllDay,
+    startDate: nextStartDate,
+    dueDate: nextDueDate,
+    duration: nextDuration,
+    repeatFlag: nextRepeatFlag,
+    reminders: nextReminders,
+    updatedAt: timestamp,
+    localStatus: nextLocalStatus
+  };
+
+  const payload: Partial<TaskEntity> = {};
+  const fieldTimestamps: Record<string, string> = {};
+
+  if (updates.dueDate !== undefined) {
+    payload.dueDate = nextDueDate;
+    fieldTimestamps.dueDate = timestamp;
+  }
+  if (updates.startDate !== undefined) {
+    payload.startDate = nextStartDate;
+    fieldTimestamps.startDate = timestamp;
+  }
+  if (updates.duration !== undefined) {
+    payload.duration = nextDuration;
+    fieldTimestamps.duration = timestamp;
+  }
+  if (isAllDayChanged) {
+    payload.isAllDay = nextIsAllDay;
+    payload.allDay = nextIsAllDay;
+    fieldTimestamps.isAllDay = timestamp;
+  }
+  if (repeatFlagChanged) {
+    payload.repeatFlag = nextRepeatFlag;
+    fieldTimestamps.repeatFlag = timestamp;
+  }
+  if (remindersChanged) {
+    payload.reminders = nextReminders;
+    fieldTimestamps.reminders = timestamp;
+  }
+
+  const mutation: SyncQueueEntry = {
+    id: mutationId,
+    idempotencyKey,
+    entityType: 'TASK',
+    entityId: task.id,
+    operation: 'UPDATE',
+    baseVersion: task.version,
+    payloadType: 'PARTIAL',
+    payload,
+    fieldTimestamps,
+    createdAt: timestamp,
+    status: 'PENDING',
+    attemptCount: 0,
+    nextAttemptAt: timestamp
+  };
+
+  await store.saveTaskWithMutation(updatedTask, mutation);
   return updatedTask;
 }
 

@@ -118,3 +118,141 @@
     border-bottom: 1px solid #e0e0e5;
   }
 }
+
+/* In-App Reminder Toast / Banner Styles (P4-REM-001) */
+.reminderToastContainer {
+  position: fixed;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 90%;
+  max-width: 480px;
+  pointer-events: none;
+}
+
+.reminderBanner {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.15rem;
+  background: #ffffff;
+  border: 1px solid #ffca28;
+  border-inline-start: 5px solid #f57f17;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.08);
+  animation: slideDownToast 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDownToast {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reminderContent {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.reminderIcon {
+  font-size: 1.35rem;
+  animation: bellRing 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes bellRing {
+  from {
+    transform: rotate(-10deg);
+  }
+  to {
+    transform: rotate(10deg);
+  }
+}
+
+.reminderText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.reminderTitle {
+  font-size: 0.95rem;
+  color: #1a1a24;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reminderSubtitle {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.reminderActions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.btnReminderComplete {
+  background: #198754;
+  color: #ffffff;
+  border: none;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.825rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btnReminderComplete:hover {
+  background: #157347;
+}
+
+.btnReminderSnooze {
+  background: #f8f9fa;
+  color: #495057;
+  border: 1px solid #ced4da;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btnReminderSnooze:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.btnReminderDismiss {
+  background: transparent;
+  color: #868e96;
+  border: none;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.25rem 0.4rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btnReminderDismiss:hover {
+  color: #212529;
+  background: #f1f3f5;
+}

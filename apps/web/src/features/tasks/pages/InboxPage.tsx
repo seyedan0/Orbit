@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useSession } from '../../../core/auth/session-context';
 import { useStore } from '../../../core/storage/store-context';
 import { EmptyState } from '../components/EmptyState';
-import { TaskForm } from '../components/TaskForm';
+import { TaskForm, type TaskFormSubmitOptions } from '../components/TaskForm';
 import { TaskList } from '../components/TaskList';
 import {
   INBOX_PROJECT_ID,
@@ -32,10 +32,22 @@ export function InboxPage() {
     void reload();
   }, [reload]);
 
-  const handleCreate = async (title: string) => {
+  const handleCreate = async (
+    title: string,
+    options?: TaskFormSubmitOptions
+  ) => {
     if (session === undefined) return;
     setActionError(null);
-    await createTask({ title }, { store, userId: session.userId });
+    await createTask(
+      {
+        title,
+        dueDate: options?.dueDate,
+        isAllDay: options?.isAllDay,
+        repeatFlag: options?.repeatFlag,
+        reminders: options?.reminders
+      },
+      { store, userId: session.userId }
+    );
     await reload();
   };
 
