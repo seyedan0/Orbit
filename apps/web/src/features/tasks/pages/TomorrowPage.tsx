@@ -2,19 +2,24 @@ import type { TaskEntity } from '@orbit/shared-types';
 import { useCallback, useEffect, useState } from 'react';
 import { useSession } from '../../../core/auth/session-context';
 import { useStore } from '../../../core/storage/store-context';
+import {
+  dateToJalali,
+  formatJalaliDate,
+  jalaliToIso
+} from '../../../core/calendar/jalali';
 import { EmptyState } from '../components/EmptyState';
 import { TaskForm, type TaskFormSubmitOptions } from '../components/TaskForm';
 import { TaskList } from '../components/TaskList';
 import {
-  INBOX_PROJECT_ID,
   createTask,
   completeTask,
   reopenTask,
   deleteTask,
-  restoreTask
+  restoreTask,
+  filterTasksDueTomorrow
 } from '../services/task-service';
 
-export function InboxPage() {
+export function TomorrowPage() {
   const { session } = useSession();
   const store = useStore();
   const [tasks, setTasks] = useState<TaskEntity[]>([]);
@@ -22,9 +27,16 @@ export function InboxPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [lastDeletedTask, setLastDeletedTask] = useState<TaskEntity | null>(null);
 
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowJalali = dateToJalali(tomorrow);
+  const tomorrowIso = jalaliToIso(tomorrowJalali.year, tomorrowJalali.month, tomorrowJalali.day, 0, 0, true);
+  const tomorrowDateLabel = formatJalaliDate(tomorrowJalali, { format: 'full' });
+
   const reload = useCallback(async () => {
-    const list = await store.listTasks(INBOX_PROJECT_ID);
-    setTasks([...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+    const allTasks = await store.listTasks();
+    const tomorrowList = filterTasksDueTomorrow(allTasks);
+    setTasks(tomorrowList);
     setLoading(false);
   }, [store]);
 
@@ -32,17 +44,16 @@ export function InboxPage() {
     void reload();
   }, [reload]);
 
-  const handleCreate = async (
-    title: string,
-    options?: TaskFormSubmitOptions
-  ) => {
+  const handleCreate = async (title: string, options?: TaskFormSubmitOptions) => {
     if (session === undefined) return;
     setActionError(null);
+    const dueDate = options?.dueDate !== undefined ? options.dueDate : tomorrowIso;
+    const isAllDay = options?.isAllDay !== undefined ? options.isAllDay : true;
     await createTask(
       {
         title,
-        dueDate: options?.dueDate,
-        isAllDay: options?.isAllDay,
+        dueDate,
+        isAllDay,
         repeatFlag: options?.repeatFlag,
         reminders: options?.reminders
       },
@@ -58,7 +69,6 @@ export function InboxPage() {
     const isCurrentlyCompleted = task.completedAt != null;
     const previousTasks = tasks;
 
-    // 1. Update local state immediately (optimistic UI)
     const optimisticTimestamp = new Date().toISOString();
     setTasks((current) =>
       current.map((t) => {
@@ -79,7 +89,6 @@ export function InboxPage() {
       }
       await reload();
     } catch (err) {
-      // Revert optimistic update on storage failure to prevent inconsistent UI state
       setTasks(previousTasks);
       setActionError(
         err instanceof Error ? err.message : 'خطا در به‌روزرسانی وضعیت تسک'
@@ -92,7 +101,6 @@ export function InboxPage() {
     setActionError(null);
 
     const previousTasks = tasks;
-    // 1. Optimistic UI update: remove task from normal inbox list
     setTasks((current) => current.filter((t) => t.id !== task.id));
     setLastDeletedTask(task);
 
@@ -100,7 +108,6 @@ export function InboxPage() {
       await deleteTask(task.id, { store, userId: session.userId });
       await reload();
     } catch (err) {
-      // Revert optimistic update on storage failure to prevent inconsistent UI state
       setTasks(previousTasks);
       setLastDeletedTask(null);
       setActionError(
@@ -114,7 +121,6 @@ export function InboxPage() {
     setActionError(null);
 
     const previousTasks = tasks;
-    // 1. Optimistic UI update: re-add task to inbox list
     setTasks((current) => [task, ...current]);
     setLastDeletedTask(null);
 
@@ -122,7 +128,6 @@ export function InboxPage() {
       await restoreTask(task.id, { store, userId: session.userId });
       await reload();
     } catch (err) {
-      // Revert optimistic update on storage failure to prevent inconsistent UI state
       setTasks(previousTasks);
       setActionError(
         err instanceof Error ? err.message : 'خطا در بازیابی تسک'
@@ -131,10 +136,15 @@ export function InboxPage() {
   };
 
   return (
-    <section className="inbox">
-      <h1>صندوق ورودی</h1>
+    <section className="inbox" data-testid="tomorrow-page">
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', marginBottom: '1rem' }}>
+        <h1 style={{ margin: 0 }}>فردا</h1>
+        <span style={{ color: '#8e8e93', fontSize: '0.95rem' }} data-testid="tomorrow-date-label">
+          {tomorrowDateLabel}
+        </span>
+      </div>
 
-      <TaskForm onSubmit={handleCreate} />
+      <TaskForm onSubmit={handleCreate} defaultDueDate={tomorrowIso} defaultIsAllDay={true} />
       {actionError && <p className="error-msg">{actionError}</p>}
 
       {lastDeletedTask && (

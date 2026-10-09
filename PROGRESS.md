@@ -4,21 +4,21 @@
 
 ## وضعیت کلی
 
-- **مرحله:** فاز ۳، sync و حساب کاربری
-- **آخرین به‌روزرسانی:** 2026-10-05
+- **مرحله:** فاز ۴، مدیریت زمان و تقویم
+- **آخرین به‌روزرسانی:** 2026-10-09
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 99%
-- **Branch فعال:** `feature/sync-health-telemetry`
+- **درصد تقریبی پیشرفت:** 90% (فاز ۴)
+- **Branch فعال:** `feature/web-natural-date-parsing`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-افزودن تله‌متری حداقلی برای سلامت همگام‌سازی (Sync Health Telemetry) بدون وابستگی دامنه به ارائه‌دهنده‌های خاص (شامل رابط استاندارد و خنثی `SyncTelemetry`، ثبت ۱۳ رویداد و متریک کلیدی، عدم نشت محتوای خصوصی کاربران، پیاده‌سازی No-op پیش‌فرض و `InMemorySyncTelemetry`، و ایمنی در برابر شکست گردآورنده).
+پیاده‌سازی موتور سبک و مستقل پردازش زبان طبیعی تاریخ و زمان به دو زبان فارسی و انگلیسی (Natural Language Date Parsing) برای ایجاد هوشمند تسک‌ها، تشخیص درلحظه هنگام تایپ عنوان، نمایش تراشه برجسته تاریخ (`smart-date-chip`)، اعمال خودکار بر روی `dueDate` و `isAllDay`، و پالایش تمیز عنوان تسک از عبارات زمانی.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی و PR شاخه `feature/sync-health-telemetry` به `develop`
-- [ ] گام بعدی فاز ۳: نهایی‌سازی و آمادگی برای یکپارچه‌سازی فرانت‌اند
+- [ ] بازبینی شاخه `feature/web-natural-date-parsing` توسط کاربر
+- [ ] گام بعدی: نهایی‌سازی دروازه خروج فاز ۴ و آغاز فاز ۵ (سازمان‌دهی، تگ‌ها، فیلترهای هوشمند و نماهای پیشرفته)
 
 ## کارهای انجام‌شده
 
@@ -66,8 +66,292 @@
 - [x] **P3-SYNC-003:** پیاده‌سازی بازیابی بعد از crash، timeout و restart برای sync runtime (بازیابی IN_FLIGHT، بازگشت امن به PENDING با backoff، حفظ کرسر و اتمیسیتی pull، سقف retry و ثبت FAILED برای خطاهای دائمی)
 - [x] ادغام PR شماره ۱۴ (`feature/sync-recovery`) در `develop`
 - [x] **P3-SYNC-004:** افزودن تله‌متری حداقلی برای سلامت همگام‌سازی بدون وابستگی دامنه به ارائه‌دهنده خاص (شامل رابط خنثی `SyncTelemetry`، ثبت ۱۳ رویداد و متریک الزامی، عدم نشت عناوین و محتوای تسک‌ها، پیاده‌سازی No-op پیش‌فرض و `InMemorySyncTelemetry`، و آزمون‌های پایداری و تاب‌آوری در برابر خطای گردآورنده)
+- [x] ادغام PR شماره ۱۸ (`feature/sync-health-telemetry`) در `develop` و `main` و آغاز رسمی فاز ۴
+- [x] **P4-CAL-001:** پیاده‌سازی زیرساخت تقویم، موتور بدون وابستگی محاسباتی شمسی (Jalali)، کامپوننت انتخاب تاریخ و زمان (DatePicker دوگانه شمسی/میلادی)، یکپارچه‌سازی زمان‌بندی تسک‌ها در سرویس و فرم تسک، و نماهای زمانی «امروز» (Today) و «فردا» (Tomorrow) همراه با لینک‌های سایدبار
+- [x] ادغام PR شماره ۱۹ (`feature/calendar-jalali-foundation`) در `develop`
+- [x] **P4-DOC-001:** تدوین سند جامع معماری محصول و استراتژی فنی (`docs/product-architecture.md`) بر پایه بنچ‌مارک تیک‌تیک، فلسفه FOSS و رایگان‌سازی امکانات پولی، چرخه بهره‌وری ۶ مرحله‌ای، هوش مصنوعی باز BYOK/MCP، رتبه‌بندی LexoRank، و به‌روزرسانی سراسری اسناد `vision`، `architecture`، `feature-catalog`، `roadmap`، `project-plan` و `README`
+- [x] **P4-CAL-002:** پیاده‌سازی نماهای تعاملی ماهانه و هفتگی با پشتیبانی دوگانه تقویم شمسی/میلادی در وب، افزودن مسیر `/calendar` و لینک ناوبری سایدبار، ایجاد سریع تسک و مدیریت تکمیل تسک از تقویم
+- [x] **P4-CAL-003:** پیاده‌سازی نمای روزانه با تایم‌لاین ساعتی (Day View) و نمای ترتیبی دستورکار (Agenda View) در وب با بخش پین‌شده تسک‌های تمام‌روز، خط قرمز زمان جاری ("هم‌اکنون")، ناوبری روزانه، ایجاد سریع تسک و تغییر وضعیت تکمیل مستقیم
+- [x] **P4-CAL-004:** پیاده‌سازی مسدودسازی زمان (Time Blocking)، کشیدن و رها کردن (Drag & Drop) و تغییر مدت‌زمان تسک‌ها (Duration Resizing) در تقویم وب با به‌روزرسانی خوش‌بینانه (<50ms)، اعتبارسنجی LWW و آزمون‌های دامنه و کامپوننت
+- [x] **P4-REC-001:** پیاده‌سازی موتور تکرار تسک‌ها (Recurring Tasks Engine بر پایه RRULE) با پشتیبانی دوگانه تقویم شمسی/میلادی، محاسبات سال‌های کبیسه، چرخه حیات تکمیل تسک و نشانگرهای بصری UI
+- [x] **P4-REM-001:** پیاده‌سازی موتور یادآورهای درون‌برنامه‌ای و مرورگر (Reminders Engine) با اسنوز (+10 دقیقه)، کنترل‌های تکمیل تسک، پیش‌تنظیم‌های استاندارد، هشدارهای صوتی و دسکتاپ، و نشانگرهای زنگوله 🔔 در تسک‌ها و تقویم
+- [x] **P4-NLP-001:** پیاده‌سازی موتور پردازش زبان طبیعی تاریخ و زمان دو زبانه (فارسی و انگلیسی)، تشخیص درلحظه عنوان، تراشه هوشمند تاریخ (`smart-date-chip`) و پالایش عنوان تسک
 
 ## فعالیت AIها
+
+### 2026-10-09 | P4-NLP-001 | پیاده‌سازی پردازش زبان طبیعی تاریخ و زمان دو زبانه (فارسی و انگلیسی)
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی موتور مستقل و سبک پردازش زبان طبیعی تاریخ و زمان دو زبانه (Persian & English Natural Language Date Parsing) برای ایجاد هوشمند تسک‌ها، پشتیبانی جامع از اصطلاحات نسبی، روزهای هفته و فرمت‌های مختلف ساعت، نمایش درلحظه تراشه هوشمند تاریخ در فرم تسک، اعمال خودکار سررسید و نوع تمام‌روز در صورت عدم مداخله دستی کاربر، و پالایش تمیز عنوان تسک از عبارات زمانی.
+- **انجام‌شده:**
+  - ایجاد ماژول پردازش زبان طبیعی در `apps/web/src/core/calendar/natural-date.ts`:
+    - تبدیل اعداد فارسی و عربی به ارقام استاندارد (`toLatinDigits`).
+    - پشتیبانی کامل از تاریخ‌های نسبی فارسی: «امروز» (روز ۰)، «فردا» (روز +۱)، «پسفردا» / «پس‌فردا» / «پس فردا» (روز +۲)، «هفته بعد» / «هفته آینده» (روز +۷).
+    - پشتیبانی از روزهای هفته شمسی («شنبه»، «یکشنبه»، «دوشنبه»، «سه‌شنبه»، «چهارشنبه»، «پنج‌شنبه»، «جمعه») همراه با پسوندهای «بعد» و «آینده».
+    - پشتیبانی از ماه‌های شمسی صریح نظیر «۱۵ مهر» یا «۲۰ اسفند».
+    - پشتیبانی از اصطلاحات زمانی فارسی: «ساعت ۱۰»، «ساعت 10:30»، «ساعت ۱۰:۳۰»، «ساعت ۵ عصر / بعدازظهر / بعد از ظهر» (تبدیل به ۱۷:۰۰)، «ساعت ۹ صبح» (۰۹:۰۰)، «ساعت ۱۲ ظهر» (۱۲:۰۰)، «ساعت ۱۲ شب» (۰۰:۰۰)، و فرمت‌های بدون واژه ساعت مانند «۵ عصر».
+    - پشتیبانی از عبارات انگلیسی: 'today', 'tomorrow', 'day after tomorrow', 'next week'، روزهای هفته ('monday' ... 'sunday', 'next monday' ...)، و زمان‌های انگلیسی ('at 5pm', 'at 10:30am', 'at 16:00', '5pm').
+    - پیاده‌سازی تابع اصلی `parseNaturalDate(input, referenceDate, calendarType)` با خروجی ساختاریافته `{ cleanTitle, detectedDate, isAllDay, matchedText }`.
+    - پالایش پاکیزه و بدون تخریب عنوان تسک از عبارات شناسایی‌شده و حروف اضافه مجاور نظیر «برای»، «در»، «تا»، 'on', 'at', 'for', 'by'.
+    - پیاده‌سازی تابع تولید برچسب تراشه بصری `formatDetectedDateChip` به هر دو تقویم شمسی («🗓️ فردا ساعت ۱۰:۰۰») و میلادی.
+  - یکپارچه‌سازی با فرم ایجاد تسک در `apps/web/src/features/tasks/components/TaskForm.tsx`:
+    - تشخیص درلحظه عنوان هنگام تایپ کاربر با `useMemo`.
+    - نمایش تراشه ظریف و برجسته هوشمند (`smart-date-chip`) در زیر فیلد عنوان با آیکون `🗓️` و دکمه حذف دستی (`×`).
+    - به‌روزرسانی همزمان انتخاب‌گر تاریخ و فعال‌سازی خودکار دراپ‌داون یادآور در صورت تشخیص زمان‌بندی.
+    - اعمال خودکار تاریخ و `cleanTitle` هنگام ارسال فرم (مگر اینکه کاربر تاریخ را به صورت دستی در DatePicker تغییر داده باشد).
+  - افزودن استایل‌های مدرن و واکنش‌گرا در `apps/web/src/styles/globals.css`:
+    - کلاس‌های `.task-input-wrapper`، `.smart-date-chip` و `.smart-date-dismiss` با پشتیبانی از Dark Mode.
+  - آزمون‌های جامع:
+    - ۲۷ آزمون واحد در `apps/web/src/core/calendar/natural-date.test.ts` برای تمام سناریوهای فارسی، انگلیسی، ترکیبی، پاکسازی عنوان و تولید برچسب.
+    - ۸ آزمون در `apps/web/src/features/tasks/components/TaskForm.test.tsx` شامل آزمون‌های رندر تراشه هوشمند تاریخ در هر دو زبان و رفتارهای شرطی فرم.
+    - اجرای موفق کل مجموعه تست‌های وب (۳۲۸ تست پاس‌شده بدون هیچ خطا).
+- **فایل‌ها:**
+  - `apps/web/src/core/calendar/natural-date.ts`
+  - `apps/web/src/core/calendar/natural-date.test.ts`
+  - `apps/web/src/features/tasks/components/TaskForm.tsx`
+  - `apps/web/src/features/tasks/components/TaskForm.test.tsx`
+  - `apps/web/src/styles/globals.css`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:** اجرای موفق `npm run typecheck`، `npx vitest run natural-date TaskForm` (۳۵ تست)، `npm run test --workspace @orbit/web` (۳۲۸ تست)، `git diff --check`.
+- **گام بعدی:** بازبینی توسط کاربر و ادغام در `develop` جهت تکمیل فاز ۴ و آماده‌سازی فاز ۵.
+
+### 2026-10-09 | P4-REM-001 | پیاده‌سازی موتور یادآورهای درون‌برنامه‌ای و مرورگر با اسنوز و کنترل‌های تکمیل
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی موتور جامع یادآورها (In-App and Browser Reminders Engine) شامل پیش‌تنظیم‌های استاندارد، محاسبات دقیق زمان یادآوری بر اساس سررسید، مدیریت مجوزهای مرورگر (`Notification`)، هشدارهای صوتی دو صدایی (Web Audio API)، بنر تعاملی درون‌برنامه‌ای در `AppShell` با قابلیت تکمیل آنی تسک و اسنوز ۱۰ دقیقه‌ای، ردگیری هشدارهای فعال در نشست کاربری جهت جلوگیری از تکرار، انتخاب‌گر یادآور در فرم تسک و نشانگر زنگوله (`🔔`) در لیست تسک‌ها و تمام نماهای تقویم.
+- **انجام‌شده:**
+  - ایجاد ماژول محاسبات و پیش‌تنظیم‌های یادآور در `apps/web/src/core/reminders/reminder-utils.ts`:
+    - تعریف پیش‌تنظیم‌های استاندارد `REMINDER_PRESETS` (`NONE`, `AT_TIME` 0m, `15_MIN_BEFORE` -15m, `30_MIN_BEFORE` -30m, `1_HOUR_BEFORE` -60m, `1_DAY_BEFORE` -1440m).
+    - توابع محاسباتی `calculateReminderTimestamp` جهت تبدیل سررسید و آفست دقیقه به زمان دقیق ISO-8601.
+    - تابع فرمت‌بندی متن یادآور (`formatReminderText`) به دو زبان فارسی («در زمان سررسید»، «۱۵ دقیقه قبل»، «۳۰ دقیقه قبل»، «۱ ساعت قبل»، «۱ روز قبل») و انگلیسی.
+    - تابع محاسبه زمان اسنوز (`calculateSnoozeDueDate`) با مقدار پیش‌فرض ۱۰ دقیقه.
+    - تابع ارزیابی زمان شلیک هشدار (`shouldFireReminder`) با پنجره تلورانس و بازه موثر.
+  - پیاده‌سازی سرویس و مدیریت اعلان‌ها در `apps/web/src/core/reminders/reminder-service.ts`:
+    - درخواست مجوز اعلان‌های بومی مرورگر (`requestNotificationPermission`).
+    - نمایش اعلان دسکتاپ بومی (`showNativeNotification`) با پشتیبانی از آیکون و بستن خودکار.
+    - تولید افکت صوتی زنگ دو صدایی (Two-Tone Chime در فرکانس‌های ۵۸۷Hz و ۸۸۰Hz) با استفاده از Web Audio API بدون نیاز به فایل صوتی خارجی.
+    - مدیریت کلیدهای هشدار شلیک‌شده در `sessionStorage` جهت جلوگیری قطعی از هشدارهای تکراری یا اسپم در حین اسکن مکرر.
+  - پیاده‌سازی زمینه و اسکنر پس‌زمینه در `apps/web/src/core/reminders/reminder-context.tsx`:
+    - هوک `useReminders()` و کامپوننت ارائه‌دهنده `ReminderProvider`.
+    - چرخه اسکن دوره‌ای (Polling Loop هر ۵ ثانیه) روی تسک‌های زمان‌بندی‌شده و فعال استور محلی.
+    - مدیریت صف هشدارهای فعال (`activeAlerts`) با پشتیبانی از چندین یادآور همزمان.
+    - اکشن‌های تعاملی کاربر:
+      - تکمیل تسک (`completeAlert`): فراخوانی `completeTask` از سرویس دامنه، حذف هشدار و بستن بنر.
+      - به تعویق انداختن تسک (`snoozeAlert`): محاسبه تاریخ جدید با +10 دقیقه و فراخوانی `rescheduleTask`.
+      - رد کردن هشدار (`dismissAlert`): ثبت در حافظه نشست و پاکسازی از بنر.
+  - یکپارچه‌سازی رابط کاربری و پوسته اپلیکیشن:
+    - `AppShell.tsx` و `AppShell.module.css`: تعبیه بنر شناور با دسترسی‌پذیری کامل (`role="alert"`، دکمه‌های "تکمیل"، "به تعویق انداختن (+۱۰ دقیقه)" و "بستن").
+    - `TaskForm.tsx`: افزودن فیلد دراپ‌داون یادآور (`task-reminder-select`) با فعال‌سازی مشروط در صورت داشتن تاریخ سررسید.
+    - `TaskItem.tsx`: نمایش بج زنگوله (`🔔`) با `data-testid="task-reminder-<id>"` در صورت وجود یادآور در تسک.
+    - نماهای تقویم (`MonthView.tsx`، `WeekView.tsx`، `DayView.tsx`، `AgendaView.tsx`): نمایش نشانگر زنگوله در کنار عناوین تسک‌ها.
+    - سرویس دامنه `task-service.ts`: ارتقای `createTask`، `scheduleTask` و `rescheduleTask` جهت ثبت و نگهداری اتمیک آرایه `reminders` و جهش‌های LWW.
+  - آزمون‌های جامع:
+    - ۱۶ آزمون واحد در `reminder-utils.test.ts` برای تمام پیش‌تنظیم‌ها، محاسبات زمانی، آفست‌های سفارشی و اسنوز.
+    - ۹ آزمون در `reminder-service.test.ts` برای مجوزهای نوتیفیکیشن، تولید صدا، نشست کلیدها و فیلتر هشدارهای شلیک‌شده.
+    - آزمون‌های یکپارچگی دامنه در `task-service.test.ts` برای ایجاد و زمان‌بندی مجدد تسک‌های دارای یادآور با جهش‌های اتمیک.
+    - آزمون‌های کامپوننت در `TaskItem.test.tsx`، `TaskForm.test.tsx` و `AppShell.test.tsx`.
+- **فایل‌ها:**
+  - `apps/web/src/core/reminders/reminder-utils.ts`
+  - `apps/web/src/core/reminders/reminder-utils.test.ts`
+  - `apps/web/src/core/reminders/reminder-service.ts`
+  - `apps/web/src/core/reminders/reminder-service.test.ts`
+  - `apps/web/src/core/reminders/reminder-context.tsx`
+  - `apps/web/src/core/reminders/index.ts`
+  - `apps/web/src/app/App.tsx`
+  - `apps/web/src/layout/AppShell.tsx`
+  - `apps/web/src/layout/AppShell.module.css`
+  - `apps/web/src/layout/AppShell.test.tsx`
+  - `apps/web/src/styles/globals.css`
+  - `apps/web/src/features/tasks/components/TaskForm.tsx`
+  - `apps/web/src/features/tasks/components/TaskForm.test.tsx`
+  - `apps/web/src/features/tasks/components/TaskItem.tsx`
+  - `apps/web/src/features/tasks/components/TaskItem.test.tsx`
+  - `apps/web/src/features/tasks/pages/InboxPage.tsx`
+  - `apps/web/src/features/tasks/pages/TodayPage.tsx`
+  - `apps/web/src/features/tasks/pages/TomorrowPage.tsx`
+  - `apps/web/src/features/tasks/services/task-service.ts`
+  - `apps/web/src/features/tasks/services/task-service.test.ts`
+  - `apps/web/src/features/calendar/components/MonthView.tsx`
+  - `apps/web/src/features/calendar/components/WeekView.tsx`
+  - `apps/web/src/features/calendar/components/DayView.tsx`
+  - `apps/web/src/features/calendar/components/AgendaView.tsx`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:** اجرای کامل `npm run lint`، `npm run typecheck`، `npm run test --workspace @orbit/web` (۲۹۸ آزمون پاس‌شده بدون خطا)، `npm run build` و `git diff --check`.
+- **گام بعدی:** بازبینی توسط کاربر و پیاده‌سازی پردازش متن طبیعی زبان تاریخ (Natural Language Date Parsing) یا ورود به فاز ۵.
+
+### 2026-10-09 | P4-REC-001 | پیاده‌سازی موتور تکرار تسک‌ها (RRULE) با تقویم شمسی و چرخه حیات تکمیل
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی موتور تکرار تسک‌ها بر پایه RFC 5545 RRULE با پشتیبانی اختصاصی از تقویم شمسی (ماه‌های ۳۱، ۳۰ و ۲۹ روزه، سال‌های کبیسه، روزهای کاری شنبه تا چهارشنبه)، ادغام در چرخه حیات تکمیل تسک (`completeTask`) با محاسبه اتمیک رخداد بعدی، تغییر شیفت `startDate` بر اساس مدت‌زمان، ثبت جهش‌های جزئی همگام‌سازی، و نمایش نشانگرهای تکرار (`🔁`) در فرم و نماهای تقویم.
+- **انجام‌شده:**
+  - ایجاد ماژول موتور تکرار در `apps/web/src/core/recurrence/recurrence.ts`:
+    - تعریف تایپ‌های `RecurrenceFrequency`، `RecurrenceOptions` و تبدیل‌های کد روزهای هفته در تقویم شمسی (`CODE_TO_JALALI_DAY` با نگاشت شنبه `SA` تا جمعه `FR`) و میلادی.
+    - پیاده‌سازی پارسر و سریالایزر RFC 5545 RRULE (`parseRRule` و `buildRRule`) با پشتیبانی از پارامترهای `FREQ`، `INTERVAL`، `BYDAY`، `BYMONTHDAY`، `UNTIL`، `COUNT` و پارامتر سفارشی `CAL=JALALI` / `CAL=GREGORIAN`.
+    - پیاده‌سازی تولید توصیف متنی محلی (`formatRRuleText`) به دو زبان فارسی («روزانه»، «روزهای کاری»، «هفتگی»، «ماهانه»، «سالانه») و انگلیسی.
+    - پیاده‌سازی تابع محاسباتی تاریخ رخداد بعدی (`getNextOccurrenceDate`):
+      - محاسبات بدون اثر جانبی (Pure) با حفظ ساعت، دقیقه و ثانیه.
+      - پشتیبانی از توالی روزهای انتخابی در هفته (`BYDAY`)، جهش‌های چند هفته‌ای (`INTERVAL`).
+      - محاسبات دقیق روز در ماه شمسی (`BYMONTHDAY`) با مدیریت طول ماه‌ها (شش ماه نخست ۳۱ روز، پنج ماه دوم ۳۰ روز، و اسفند ۲۹ روز در سال‌های عادی یا ۳۰ روز در سال‌های کبیسه نظیر ۱۴۰۸).
+      - پشتیبانی از فرمت‌های استاندارد ISO-8601 و فرمت فشرده RFC 5545 (`YYYYMMDDTHHMMSSZ`) برای سقف زمانی `UNTIL`.
+    - تعریف پیش‌تنظیم‌های استاندارد (`RECURRENCE_PRESETS`) برای رابط کاربری (بدون تکرار، روزانه، روزهای کاری، هفتگی، ماهانه، سالانه).
+  - ادغام در سرویس دامنه در `apps/web/src/features/tasks/services/task-service.ts`:
+    - پشتیبانی از فیلد `repeatFlag` در ورودی‌ها و توابع `createTask`، `scheduleTask` و `rescheduleTask`.
+    - یکپارچه‌سازی چرخه حیات تکمیل در `completeTask`: بررسی `repeatFlag`؛ در صورت وجود و امکان محاسبه تاریخ بعدی، تاریخ سررسید (`dueDate`) به جلو هدایت می‌شود، در صورت وجود تاریخ شروع (`startDate`) با حفظ بازه زمانی شیفت پیدا می‌کند، وضعیت تکمیل به `completedAt: null` ریست می‌شود، و جهش همگام‌سازی جزئی (`UPDATE`) با `fieldTimestamps` برای پروتکل LWW ثبت می‌گردد. در صورت رسیدن به سقف `UNTIL`، تسک به‌صورت عادی خاتمه می‌یابد.
+  - به‌روزرسانی رابط کاربری وب:
+    - `TaskForm.tsx`: افزودن دراپ‌داون انتخاب تکرار (`task-repeat-select`) با برچسب‌های فارسی و ثبت مقدار استاندارد RRULE در ایجاد تسک.
+    - صفحات `InboxPage.tsx`، `TodayPage.tsx` و `TomorrowPage.tsx`: دریافت و انتقال `repeatFlag` به سرویس ایجاد تسک.
+    - `TaskItem.tsx`: نمایش برچسب بصری تسک تکرارشونده (`🔁`) با استایل و `data-testid="task-repeat-<id>"`.
+    - نماهای تقویم (`MonthView.tsx`، `WeekView.tsx`، `DayView.tsx` و `AgendaView.tsx`): نمایش نشانگر تکرار در کنار عنوان تسک‌های تکرارشونده در همه بخش‌های ماهانه، هفتگی، تمام‌روز، اسلات ساعتی و دستورکار.
+  - آزمون‌های جامع:
+    - ۲۰ آزمون واحد برای موتور تکرار در `recurrence.test.ts` شامل آزمون‌های سال کبیسه ۱۴۰۸، جهش ماه‌های ۳۰/۳۱ روزه، روزهای کاری و فرمت متن.
+    - آزمون‌های چرخه حیات تکمیل تسک‌های تکرارشونده، شیفت `startDate`، سقف `UNTIL` و ثبت جهش‌ها در `task-service.test.ts`.
+    - آزمون‌های کامپوننت برای نشانگر تکرار در `TaskItem.test.tsx` و انتخاب‌گر تکرار در `TaskForm.test.tsx`.
+- **فایل‌ها:**
+  - `apps/web/src/core/recurrence/recurrence.ts`
+  - `apps/web/src/core/recurrence/recurrence.test.ts`
+  - `apps/web/src/styles/globals.css`
+  - `apps/web/src/features/tasks/services/task-service.ts`
+  - `apps/web/src/features/tasks/services/task-service.test.ts`
+  - `apps/web/src/features/tasks/components/TaskForm.tsx`
+  - `apps/web/src/features/tasks/components/TaskForm.test.tsx`
+  - `apps/web/src/features/tasks/components/TaskItem.tsx`
+  - `apps/web/src/features/tasks/components/TaskItem.test.tsx`
+  - `apps/web/src/features/tasks/pages/InboxPage.tsx`
+  - `apps/web/src/features/tasks/pages/TodayPage.tsx`
+  - `apps/web/src/features/tasks/pages/TomorrowPage.tsx`
+  - `apps/web/src/features/calendar/components/MonthView.tsx`
+  - `apps/web/src/features/calendar/components/WeekView.tsx`
+  - `apps/web/src/features/calendar/components/DayView.tsx`
+  - `apps/web/src/features/calendar/components/AgendaView.tsx`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:** اجرای موفق `npm run lint`، `npm run typecheck`، `npm run test --workspace @orbit/web` (۲۶۸ آزمون پاس‌شده بدون خطا)، `npm run build` و `git diff --check`.
+- **گام بعدی:** بازبینی توسط کاربر و پیاده‌سازی یادآورها (Reminders) یا پردازش متن طبیعی زبان تاریخ.
+
+### 2026-10-08 | P4-CAL-004 | مسدودسازی زمان (Time Blocking) و کشیدن و رها کردن (Drag & Drop) در تقویم وب
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی قابلیت مسدودسازی زمانی تسک‌ها (Time Blocking)، کشیدن و رها کردن (Drag and Drop) تسک‌ها در نماهای ماهانه و روزانه تقویم، تغییر مدت‌زمان (Duration Resizing) با دستگیره اختصاصی و به‌روزرسانی خوش‌بینانه با بازگشت امن در صورت بروز خطا.
+- **انجام‌شده:**
+  - توسعه موجودیت `TaskEntity` در `packages/shared-types/src/task.ts` با افزودن فیلد اختیاری `duration?: number | null | undefined`.
+  - توسعه سرویس دامنه در `apps/web/src/features/tasks/services/task-service.ts`:
+    - پیاده‌سازی تابع `rescheduleTask(store, taskId, updates, deps)` با پشتیبانی از تغییر `dueDate`، `startDate`، `duration` و `isAllDay`.
+    - اعتبارسنجی تقدم تاریخ شروع نسبت به سررسید (`startDate <= dueDate`) و عدم پذیرش مدت‌زمان منفی (`TaskValidationError`).
+    - ثبت اتمیک جهش همگام‌سازی از نوع `UPDATE` با `fieldTimestamps` دقیق برای هر فیلد تغییریافته جهت هماهنگی با پروتکل حل تعارض LWW.
+    - ارتقای `CreateTaskInput` و `scheduleTask` جهت پشتیبانی یکپارچه از `duration`.
+  - ایجاد توابع محاسباتی در `apps/web/src/features/calendar/calendar-utils.ts`:
+    - `rescheduleDatePreservingTime(originalIso, targetDate)` جهت حفظ ساعت، دقیقه و ثانیه هنگام جابه‌جایی روزها در تقویم ماهانه.
+    - `rescheduleTaskToHour(targetDate, hour, durationMinutes)` جهت محاسبه اتمیک `startDate` و `dueDate` بر اساس ساعت مقصد و طول بازه.
+  - تعاملات در نمای ماهانه (`MonthView.tsx` و `MonthView.module.css`):
+    - امکان کشیدن کارت تسک‌ها (`draggable={true}`) با بارگذاری شناسه تسک.
+    - پشتیبانی سلول‌های روز به عنوان مقصد رها کردن (Drop Target) همراه با استایل بصری `dayCellDragOver` و فراخوانی `onRescheduleTask`.
+  - تعاملات در نمای روزانه (`DayView.tsx` و `DayView.module.css`):
+    - امکان کشیدن تسک‌های تمام‌روز و تسک‌های زمان‌دار ساعتی.
+    - پشتیبانی اسلات‌های ساعتی (۰ تا ۲۳) و بخش بالایی تسک‌های تمام‌روز به عنوان مقصد رها کردن با استایل هایلایت فعال.
+    - رها کردن تسک تمام‌روز روی اسلات ساعتی، صفت `isAllDay` را حذف کرده و ساعت را تخصیص می‌دهد.
+    - اضافه شدن دستگیره اختصاصی تغییر اندازه در پایین کارت‌های زمان‌دار (`resizeHandle` با `data-testid="resize-handle-<taskId>"` و `role="separator"`).
+    - پشتیبانی از درگ ماوس برای تغییر پیوسته مدت‌زمان با گام‌های ۱۵ و ۳۰ دقیقه‌ای و کلیک جایگزین (Fallback) برای افزایش سریع زمان.
+    - نمایش برچسب مدت‌زمان تسک (`durationBadge` با اعداد فارسی/انگلیسی) و تنظیم پویای ارتفاع کارت متناسب با بازه زمانی.
+  - به‌روزرسانی خوش‌بینانه در `CalendarPage.tsx`:
+    - توابع `handleRescheduleMonth`، `handleRescheduleDayHour` و `handleResizeDayDuration` با اعمال فوری روی استیت (<50ms).
+    - برگرداندن خودکار تغییرات (Rollback) به استیت قبلی در صورت بروز خطای دیتابیس یا اعتبارسنجی و نمایش بنر خطا با `data-testid="calendar-action-error"`.
+  - آزمون‌های جامع:
+    - آزمون‌های واحد برای `rescheduleTask` در `task-service.test.ts` شامل تغییر اتمیک، اعتبارسنجی‌ها، پاک‌سازی فیلدها و ثبت جهش‌ها.
+    - آزمون‌های کامپوننت و توابع تقویم در `CalendarPage.test.tsx` (تعداد تست‌های پاس‌شده کلاینت وب به ۲۴۲ تست رسید).
+- **فایل‌ها:**
+  - `packages/shared-types/src/task.ts`
+  - `apps/web/src/features/tasks/services/task-service.ts`
+  - `apps/web/src/features/tasks/services/task-service.test.ts`
+  - `apps/web/src/features/calendar/calendar-utils.ts`
+  - `apps/web/src/features/calendar/components/MonthView.tsx`
+  - `apps/web/src/features/calendar/components/MonthView.module.css`
+  - `apps/web/src/features/calendar/components/DayView.tsx`
+  - `apps/web/src/features/calendar/components/DayView.module.css`
+  - `apps/web/src/features/calendar/pages/CalendarPage.tsx`
+  - `apps/web/src/features/calendar/pages/CalendarPage.test.tsx`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:** اجرای موفق `npm run lint`، `npm run typecheck`، `npm run test` (مجموعاً ۳۳۵ آزمون بدون خطا) و `npm run build`.
+- **گام بعدی:** بازبینی توسط کاربر و پیاده‌سازی قابلیت‌های بعدی تقویم (قوانین تکرار RRULE / یادآورها).
+
+### 2026-10-08 | P4-CAL-003 | نمای روزانه (تایم‌لاین ساعتی) و نمای دستورکار (Agenda) در تقویم وب
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی نماهای تعاملی روزانه (`DayView`) و دستورکار (`AgendaView`) با پشتیبانی کامل از سیستم‌های تقویم شمسی و میلادی در تقویم وب
+- **انجام‌شده:**
+  - ارتقای تایپ `CalendarViewMode` به `'month' | 'week' | 'day' | 'agenda'` در `apps/web/src/features/calendar/calendar-utils.ts`.
+  - افزودن توابع کمکی `getDayHourSlots` (تولید اسلات‌های ۰ تا ۲۳ با برچسب‌های فارسی/انگلیسی)، `getAgendaDayGroups` (گروه‌بندی تسک‌ها در روزهای ترتیبی با مرتب‌سازی اولویت و زمان)، `navigateDay` و `navigateAgenda`.
+  - پیاده‌سازی کامپوننت `DayView` با بخش بالایی پین‌شده تسک‌های تمام‌روز ("تمام روز")، گرید تایم‌لاین ۲۴ ساعته با جای‌گذاری دقیق کارت‌های تسک در اسلات ساعت، خط قرمز زمان جاری پویا ("هم‌اکنون")، کلید سریع افزودن تسک و امکان تیک زدن اتمام تسک.
+  - پیاده‌سازی کامپوننت `AgendaView` با فهرست ترتیبی کارت‌های روزانه، برچسب‌های تقویم دوگانه، کارت‌های تسک با برچسب اولویت و زمان، وضعیت خالی تمیز برای روزهای بدون تسک یا بازه خالی.
+  - یکپارچه‌سازی نوار ابزار `CalendarPage` با تب‌های جدید "روز" و "دستورکار"، ناوبری ۱ روزه در نمای روز و جهش به امروز/۱۴ روز در نمای دستورکار، و باز شدن مدال تسک با ساعت پیش‌فرض انتخاب‌شده.
+  - صادرات کامپوننت‌ها در `apps/web/src/features/calendar/index.ts`.
+  - افزودن آزمون‌های کامپوننت در `CalendarPage.test.tsx` (مجموعاً ۲۲۸ آزمون سبز در کلاینت وب).
+- **فایل‌ها:**
+  - `apps/web/src/features/calendar/calendar-utils.ts`
+  - `apps/web/src/features/calendar/components/DayView.module.css`
+  - `apps/web/src/features/calendar/components/DayView.tsx`
+  - `apps/web/src/features/calendar/components/AgendaView.module.css`
+  - `apps/web/src/features/calendar/components/AgendaView.tsx`
+  - `apps/web/src/features/calendar/pages/CalendarPage.tsx`
+  - `apps/web/src/features/calendar/pages/CalendarPage.test.tsx`
+  - `apps/web/src/features/calendar/index.ts`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npm run lint`: موفق با ۰ خطا و ۰ هشدار
+  - `npm run typecheck`: موفق با ۰ خطا در کل مونو‌ریپو
+  - `npm run test --workspace @orbit/web`: موفق؛ تمام ۲۲۸ آزمون پاس شدند
+  - `npm run build`: موفق؛ بیلد کامل تمام پکیج‌ها و اپلیکیشن‌ها
+  - `git diff --check`: تمیز و بدون خطای فاصله‌گذاری
+- **وضعیت:** آماده در شاخه `feature/web-calendar-day-agenda` جهت بازبینی کاربر
+- **گام بعدی:** پیاده‌سازی قابلیت Time Blocking و جابه‌جایی Drag & Drop تسک‌ها در تقویم
+
+### 2026-10-08 | P4-CAL-002 | نماهای ماهانه و هفتگی تقویم در وب با پشتیبانی شمسی و میلادی
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی نماهای تعاملی ماهانه و هفتگی تقویم با پشتیبانی کامل از سیستم‌های تقویم شمسی و میلادی در رابط کاربری وب
+- **انجام‌شده:**
+  - ایجاد توابع کمکی تقویم در `apps/web/src/features/calendar/calendar-utils.ts` شامل ناوبری ماهانه و هفتگی، تطبیق تسک‌ها بر اساس سررسید/شروع، و تولید خانه‌های تقویم ماهانه و ستون‌های هفتگی.
+  - پیاده‌سازی کامپوننت `MonthView` در `apps/web/src/features/calendar/components/MonthView.tsx` با گرید ۷ ستونه (شنبه تا جمعه برای شمسی و یکشنبه تا شنبه برای میلادی)، نمایش کارت‌های تسک با رنگ اولویت، برجسته‌سازی امروز، و کلید افزودن تسک.
+  - پیاده‌سازی کامپوننت `WeekView` در `apps/web/src/features/calendar/components/WeekView.tsx` با ۷ ستون روزهای هفته جاری، نمایش نشانگرهای زمانی و تمام‌روز، برچسب اولویت و امکان تکمیل مستقیم تسک‌ها.
+  - پیاده‌سازی صفحه `CalendarPage` در `apps/web/src/features/calendar/pages/CalendarPage.tsx` با نوار ابزار کامل شامل سوئیچ بین نماهای ماه/هفته، سوئیچ بین تقویم شمسی/میلادی، کلیدهای ناوبری «قبلی»، «بعدی» و «امروز»، عنوان پویای ماه و سال، و مدال ایجاد سریع تسک با تاریخ از پیش تعیین‌شده.
+  - افزودن مسیر `/calendar` در `apps/web/src/app/routes.tsx` و لینک «تقویم» در ناوبری `AppShell.tsx` همراه با `aria-label` و `data-testid`.
+  - صادرات کامپوننت‌ها و توابع در `apps/web/src/features/calendar/index.ts`.
+  - افزودن آزمون‌های جامع کامپوننت و صفحه در `apps/web/src/features/calendar/pages/CalendarPage.test.tsx` (۸ تست جدید).
+- **فایل‌ها:**
+  - `apps/web/src/features/calendar/calendar-utils.ts`
+  - `apps/web/src/features/calendar/components/MonthView.module.css`
+  - `apps/web/src/features/calendar/components/MonthView.tsx`
+  - `apps/web/src/features/calendar/components/WeekView.module.css`
+  - `apps/web/src/features/calendar/components/WeekView.tsx`
+  - `apps/web/src/features/calendar/pages/CalendarPage.module.css`
+  - `apps/web/src/features/calendar/pages/CalendarPage.tsx`
+  - `apps/web/src/features/calendar/pages/CalendarPage.test.tsx`
+  - `apps/web/src/features/calendar/index.ts`
+  - `apps/web/src/app/routes.tsx`
+  - `apps/web/src/layout/AppShell.tsx`
+  - `apps/web/src/layout/AppShell.test.tsx`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npm run lint`: موفق با ۰ خطا و ۰ هشدار
+  - `npm run typecheck`: موفق با ۰ خطا در تمام پکیج‌ها و اپلیکیشن‌ها
+  - `npm run test --workspace @orbit/web`: موفق؛ تمام ۲۲۰ تست کلاینت وب با موفقیت پاس شدند
+  - `npm run build`: موفق؛ کامپایل و بیلد بدون خطای Vite و TypeScript
+  - `git diff --check`: بدون خطای فاصله‌گذاری
+- **وضعیت:** آماده در شاخه `feature/web-calendar-views` جهت بازبینی کاربر
+- **گام بعدی:** پیاده‌سازی نمای روزانه (Day View)، نمای Agenda و قابلیت Time Blocking
+
+### 2026-10-05 | تدوین سند جامع معماری محصول و همگام‌سازی مستندات
+
+- **عامل:** Antigravity
+- **هدف:** تحلیل عمیق بنچ‌مارک تیک‌تیک و تدوین سند جامع معماری محصول، رایگان‌سازی قابلیت‌های پولی در اکوسیستم آزاد، بازآرایی اسناد و ادغام در develop
+- **انجام‌شده:** ایجاد `docs/product-architecture.md`، به‌روزرسانی `docs/vision.md`، `docs/architecture.md`، `docs/feature-catalog.md`، `docs/roadmap.md`، `docs/project-plan.md` و `docs/README.md`
+- **فایل‌ها:** پوشه `docs/` و `PROGRESS.md`
+- **اعتبارسنجی:** `npm run typecheck` موفق، تست‌های کلاینت وب موفق (۲۱۲ آزمون)، `git diff --check` بدون خطا
+- **گام بعدی:** ادامه فاز ۴، پیاده‌سازی نماهای تقویم هفتگی و ماهانه (P4-CAL-002)
 
 ### 2026-09-29 | راه‌اندازی اولیه مستندات
 
@@ -896,10 +1180,83 @@
   - `npm run test --workspace @orbit/web`: تمام ۱۶۵ تست در ۱۳ فایل پاس شدند
   - `git diff --check`: بدون خطا
 - **وضعیت PR:**
-  - آماده ثبت PR از شاخه `feature/sync-health-telemetry` به `develop`
+  - ادغام‌شده در `develop` و `main` (PR #18).
 - **گام بعدی (Handoff):**
-  - ادغام `feature/sync-health-telemetry` در `develop`
-  - ادامه پیاده‌سازی و نهایی‌سازی قابلیت‌های بعدی فاز ۳
+  - آغاز رسمی فاز ۴ با وظیفه P4-CAL-001.
+
+### 2026-10-05 | زیرساخت تقویم، موتور جلالی، کامپوننت DatePicker و نماهای Today/Tomorrow (P4-CAL-001)
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی زیرساخت مدیریت زمان و تقویم شامل موتور مستقل و دقیق تقویم شمسی (جلالی)، کامپوننت انتخاب‌گر دوگانه تاریخ و ساعت (Jalali/Gregorian DatePicker)، زمان‌بندی تسک‌ها در سرویس دامنه، و نماهای روزانه «امروز» (Today) و «فردا» (Tomorrow).
+- **انجام‌شده:**
+  - **گسترش مدل داده (`packages/shared-types/src/task.ts`):**
+    - افزودن فیلدهای اختیاری زمان‌بندی: `startDate?: string | null`، `dueDate?: string | null`، `allDay?: boolean`، `timezone?: string | null`.
+    - تثبیت استاندارد ذخیره‌سازی مقادیر زمانی در قالب UTC ISO-8601 به منظور حفظ سازگاری همگام‌سازی و حل تعارض LWW.
+  - **موتور تقویم شمسی مستقل (`apps/web/src/core/calendar/jalali.ts`):**
+    - پیاده‌سازی بدون وابستگی خارجی با الگوریتم دقیق محاسباتی ۳۳ ساله برکوفسکی (Borkowski 1996) معتبر برای بازه سال‌های جلالی ۶۱- تا ۳۱۷۷.
+    - محاسبه دقیق سال‌های کبیسه شمسی (مانند ۱۳۹۵، ۱۳۹۹، ۱۴۰۳، ۱۴۰۸) و طول ماه‌ها (فروردین تا شهریور ۳۱ روز، مهر تا بهمن ۳۰ روز، و اسفند ۲۹/۳۰ روز).
+    - نگاشت شاخص روزهای هفته با شروع از شنبه (شنبه = ۰ تا جمعه = ۶) برای زبان فارسی (`fa-IR`).
+    - توابع تبدیل دوطرفه میلادی و شمسی (`gregorianToJalali`, `jalaliToGregorian`, `dateToJalali`, `jalaliToDate`, `isoToJalali`, `jalaliToIso`).
+    - ابزارهای فرمت‌بندی تاریخ و ساعت، تبدیل ارقام به فارسی (`toPersianDigits`) و پارس رشته‌های تاریخ.
+  - **کامپوننت انتخاب تاریخ و زمان (`apps/web/src/features/calendar/components/DatePicker.tsx`):**
+    - کامپوننت دسترس‌پذیر (ARIA) با `role="dialog"`, `aria-modal="false"`, `aria-haspopup="dialog"`, `aria-selected` و مدیریت فوکوس و بسته‌شدن با دکمه Escape و کلیک بیرون.
+    - پشتیبانی از تعویض زنده سیستم تقویم بین شمسی و میلادی با حفظ برچسب زمانی انتخاب‌شده.
+    - گزینه‌های زمان‌بندی تمام‌روز (تمام روز / All-Day) و انتخاب ساعت و دقیقه.
+    - دکمه‌های سریع «امروز»، «فردا» و «پاک کردن».
+  - **یکپارچه‌سازی سرویس دامنه تسک‌ها (`apps/web/src/features/tasks/services/task-service.ts`):**
+    - پشتیبانی از زمان‌بندی در زمان ایجاد (`createTask`).
+    - پیاده‌سازی متد `scheduleTask` جهت زمان‌بندی، به‌روزرسانی و لغو تاریخ سررسید/شروع با صدور جهش‌های `PARTIAL UPDATE` و متادیتای `fieldTimestamps`.
+    - اعتبارسنجی شرط منطقی `startDate <= dueDate`.
+    - توابع کوئری و فیلتر نماهای زمانی: `isDueToday`, `isDueTomorrow`, `filterTasksDueToday`, `filterTasksDueTomorrow`.
+  - **یکپارچه‌سازی فرم تسک (`apps/web/src/features/tasks/components/TaskForm.tsx`):**
+    - ادغام `DatePicker` درون فرم افزودن تسک و امکان تعیین سررسید پیش‌فرض.
+  - **نمایش تاریخ سررسید در تسک‌ها (`apps/web/src/features/tasks/components/TaskItem.tsx`):**
+    - نمایش برچسب زیبای تاریخ سررسید به تقویم شمسی در کنار عنوان تسک.
+  - **نماهای امروز و فردا (`TodayPage.tsx` و `TomorrowPage.tsx`):**
+    - ایجاد صفحات `/today` و `/tomorrow` با هدر تاریخ روز فارسی و لیست تسک‌های سررسید شده.
+    - به‌روزرسانی ناوبری سایدبار `AppShell.tsx` با پیوندهای «امروز» و «فردا».
+    - ثبت مسیرها در `apps/web/src/app/routes.tsx`.
+  - **تست‌های واحد و یکپارچه‌سازی:**
+    - آزمون‌های ۲۹گانه موتور جلالی (`apps/web/src/core/calendar/jalali.test.ts`).
+    - آزمون‌های سرویس زمان‌بندی و فیلترینگ تاریخ (`apps/web/src/features/tasks/services/task-service.test.ts`).
+    - آزمون‌های کامپوننت `DatePicker` (`apps/web/src/features/calendar/components/DatePicker.test.tsx`).
+    - آزمون‌های صفحات `TodayPage` و `TomorrowPage`.
+  - **مستندات:**
+    - به‌روزرسانی `docs/data-model.md` با فیلدهای جدید `TaskEntity` و قواعد ذخیره‌سازی UTC ISO-8601.
+- **فایل‌ها:**
+  - `packages/shared-types/src/task.ts`
+  - `packages/sync-engine/src/ports.ts`
+  - `apps/web/src/core/calendar/jalali.ts`
+  - `apps/web/src/core/calendar/jalali.test.ts`
+  - `apps/web/src/core/storage/indexeddb-local-store.ts`
+  - `apps/web/src/core/storage/memory-local-store.ts`
+  - `apps/web/src/features/calendar/components/DatePicker.tsx`
+  - `apps/web/src/features/calendar/components/DatePicker.module.css`
+  - `apps/web/src/features/calendar/components/DatePicker.test.tsx`
+  - `apps/web/src/features/calendar/index.ts`
+  - `apps/web/src/features/tasks/services/task-service.ts`
+  - `apps/web/src/features/tasks/services/task-service.test.ts`
+  - `apps/web/src/features/tasks/components/TaskForm.tsx`
+  - `apps/web/src/features/tasks/components/TaskForm.test.tsx`
+  - `apps/web/src/features/tasks/components/TaskItem.tsx`
+  - `apps/web/src/features/tasks/pages/TodayPage.tsx`
+  - `apps/web/src/features/tasks/pages/TodayPage.test.tsx`
+  - `apps/web/src/features/tasks/pages/TomorrowPage.tsx`
+  - `apps/web/src/features/tasks/pages/TomorrowPage.test.tsx`
+  - `apps/web/src/layout/AppShell.tsx`
+  - `apps/web/src/layout/AppShell.test.tsx`
+  - `apps/web/src/app/routes.tsx`
+  - `apps/web/src/styles/globals.css`
+  - `docs/data-model.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - اجرای کامل اعتبارسنجی‌های شش‌گانه الزامی (`npm ci`, `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build`, `git diff --check`).
+- **وضعیت PR:**
+  - آماده ثبت PR از شاخه `feature/calendar-jalali-foundation` به `develop`.
+- **گام بعدی (Handoff):**
+  - ادغام `feature/calendar-jalali-foundation` در `develop`.
+  - اجرای تسک بعدی فاز ۴ (نماهای Upcoming و تقویم کامل هفتگی و ماهانه).
+
 
 
 

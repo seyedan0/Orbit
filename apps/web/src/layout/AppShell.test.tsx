@@ -6,6 +6,7 @@ import { SessionProvider } from '../core/auth/session-context.js';
 import { MemoryLocalStore } from '../core/storage/memory-local-store.js';
 import { StoreProvider } from '../core/storage/store-context.js';
 import { SyncProvider } from '../core/sync/sync-context.js';
+import { ReminderProvider } from '../core/reminders/reminder-context.js';
 import { AppShell } from './AppShell.js';
 
 describe('AppShell with sync status integration', () => {
@@ -17,15 +18,20 @@ describe('AppShell with sync status integration', () => {
       <SessionProvider>
         <StoreProvider store={store}>
           <SyncProvider transport={transport}>
-            <MemoryRouter>
-              <AppShell />
-            </MemoryRouter>
+            <ReminderProvider>
+              <MemoryRouter>
+                <AppShell />
+              </MemoryRouter>
+            </ReminderProvider>
           </SyncProvider>
         </StoreProvider>
       </SessionProvider>
     );
 
     // Verify nav items
+    expect(html).toContain('امروز');
+    expect(html).toContain('فردا');
+    expect(html).toContain('تقویم');
     expect(html).toContain('صندوق ورودی');
     expect(html).toContain('تنظیمات');
 

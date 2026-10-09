@@ -46,6 +46,86 @@ body {
   outline-offset: 1px;
 }
 
+.task-input-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  position: relative;
+}
+
+.smart-date-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  background-color: #eef2ff;
+  color: #4338ca;
+  width: fit-content;
+  user-select: none;
+  animation: fadeIn 0.15s ease-in-out;
+}
+
+[data-theme='dark'] .smart-date-chip {
+  background-color: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+}
+
+.smart-date-dismiss {
+  background: none;
+  border: none;
+  color: #6366f1;
+  cursor: pointer;
+  padding: 0 0.15rem;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.smart-date-dismiss:hover {
+  color: #dc2626;
+}
+
+.task-repeat-select {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #d0d0d5;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background-color: #fff;
+  color: #333;
+  cursor: pointer;
+}
+
+.task-repeat-select:focus {
+  outline: 2px solid #4f7cff;
+  outline-offset: 1px;
+}
+
+.task-reminder-select {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #d0d0d5;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background-color: #fff;
+  color: #333;
+  cursor: pointer;
+}
+
+.task-reminder-select:focus {
+  outline: 2px solid #4f7cff;
+  outline-offset: 1px;
+}
+
+.task-reminder-select:disabled {
+  opacity: 0.55;
+  background-color: #f5f5f7;
+  cursor: not-allowed;
+}
+
 .btn-primary {
   padding: 0.55rem 1.1rem;
   background: #4f7cff;
@@ -113,6 +193,28 @@ body {
 .task-title.completed {
   text-decoration: line-through;
   color: #8e8e93;
+}
+
+.task-due-badge {
+  font-size: 0.78rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  background-color: #f0f4ff;
+  color: #1e3bb3;
+  border: 1px solid #d4e2ff;
+  white-space: nowrap;
+}
+
+.task-repeat-badge {
+  font-size: 0.85rem;
+  margin-inline-start: 0.35rem;
+  vertical-align: middle;
+}
+
+.task-reminder-badge {
+  font-size: 0.85rem;
+  margin-inline-start: 0.35rem;
+  vertical-align: middle;
 }
 
 .task-item.deleted {

@@ -123,4 +123,26 @@ describe('TaskItem', () => {
     expect(onRestore).toHaveBeenCalledTimes(1);
     expect(onRestore).toHaveBeenCalledWith(task);
   });
+
+  it('renders repeat badge indicator when repeatFlag is present', () => {
+    const task = makeTask({
+      repeatFlag: 'FREQ=DAILY;INTERVAL=1;CAL=JALALI'
+    });
+    const html = renderToStaticMarkup(<TaskItem task={task} />);
+
+    expect(html).toContain('task-repeat-badge');
+    expect(html).toContain('data-testid="task-repeat-test-task-1"');
+    expect(html).toContain('🔁');
+  });
+
+  it('renders reminder bell badge indicator when reminders is non-empty', () => {
+    const task = makeTask({
+      reminders: ['15_MIN_BEFORE']
+    });
+    const html = renderToStaticMarkup(<TaskItem task={task} />);
+
+    expect(html).toContain('task-reminder-badge');
+    expect(html).toContain('data-testid="task-reminder-test-task-1"');
+    expect(html).toContain('🔔');
+  });
 });

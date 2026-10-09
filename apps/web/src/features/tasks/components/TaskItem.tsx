@@ -1,4 +1,5 @@
 import type { TaskEntity } from '@orbit/shared-types';
+import { formatJalaliDate, isoToJalali } from '../../../core/calendar/jalali';
 
 export interface TaskItemProps {
   task: TaskEntity;
@@ -19,6 +20,19 @@ export function TaskItem({
   const isDeleted = task.deletedAt != null;
   const isTask = task.kind === 'TASK';
 
+  const formattedDueDate = task.dueDate
+    ? (() => {
+        try {
+          return formatJalaliDate(isoToJalali(task.dueDate), {
+            format: 'short',
+            includeTime: !task.isAllDay
+          });
+        } catch {
+          return null;
+        }
+      })()
+    : null;
+
   return (
     <li
       className={`task-item ${isCompleted ? 'completed' : ''} ${
@@ -38,6 +52,29 @@ export function TaskItem({
       )}
       <span className={`task-title ${isCompleted ? 'completed' : ''}`}>
         {task.title}
+        {task.repeatFlag && !isDeleted && (
+          <span
+            className="task-repeat-badge"
+            data-testid={`task-repeat-${task.id}`}
+            title="تکرارشونده"
+          >
+            🔁
+          </span>
+        )}
+        {task.reminders && task.reminders.length > 0 && !isDeleted && (
+          <span
+            className="task-reminder-badge"
+            data-testid={`task-reminder-${task.id}`}
+            title="دارای یادآور"
+          >
+            🔔
+          </span>
+        )}
+        {formattedDueDate && !isDeleted && (
+          <span className="task-due-badge" data-testid={`task-due-${task.id}`}>
+            📅 {formattedDueDate}
+          </span>
+        )}
       </span>
       {isDeleted ? (
         <button

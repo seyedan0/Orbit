@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>سند جامع معماری، محصول و استراتژی فنی Orbit (پلتفرم آزاد Productivity)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+    :root {
+      --bg-primary: #0f172a;
+      --bg-surface: #1e293b;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #eff6ff;
+      --accent: #3b82f6;
+      --border-color: #e2e8f0;
+      --card-bg: #ffffff;
+      --code-bg: #0f172a;
+      --code-text: #f1f5f9;
+      --badge-core-bg: #fef2f2;
+      --badge-core-text: #dc2626;
+      --badge-core-border: #fecaca;
+      --badge-important-bg: #fffbeb;
+      --badge-important-text: #b45309;
+      --badge-important-border: #fde68a;
+      --badge-nice-bg: #f0fdf4;
+      --badge-nice-text: #15803d;
+      --badge-nice-border: #bbf7d0;
+      --badge-phase-bg: #eff6ff;
+      --badge-phase-text: #2563eb;
+      --badge-phase-border: #bfdbfe;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    html {
+      direction: rtl;
+      text-align: right;
+      background-color: #f8fafc;
+      color: var(--text-main);
+      font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      padding: 2.5rem 1.5rem;
+      background-color: #f8fafc;
+      line-height: 1.85;
+      font-size: 15px;
+    }
+
+    article.page {
+      max-width: 1040px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 3.5rem 4rem;
+      border-radius: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(0, 0, 0, 0.03);
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem 0.5rem;
+      }
+      article.page {
+        padding: 1.75rem 1.25rem;
+        border-radius: 12px;
+      }
+    }
+
+    /* Typography */
+    h1.page-title {
+      font-size: 2.25rem;
+      font-weight: 900;
+      color: #0f172a;
+      line-height: 1.35;
+      margin-top: 0;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.75rem;
+    }
+
+    .page-subtitle {
+      font-size: 1.15rem;
+      color: #475569;
+      font-weight: 500;
+      line-height: 1.7;
+      margin-top: 0;
+      margin-bottom: 1.75rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 2px solid #f1f5f9;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-top: 2.75rem;
+      margin-bottom: 1.1rem;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    h1::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+      margin-right: 0.75rem;
+    }
+
+    h2 {
+      font-size: 1.32rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 2rem;
+      margin-bottom: 0.85rem;
+    }
+
+    h3 {
+      font-size: 1.12rem;
+      font-weight: 600;
+      color: #334155;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      margin: 0.85rem 0;
+      color: #334155;
+      font-weight: 400;
+      line-height: 1.85;
+    }
+
+    strong {
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+      border-bottom: 1px dashed rgba(37, 99, 235, 0.4);
+      transition: all 0.15s ease;
+    }
+
+    a:hover {
+      color: var(--primary-hover);
+      border-bottom-style: solid;
+    }
+
+    /* Metadata pills */
+    .header-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.25rem 0.75rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      color: #475569;
+      font-weight: 500;
+    }
+
+    .meta-item strong {
+      color: #0f172a;
+    }
+
+    /* Blockquotes & Callouts */
+    blockquote {
+      margin: 1.5rem 0;
+      padding: 1rem 1.25rem;
+      background: #f8fafc;
+      border-right: 4px solid var(--accent);
+      border-left: none;
+      border-radius: 8px 4px 4px 8px;
+      color: #1e293b;
+      font-size: 0.96rem;
+      box-shadow: inset 0 0 0 1px rgba(226, 232, 240, 0.6);
+    }
+
+    blockquote p {
+      margin: 0.25rem 0;
+    }
+
+    hr {
+      border: none;
+      height: 1px;
+      background: linear-gradient(to left, transparent, #e2e8f0, transparent);
+      margin: 2.75rem 0;
+    }
+
+    /* Lists */
+    ul, ol {
+      margin: 0.8rem 0;
+      padding-right: 1.5rem;
+      padding-left: 0;
+    }
+
+    li {
+      margin-bottom: 0.4rem;
+      color: #334155;
+    }
+
+    /* Tables */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+    }
+
+    .simple-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+      direction: rtl;
+    }
+
+    .simple-table th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+      font-size: 0.88rem;
+      text-align: right;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+
+    .simple-table td {
+      padding: 0.75rem 1rem;
+      text-align: right;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+      font-size: 0.9rem;
+    }
+
+    .simple-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .simple-table tr:hover td {
+      background-color: #f8fafc;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.2rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+
+    .badge-core {
+      background: var(--badge-core-bg);
+      color: var(--badge-core-text);
+      border: 1px solid var(--badge-core-border);
+    }
+
+    .badge-important {
+      background: var(--badge-important-bg);
+      color: var(--badge-important-text);
+      border: 1px solid var(--badge-important-border);
+    }
+
+    .badge-nice {
+      background: var(--badge-nice-bg);
+      color: var(--badge-nice-text);
+      border: 1px solid var(--badge-nice-border);
+    }
+
+    .badge-phase {
+      background: var(--badge-phase-bg);
+      color: var(--badge-phase-text);
+      border: 1px solid var(--badge-phase-border);
+    }
+
+    /* Code & Pre */
+    pre.code, pre {
+      direction: ltr !important;
+      text-align: left !important;
+      background: var(--code-bg) !important;
+      color: var(--code-text) !important;
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem !important;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace !important;
+      font-size: 0.86rem !important;
+      line-height: 1.65 !important;
+      overflow-x: auto;
+      margin: 1.25rem 0 !important;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+      border: 1px solid #1e293b;
+    }
+
+    code {
+      direction: ltr;
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      background: #f1f5f9;
+      color: #e11d48;
+      padding: 0.15rem 0.4rem;
+      border-radius: 5px;
+      font-size: 0.86em;
+      border: 1px solid #e2e8f0;
+    }
+
+    pre code {
+      background: transparent !important;
+      color: inherit !important;
+      padding: 0 !important;
+      border: none !important;
+    }
+
+    /* Flow diagram box */
+    .flow-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin: 1.5rem 0;
+      text-align: center;
+      direction: rtl;
+    }
+
+    .flow-steps {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .flow-step {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      color: #0f172a;
+    }
+
+    .flow-step span {
+      display: block;
+      font-size: 0.75rem;
+      color: #64748b;
+      font-weight: 400;
+    }
+
+    .flow-arrow {
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 1.1rem;
+    }
+  </style>
+</head>
+<body>
+  <article class="page sans">
+    <header>
+      <h1 class="page-title" dir="auto">سند معماری و پیشنهاد محصول پلتفرم جامع Orbit</h1>
+      <p class="page-subtitle" dir="auto">
+        پلتفرم متن‌باز و آزاد بهره‌وری شخصی (FOSS Personal Productivity OS)<br />
+        رقیب مستقیم و مستقل TickTick و Todoist با تمرکز بر تقویم دوگانه (شمسی/میلادی)، معماری Local-First و هوش مصنوعی باز
+      </p>
+
+      <div class="header-meta">
+        <div class="meta-item"><strong>نسخه سند:</strong> 1.0</div>
+        <div class="meta-item"><strong>تاریخ انتشار:</strong> اکتبر ۲۰۲۶</div>
+        <div class="meta-item"><strong>وضعیت:</strong> Architecture &amp; Product Specification</div>
+        <div class="meta-item"><strong>پلتفرم‌های هدف:</strong> Web + Desktop (Tauri) + Mobile (Android)</div>
+        <div class="meta-item"><strong>معماری کلاینت:</strong> Local-First (IndexedDB / SQLite)</div>
+        <div class="meta-item"><strong>پشته سرور:</strong> NestJS + PostgreSQL + TypeORM</div>
+        <div class="meta-item"><strong>ساختار مخزن:</strong> Monorepo (npm workspaces)</div>
+        <div class="meta-item"><strong>مجوز نرم‌افزار:</strong> Free &amp; Open Source (FOSS)</div>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <!-- 1. خلاصه اجرایی -->
+      <h1 id="executive-summary" dir="auto">1. خلاصه اجرایی و مانیفست Orbit</h1>
+      
+      <h2 id="core-philosophy" dir="auto">1.1 فلسفه وجودی و تمایز بنیادین</h2>
+      <p dir="auto">
+        برای ساخت یک رقیب استاندارد در تراز جهانی در برابر ابزارهایی چون <strong>TickTick</strong>، <strong>Todoist</strong> یا <strong>Motion</strong>، نباید صرفاً یک «Todo App با چند ویژگی اضافه» بسازیم.
+      </p>
+      <p dir="auto">
+        بزرگ‌ترین مشکل ابزارهای موجود این است که کاربر برای رفع نیازهای روزمره خود مجبور به پرداخت پِی‌وال‌های سنگین سالانه (حدود <strong>$49.99 در سال</strong>) است؛ دسترسی بومی و دقیق به <strong>تقویم خورشیدی (شمسی/جلالی)</strong> و زبان فارسی وجود ندارد؛ داده‌های حساس کاربر در فضای ابری محبوس هستند و امکان بهره‌گیری از هوش مصنوعی اختصاصی بدون هزینه‌های ماهانه تحمیلی فراهم نیست.
+      </p>
+      
+      <blockquote>
+        <p><strong>مانیفست Orbit:</strong></p>
+        <p>Orbit پلتفرمی متن‌باز و محلی‌محور (Local-First) است که تمامی امکانات گران‌قیمت تیک‌تیک (تقویم‌های پیشرفته، تایم‌لاین، ماتریس آیزنهاور، ردیاب نامحدود عادت‌ها، فیلترهای هوشمند و فوکوس) را به عنوان حقوق اساسی کاربر، به‌صورت ۱۰۰٪ رایگان و آزاد در اختیار عموم قرار می‌دهد؛ با تجربه درجه یک در زبان فارسی، تقویم شمسی/میلادی و امکان اتصال مستقیم به هوش مصنوعی با کلید شخصی یا مدل‌های آفلاین.</p>
+      </blockquote>
+
+      <h2 id="productivity-loop" dir="auto">1.2 چرخه ۶ مرحله‌ای بهره‌وری (The 6-Stage Loop)</h2>
+      <p dir="auto">محصول به جای یک فهرست انفعالی تسک‌ها، بر اساس یک چرخه پویا و زنده ساخته شده است:</p>
+
+      <div class="flow-box">
+        <div class="flow-steps">
+          <div class="flow-step">۱. Capture<span>ورود آنی بدون اصطکاک</span></div>
+          <div class="flow-arrow">←</div>
+          <div class="flow-step">۲. Understand<span>درک نیت و ساختاردهی</span></div>
+          <div class="flow-arrow">←</div>
+          <div class="flow-step">۳. Plan<span>برنامه‌ریزی واقع‌بینانه</span></div>
+          <div class="flow-arrow">←</div>
+          <div class="flow-step">۴. Execute<span>تمرکز عمیق و انجام</span></div>
+          <div class="flow-arrow">←</div>
+          <div class="flow-step">۵. Review<span>بازبینی هوشمند</span></div>
+          <div class="flow-arrow">←</div>
+          <div class="flow-step">۶. Improve<span>کاهش بدهی و بهبود الگو</span></div>
+        </div>
+      </div>
+
+      <ul dir="auto">
+        <li><strong>Capture (ثبت سریع):</strong> کاربر بدون فکر کردن به دسته‌بندی یا تاریخ، هر ایده یا کاری را فوراً با میانبر ثبت می‌کند (<code>Type → Enter</code>).</li>
+        <li><strong>Understand (ساختاردهی):</strong> سیستم تاریخ‌های طبیعی فارسی و انگلیسی را استخراج کرده و اطلاعات را دسته‌بندی می‌کند.</li>
+        <li><strong>Plan (برنامه‌ریزی واقع‌بینانه):</strong> تطبیق کارها با ساعات آزاد در تقویم و هشدار در صورت فراتر رفتن برنامه‌ریزی از ظرفیت روزانه.</li>
+        <li><strong>Execute (اجرای متمرکز):</strong> پومودورو، حالت Focus بدون حواس‌پرتی و ثبت خودکار دقایق کار عمیق.</li>
+        <li><strong>Review (بازبینی پیوسته):</strong> ماژول‌های بازبینی روزانه و هفتگی (Daily / Weekly Review) برای شفاف‌سازی دستاوردها و کارهای معوق.</li>
+        <li><strong>Improve (کاهش بدهی کارها):</strong> شناسایی خودکار «بدهی کارها» (Task Debt) و تسک‌هایی که مکرراً به تعویق می‌افتند.</li>
+      </ul>
+
+      <hr />
+
+      <!-- 2. سطوح اهمیت و کاتالوگ قابلیت‌ها -->
+      <h1 id="feature-matrix" dir="auto">2. سطوح اهمیت و جدول تطبیق قابلیت‌ها</h1>
+      
+      <p dir="auto">در این سند، قابلیت‌های محصول با سه سطح اهمیت و فاز اجرایی استانداردسازی شده‌اند:</p>
+
+      <div class="table-container">
+        <table class="simple-table">
+          <thead>
+            <tr>
+              <th>سطح</th>
+              <th>مفهوم و استاندارد</th>
+              <th>نمونه در Orbit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-core">Core (P0)</span></td>
+              <td>هسته حیاتی محصول برای کارکرد روزمره و رقابت مستقیم</td>
+              <td>تسک‌ها، تقویم شمسی/میلادی، معماری Local-First، صف Sync، یادآورها</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-important">Important (P1)</span></td>
+              <td>قابلیت‌های کلیدی برای تکامل محصول و غلبه بر رقبا</td>
+              <td>ماتریس آیزنهاور، تایم‌لاین، ردیاب نامحدود عادات، فیلترهای DSL، پومودورو</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-nice">Nice-to-have (P2)</span></td>
+              <td>بهینه‌سازی‌های تجربه، اتوماسیون گسترده و گزارش‌های تکمیلی</td>
+              <td>تم‌های پیشرفته، صداهای پس‌زمینه تمرکز، هوش مصنوعی خودکار</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr />
+
+      <!-- 3. مدیریت تسک‌ها -->
+      <h1 id="task-management" dir="auto">3. مدیریت وظایف (Task Management)</h1>
+      <p dir="auto">سلسله‌مراتب سازمانی در Orbit به صورت کاملاً ساختاریافته طراحی شده است:</p>
+      
+      <blockquote>
+        <p><strong>سلسله‌مراتب:</strong> Workspace → Folder → List → Section → Task → Subtask / Checklist</p>
+      </blockquote>
+
+      <div class="table-container">
+        <table class="simple-table">
+          <thead>
+            <tr>
+              <th>قابلیت</th>
+              <th>توضیحات عملکردی</th>
+              <th>سطح اهمیت</th>
+              <th>وضعیت در Orbit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Quick Add &amp; Inbox</td>
+              <td>ثبت فوق سریع تسک در صندوق ورودی با میانبر کیبورد</td>
+              <td><span class="badge badge-core">Core</span></td>
+              <td><span class="badge badge-phase">پیاده‌شده (فاز ۲)</span></td>
+            </tr>
+            <tr>
+              <td>تکمیل و بازگشایی (Complete/Reopen)</td>
+              <td>علامت‌گذاری انجام، ذخیره زمان تکمیل و به‌روزرسانی آنی UI</td>
+              <td><span class="badge badge-core">Core</span></td>
+              <td><span class="badge badge-phase">پیاده‌شده (فاز ۲)</span></td>
+            </tr>
+            <tr>
+              <td>حذف نرم و بازگردانی (Soft Delete &amp; Undo)</td>
+              <td>تنظیم <code>deletedAt</code>، بنر برگرداندن آنی و بدون پاک‌سازی فیزیکی</td>
+              <td><span class="badge badge-core">Core</span></td>
+              <td><span class="badge badge-phase">پیاده‌شده (فاز ۲)</span></td>
+            </tr>
+            <tr>
+              <td>تفکیک TASK، NOTE و CHECKLIST</td>
+              <td>یادداشت بدون الزام تیک خوردن، چک‌لیست آیتم‌دار، تسک استاندارد</td>
+              <td><span class="badge badge-core">Core</span></td>
+              <td><span class="badge badge-phase">پیاده‌شده (فاز ۲)</span></td>
+            </tr>
+            <tr>
+              <td>اولویت‌بندی (Priorities 0, 1, 3, 5)</td>
+              <td>نگاشت استاندارد بر مبنای هیچ، کم، متوسط و زیاد</td>
+              <td><span class="badge badge-core">Core</span></td>
+              <td><span class="badge badge-phase">پیاده‌شده (فاز ۲)</span></td>
+            </tr>
+            <tr>
+              <td>زمان‌بندی، تاریخ شروع و سررسید</td>
+              <td>تعیین <code>startDate</code>، <code>dueDate</code> و مدت‌زمان <code>duration</code></td>
+              <td><span class="badge badge-core">Core</span></td>
+              <td><span class="badge badge-phase">فاز ۴</span></td>
+            </tr>
+            <tr>
+              <td>تکرار پیشرفته (RRULE Recurrence)</td>
+              <td>تکرار روزانه، هفتگی، ماهانه و سالانه با پشتیبانی از استثناها</td>
+              <td><span class="badge badge-core">Core</span></td>
+              <td><span class="badge badge-phase">فاز ۴</span></td>
+            </tr>
+            <tr>
+              <td>زیرکارها و چک‌لیست‌ها (Subtasks)</td>
+              <td>آیتم‌های چندسطحی با پیشرفت درصدی مستقل</td>
+              <td><span class="badge badge-important">Important</span></td>
+              <td><span class="badge badge-phase">فاز ۵</span></td>
+            </tr>
+            <tr>
+              <td>برچسب‌ها و گروه‌بندی (Tags &amp; Tag Groups)</td>
+              <td>دسته‌بندی چندگانه با برچسب‌های رنگی</td>
+              <td><span class="badge badge-important">Important</span></td>
+              <td><span class="badge badge-phase">فاز ۵</span></td>
+            </tr>
+            <tr>
+              <td>رتبه‌بندی کسری (LexoRank Positioning)</td>
+              <td>جابه‌جایی Drag &amp; Drop بدون به‌روزرسانی سنگین کل دیتابیس</td>
+              <td><span class="badge badge-important">Important</span></td>
+              <td><span class="badge badge-phase">فاز ۵</span></td>
+            </tr>
+            <tr>
+              <td>پیوست‌ها و یادداشت صوتی</td>
+              <td>بارگذاری فایل و یادداشت‌های صوتی محلی</td>
+              <td><span class="badge badge-nice">Nice-to-have</span></td>
+              <td><span class="badge badge-phase">فاز ۹</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p dir="auto">مدل شیء دامنه تسک در پکیج مشترک بدون هیچ وابستگی خارجی تعریف می‌شود:</p>
+
+      <pre class="code"><code class="language-typescript">TaskEntity
+ ├── id: string (UUIDv4)
+ ├── projectId: string
+ ├── userId: string
+ ├── title: string
+ ├── content?: string
+ ├── kind: 'TASK' | 'NOTE' | 'CHECKLIST'
+ ├── priority: 0 | 1 | 3 | 5
+ ├── isAllDay: boolean
+ ├── startDate?: string (ISO)
+ ├── dueDate?: string (ISO)
+ ├── timeZone: string (IANA)
+ ├── repeatFlag?: string (RRULE)
+ ├── duration?: number (minutes)
+ ├── reminders: string[]
+ ├── items: SubTaskItem[]
+ ├── version: number
+ ├── localStatus: 'SYNCED' | 'CREATED' | 'UPDATED' | 'DELETED'
+ ├── createdAt: string
+ ├── updatedAt: string
+ ├── completedAt?: string | null
+ └── deletedAt?: string | null</code></pre>
+
+      <hr />
+
+      <!-- 4. تقویم جامع دوگانه -->
+      <h1 id="calendar-system" dir="auto">4. تقویم جامع دوگانه (شمسی / جلالی + میلادی)</h1>
+      <p dir="auto">
+        بزرگ‌ترین خلأ موجود در اپلیکیشن‌های بین‌المللی، عدم سازگاری بومی با تقویم خورشیدی و زبان فارسی است. در Orbit تقویم یک ابزار لوکس و پولی نیست، بلکه جزء هسته اصلی است:
+      </p>
+
+      <div class="table-container">
+        <table class="simple-table">
+          <thead>
+            <tr>
+              <th>ویژگی تقویم</th>
+              <th>در تیک‌تیک / رقبا</th>
+              <th>در Orbit</th>
+              <th>سطح اهمیت</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>پشتیبانی از تقویم شمسی (جلالی)</td>
+              <td>وجود ندارد (فقط میلادی)</td>
+              <td><strong>پشتیبانی ۱۰۰٪ بومی</strong> با الگوریتم ۳۳ ساله برکوفسکی، شروع هفته از شنبه</td>
+              <td><span class="badge badge-core">Core</span></td>
+            </tr>
+            <tr>
+              <td>سوئیچ آنی دوگانه (Dual Calendar)</td>
+              <td>وجود ندارد</td>
+              <td>سوئیچ لحظه‌ای با یک کلیک بین تقویم شمسی و میلادی در تمام نماها</td>
+              <td><span class="badge badge-core">Core</span></td>
+            </tr>
+            <tr>
+              <td>نماهای تقویم (روزانه/هفتگی/ماهانه)</td>
+              <td><strong>قفل پولی</strong> در اشتراک سالانه ($50)</td>
+              <td><strong>کاملاً رایگان و نامحدود</strong> با انیمیشن‌های روان ۶۰ فریم</td>
+              <td><span class="badge badge-core">Core</span></td>
+            </tr>
+            <tr>
+              <td>بلوک‌بندی زمانی (Time Blocking)</td>
+              <td>محدود به نسخه پریمیوم</td>
+              <td>کشیدن و رها کردن (Drag &amp; Drop) تسک‌ها از سایدبار به داخل تقویم</td>
+              <td><span class="badge badge-core">Core</span></td>
+            </tr>
+            <tr>
+              <td>نمای ۳ روزه، سالانه و Agenda</td>
+              <td>پولی</td>
+              <td>رایگان برای مرور سریع سال و برنامه‌ریزی فشرده چندروزه</td>
+              <td><span class="badge badge-important">Important</span></td>
+            </tr>
+            <tr>
+              <td>اتصال تقویم‌های خارجی (CalDAV/ICS)</td>
+              <td>پولی / محدود</td>
+              <td>اتصال دوطرفه از طریق پروتکل‌های استاندارد باز</td>
+              <td><span class="badge badge-important">Important</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <pre class="code"><code>// معماری انتزاعی رویدادهای تقویم در Orbit
+CalendarEvent =
+  | TaskEvent (تسک‌های برنامه‌ریزی‌شده در بازه زمانی)
+  | ExternalCalDAVEvent (رویدادهای خارجی خوانده‌شده از گوگل یا آی‌کلاد)
+  | HabitRoutineEvent (عادت‌های دارای زمان معین)</code></pre>
+
+      <hr />
+
+      <!-- 5. نماهای سازمان‌دهی پیشرفته -->
+      <h1 id="views-and-organization" dir="auto">5. نماهای سازمان‌دهی پیشرفته (Eisenhower, Timeline, Kanban)</h1>
+
+      <h2 id="eisenhower-matrix" dir="auto">5.1 ماتریس آیزنهاور (Eisenhower Matrix) به صورت Derived View</h2>
+      <p dir="auto">
+        در Orbit، ماتریس آیزنهاور یک جدول دیتابیس مستقل نیست؛ بلکه یک <strong>نمای مشتق‌شده محاسباتی (Pure Derived View)</strong> از فیلدهای <code>priority</code> و <code>dueDate</code> تسک‌هاست:
+      </p>
+
+      <pre class="code"><code>                فوری (Urgent)
+                      │
+        ربع ۱         │          ربع ۳
+   انجام فوری (Do Now) │     واگذاری (Delegate)
+──────────────────────┼────────────────────────
+        ربع ۲         │          ربع ۴
+  زمان‌بندی (Schedule) │       حذف (Eliminate)
+                      │
+               غیر فوری (Not Urgent)</code></pre>
+
+      <p dir="auto">
+        وقتی کاربر تسکی را با موس از ربع ۲ به ربع ۱ می‌کشد، سیستم به طور خودکار اولویت تسک را به High ارتقا می‌دهد بدون اینکه نیازی به ایجاد انتیتی جدید باشد.
+      </p>
+
+      <h2 id="timeline-and-kanban" dir="auto">5.2 تایم‌لاین و بورد کانبان</h2>
+      <ul dir="auto">
+        <li><strong>Timeline View:</strong> نمایش کارهای دارای بازه زمانی بر روی محور افقی زمان با قابلیت تغییر طول مدت (Resize) با کشیدن لبه‌های تسک.</li>
+        <li><strong>بورد کانبان (Kanban):</strong> گروه‌بندی ستون‌ها بر اساس وضعیت (Todo, Doing, Done)، برچسب یا بخش‌های پروژه با رتبه‌بندی کسری (LexoRank).</li>
+      </ul>
+
+      <h2 id="smart-filter-dsl" dir="auto">5.3 موتور فیلترهای هوشمند مبتنی بر JSON Rule DSL</h2>
+      <p dir="auto">
+        کاربران می‌توانند لیست‌های هوشمند نامحدودی با منطق ترکیبی بولی تعریف کنند که در تمام کلاینت‌ها (وب، دسکتاپ، موبایل و MCP) یکسان اجرا شود:
+      </p>
+
+      <pre class="code"><code class="language-json">{
+  "operator": "AND",
+  "rules": [
+    { "field": "priority", "operator": "gte", "value": 3 },
+    { "field": "dueDate", "operator": "within", "value": "this_week" },
+    { "field": "tags", "operator": "contains", "value": "deep-work" }
+  ]
+}</code></pre>
+
+      <hr />
+
+      <!-- 6. عادات و تمرکز -->
+      <h1 id="habits-and-focus" dir="auto">6. ردیاب عادت‌ها و ماژول تمرکز (Habit Tracker &amp; Focus)</h1>
+
+      <h2 id="habits-unlimited" dir="auto">6.1 ردیاب عادات کاملاً آزاد (در برابر سقف ۵ عادت تیک‌تیک)</h2>
+      <p dir="auto">
+        تیک‌تیک کاربران نسخه رایگان را تنها به ۵ عادت محدود کرده است. در Orbit ایجاد عادت نامحدود و رایگان است:
+      </p>
+      <ul dir="auto">
+        <li>اهداف روزانه، هفتگی یا روزهای خاص هفته.</li>
+        <li>محاسبه زنجیره موفقیت (Streaks) و درصد پایداری عادت.</li>
+        <li>تقویم هیت‌مپ بصری (GitHub-style Contribution Heatmap) برای هر عادت.</li>
+        <li>قابلیت لینک کردن عادت به تسک و شروع تایمر فوکوس از روی آن.</li>
+      </ul>
+
+      <h2 id="focus-pomodoro" dir="auto">6.2 پومودورو و زمان تمرکز</h2>
+      <ul dir="auto">
+        <li>تایمر شمارش معکوس پومودورو (۲۵/۵ دقیقه قابل شخصی‌سازی) و کرونومتر کار آزاد.</li>
+        <li>اتصال هر جلسه تمرکز به یک تسک خاص و ثبت دقایق واقعی کار عمیق (Deep Work).</li>
+        <li>حالت تمام‌صفحه و ضد حواس‌پرتی (Distraction-free Focus Mode).</li>
+        <li>ثبت بدون تکرار (Idempotent) رکوردهای تمرکز در صف Sync.</li>
+      </ul>
+
+      <hr />
+
+      <!-- 7. Honest Productivity و بازبینی -->
+      <h1 id="honest-productivity" dir="auto">7. برنامه‌ریزی صادقانه و بازبینی (Honest Productivity &amp; Review)</h1>
+      
+      <p dir="auto">به جای گیمیفیکیشن‌های کاذب و امتیازهای تزئینی، Orbit بر «بهره‌وری حقیقت‌محور» استوار است:</p>
+
+      <h2 id="capacity-warning" dir="auto">7.1 هشدار ظرفیت واقعی (Capacity Warning)</h2>
+      <p dir="auto">
+        سیستم مجموع زمان تخمینی تسک‌های روز را با ساعات خالی تقویم مقایسه می‌کند:
+      </p>
+      <blockquote>
+        <p>⚠️ <strong>برنامه‌ریزی امروز ۱۴۰٪ ظرفیت شماست!</strong> شما برای امروز ۷ ساعت کار تعیین کرده‌اید، در حالی که با احتساب ۲ جلسه در تقویم، حداکثر ۴ ساعت و نیم وقت آزاد دارید. سیستم پیشنهاد می‌دهد ۲ تسک با اولویت پایین به فردا موکول شوند.</p>
+      </blockquote>
+
+      <h2 id="task-debt" dir="auto">7.2 شاخص بدهی کارها (Task Debt)</h2>
+      <p dir="auto">
+        تسک‌هایی که بیش از ۳ بار جابه‌جا و تمدید شده‌اند علامت‌گذاری می‌شوند تا کاربر به جای تلنبار کردن کارها، آن‌ها را به کارهای کوچک‌تر خرد کند، واگذار نماید یا شجاعانه حذف کند.
+      </p>
+
+      <h2 id="daily-weekly-review" dir="auto">7.3 ماژول‌های بازبینی روزانه و هفتگی (Daily &amp; Weekly Review)</h2>
+      <ul dir="auto">
+        <li><strong>Daily Review (شبانه):</strong> چه کارهایی امروز تکمیل شد؟ کارهای ناتمام چگونه منتقل شوند؟ برنامه فردا چیست؟</li>
+        <li><strong>Weekly Review (پایان هفته):</strong> نرخ موفقیت هفتگی، مجموع ساعات تمرکز، استمرار عادات و تخصیص اولویت‌ها برای هفته آینده.</li>
+      </ul>
+
+      <hr />
+
+      <!-- 8. معماری فنی و Monorepo -->
+      <h1 id="technical-architecture" dir="auto">8. معماری فنی کلان و مونو‌ریپو (Technical Architecture)</h1>
+
+      <pre class="code"><code>                         ┌─────────────────────────────┐
+                         │   AI Engine / Local Ollama  │
+                         └──────────────┬──────────────┘
+                                        │ (BYOK / Local)
+ ┌──────────────────────┐       ┌───────▼──────────────┐       ┌──────────────────────┐
+ │      Web Client      │       │                      │       │    Desktop Client    │
+ │ (React + Vite + IDB) ├──────►│     NestJS API       │◄──────┤ (Tauri + Local Store)│
+ └──────────────────────┘       │  (Modular Monolith)  │       └──────────────────────┘
+                                └───────┬──────────────┘
+                                        │
+                    ┌───────────────────┼───────────────────┐
+                    │                   │                   │
+              ┌─────▼─────┐       ┌────▼─────┐       ┌────▼──────┐
+              │PostgreSQL │       │  Redis   │       │ObjectStore│
+              │  (ACID)   │       │(Optional)│       │ (S3/Local)│
+              └───────────┘       └──────────┘       └───────────┘</code></pre>
+
+      <h2 id="monorepo-structure" dir="auto">8.1 ساختار مونو‌ریپو و مرز مسئولیت‌ها</h2>
+      <pre class="code"><code>orbit/
+│
+├── apps/
+│   ├── web/           # کلاینت وب React + Vite SPA با دسترسی به IndexedDB
+│   ├── desktop/       # کلاینت سبک دسکتاپ Windows/Linux مبتنی بر Tauri
+│   ├── mobile/        # کلاینت آینده موبایل مبتنی بر React Native + SQLite
+│   └── server/        # سرور ماژولار NestJS + TypeORM + احراز هویت JWT + اندپوینت‌های Sync
+│
+├── packages/
+│   ├── shared-types/  # تعاریف و تایپ‌های خنثی TypeScript (تسک‌ها، جهش‌ها، رویدادها)
+│   ├── sync-engine/   # هسته مدیریت صف، ران‌تایم همگام‌سازی، بک‌آف نمایی و حل تعارض
+│   └── domain/        # لاجیک خالص بیزینس: تقویم شمسی/میلادی، RRULE، فیلترها و رتبه‌بندی
+│
+└── docs/              # مستندات پایدار، معماری، پروتکل سینک و ثبت پیشرفت</code></pre>
+
+      <h2 id="code-sharing-rule" dir="auto">8.2 قانون تفکیک منطق و رابط کاربری</h2>
+      <blockquote>
+        <p><strong>قانون طلایی مونو‌ریپو:</strong> منطق تجاری (Business Logic)، تایپ‌ها، اعتبارسنجی‌ها و پروتکل همگام‌سازی به طور ۱۰۰٪ مشترک هستند؛ اما رابط کاربری (UI) برای هر پلتفرم به صورت بهینه و بومی طراحی می‌شود تا بهترین عملکرد و حس کاربری حاصل شود.</p>
+      </blockquote>
+
+      <hr />
+
+      <!-- 9. پروتکل همگام‌سازی و حل تعارض -->
+      <h1 id="sync-and-conflict-resolution" dir="auto">9. پروتکل همگام‌سازی Local-First و حل تعارض</h1>
+      
+      <p dir="auto">
+        در معماری Local-First، کلاینت هرگز منتظر پاسخ سرور نمی‌ماند. تمام عملیات با سرعت زیر ۵۰ میلی‌ثانیه مستقیماً در دیتابیس محلی (IndexedDB در وب/دسکتاپ) ثبت شده و به طور هم‌زمان یک جهش (Mutation) در صف Outbox قرار می‌گیرد.
+      </p>
+
+      <h2 id="push-pull-flow" dir="auto">9.1 چرخه Push و Pull</h2>
+      <ol dir="auto">
+        <li><strong>Push (ارسال جهش‌ها):</strong> کلاینت دسته‌ای از جهش‌های صف‌بندی‌شده را با ترتیب زمانی FIFO به سرور ارسال می‌کند.</li>
+        <li><strong>Idempotency تضمین‌شده:</strong> هر جهش دارای <code>idempotencyKey</code> یکتاست. در صورت ارسال مجدد، سرور نتیجه قبلی را بدون تکرار بازمی‌گرداند (<code>ALREADY_APPLIED</code>).</li>
+        <li><strong>Pull (دریافت تغییرات):</strong> کلاینت تغییرات سرور را با استفاده از کرسر ترتیبی یکنواخت (Monotonic Cursor) دریافت می‌کند. کرسر تنها پس از ذخیره‌سازی موفقیت‌آمیز تمام رکوردها ارتقا می‌یابد تا هیچ تغییری در صورت قطع شبکه از بین نرود.</li>
+      </ol>
+
+      <h2 id="field-level-lww" dir="auto">9.2 حل تعارض در سطح فیلد (Field-Level Last-Write-Wins)</h2>
+      <p dir="auto">
+        در پروتکل Orbit، برخلاف سیستم‌های سنتی، کل آبجکت بازنویسی نمی‌شود. هر فیلد دارای تایم‌استمپ اختصاصی است:
+      </p>
+      <ul dir="auto">
+        <li>اگر کاربر A در حالت آفلاین <code>title</code> را تغییر دهد و کاربر B در همان زمان <code>dueDate</code> را تغییر دهد، سرور هر دو تغییر را ادغام می‌کند (<code>CONFLICT_MERGED</code>).</li>
+        <li>در صورت تعارض روی یک فیلد یکسان، جدیدترین تایم‌استمپ برنده است. در برابری دقیق زمان، شناسه جهش (Mutation ID) به عنوان tie-breaker قطعی عمل می‌کند.</li>
+        <li>حذف رکوردها با پرچم <code>deletedAt</code> به عنوان یک تغییر زمان‌دار رفتار می‌کند و پس از سینک کامل تمام کلاینت‌ها، پاک‌سازی نهایی (Purge) می‌شود.</li>
+      </ul>
+
+      <hr />
+
+      <!-- 10. استراتژی باز هوش مصنوعی -->
+      <h1 id="ai-strategy" dir="auto">10. استراتژی باز و انقلابی هوش مصنوعی (Open AI Strategy)</h1>
+
+      <p dir="auto">
+        اوربیت هیچ مدل هوش مصنوعی گران‌قیمتی را به عنوان پِی‌وال به کاربر تحمیل نمی‌کند. در عوض، یک لایه منعطف و سه‌گانه ارائه می‌دهد:
+      </p>
+
+      <div class="table-container">
+        <table class="simple-table">
+          <thead>
+            <tr>
+              <th>روش اتصال</th>
+              <th>نحوه عملکرد</th>
+              <th>هزینه و حریم خصوصی</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>BYOK (کلید شخصی کاربر)</strong></td>
+              <td>اتصال مستقیم به Gemini، OpenAI، Groq یا Anthropic با کلید API کاربر</td>
+              <td>رایگان بر بستر سهمیه رایگان Gemini؛ کلید فقط روی دستگاه کاربر ذخیره می‌شود</td>
+            </tr>
+            <tr>
+              <td><strong>Local LLM (آفلاین ۱۰۰٪)</strong></td>
+              <td>اتصال به سرور لوکال Ollama یا LM Studio روی <code>localhost:11434</code></td>
+              <td>کاملاً رایگان، بدون نیاز به اینترنت، حفظ ۱۰۰٪ حریم خصوصی داده‌ها</td>
+            </tr>
+            <tr>
+              <td><strong>سرور محلی MCP</strong></td>
+              <td>ارائه پروتکل Model Context Protocol برای Claude Desktop و Cursor</td>
+              <td>امکان مدیریت تسک‌ها و تقویم مستقیماً از داخل محیط‌های توسعه و چت‌بات‌های دسکتاپ</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="ai-capabilities" dir="auto">10.1 ابزارهای کاربردی AI در Orbit</h2>
+      <ul dir="auto">
+        <li><strong>AI Brain Dump:</strong> متن طولانی یا یادداشت صوتی کاربر را می‌گیرد و آن را به تسک‌ها، رویدادهای تقویم، تگ‌ها و اولویت‌ها تفکیک می‌کند.</li>
+        <li><strong>Auto Plan My Week:</strong> با تحلیل تسک‌های معوقه، مهلت‌ها و ساعات خالی تقویم، یک برنامه هفتگی متوازن به کاربر پیشنهاد می‌دهد.</li>
+        <li><strong>Break Down Task:</strong> کارهای بزرگ و مبهم را به ۵ زیرکار شفاف و اجرایی خرد می‌کند.</li>
+      </ul>
+
+      <hr />
+
+      <!-- 11. نقشه راه فازهای پروژه -->
+      <h1 id="project-roadmap" dir="auto">11. نقشه راه جامع پروژه (Phases 0 to 11)</h1>
+
+      <div class="table-container">
+        <table class="simple-table">
+          <thead>
+            <tr>
+              <th>فاز</th>
+              <th>عنوان و محدوده تمرکز</th>
+              <th>خروجی‌های کلیدی</th>
+              <th>وضعیت</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>فاز ۰</strong></td>
+              <td>کشف محصول و تصمیم‌های پایه</td>
+              <td>چشم‌انداز، کاتالوگ قابلیت‌ها، ADRهای پلتفرم و معماری</td>
+              <td><span class="badge badge-nice">تکمیل‌شده</span></td>
+            </tr>
+            <tr>
+              <td><strong>فاز ۱</strong></td>
+              <td>قراردادها، هسته مونو‌ریپو و تایپ‌ها</td>
+              <td>راه‌اندازی <code>shared-types</code>، پورت‌های دیتابیس و پایپ‌لاین CI</td>
+              <td><span class="badge badge-nice">تکمیل‌شده</span></td>
+            </tr>
+            <tr>
+              <td><strong>فاز ۲</strong></td>
+              <td>دامنه تسک و ذخیره‌سازی محلی IndexedDB</td>
+              <td>ساخت، تکمیل، حذف نرم، بازیابی، فرم‌ها و تست‌های اتمیک در وب</td>
+              <td><span class="badge badge-nice">تکمیل‌شده</span></td>
+            </tr>
+            <tr>
+              <td><strong>فاز ۳</strong></td>
+              <td>همگام‌سازی، سرور NestJS و احراز هویت</td>
+              <td>موتور SyncRuntime، پایگاه داده PostgreSQL، احراز هویت JWT و حل تعارض LWW</td>
+              <td><span class="badge badge-phase">تکمیل‌شده (جاری)</span></td>
+            </tr>
+            <tr>
+              <td><strong>فاز ۴</strong></td>
+              <td>تقویم دوگانه (شمسی/میلادی)، زمان و یادآورها</td>
+              <td>تقویم جلالی بومی، DatePicker دوگانه، نماهای زمانی و Time Blocking</td>
+              <td><span class="badge badge-core">گام بعدی</span></td>
+            </tr>
+            <tr>
+              <td><strong>فاز ۵</strong></td>
+              <td>سازمان‌دهی، فیلترهای DSL، آیزنهاور و تایم‌لاین</td>
+              <td>ماتریس آیزنهاور، لیست‌های هوشمند JSON، کانبان و تایم‌لاین گانت</td>
+              <td><span class="badge badge-important">برنامه‌ریزی‌شده</span></td>
+            </tr>
+            <tr>
+              <td><strong>فاز ۶</strong></td>
+              <td>تمرکز، پومودورو و تم‌ها</td>
+              <td>تایمرهای پومودورو، حالت Focus بدون حواس‌پرتی و تم تاریک/روشن</td>
+              <td><span class="badge badge-important">برنامه‌ریزی‌شده</span></td>
+            </tr>
+            <tr>
+              <td><strong>فاز ۷</strong></td>
+              <td>عادت‌ها و روتین‌های نامحدود</td>
+              <td>ثبت عادات، زنجیره‌ها (Streaks)، تقویم هیت‌مپ و اتصال به فوکوس</td>
+              <td><span class="badge badge-important">برنامه‌ریزی‌شده</span></td>
+            </tr>
+            <tr>
+              <td><strong>فاز ۸</strong></td>
+              <td>تحلیل‌ها، گزارش‌ها و بازبینی (Honest Productivity)</td>
+              <td>ماژول‌های بازبینی شبانه و هفتگی، سنجش بدهی کارها و هشدار ظرفیت</td>
+              <td><span class="badge badge-important">برنامه‌ریزی‌شده</span></td>
+            </tr>
+            <tr>
+              <td><strong>فاز ۹</strong></td>
+              <td>همکاری تیمی و اشتراک‌گذاری آزاد</td>
+              <td>فضای کاری اشتراکی، نقش‌ها و مجوزها، کامنت‌ها و فعالیت‌ها</td>
+              <td><span class="badge badge-nice">برنامه‌ریزی‌شده</span></td>
+            </tr>
+            <tr>
+              <td><strong>فاز ۱۰</strong></td>
+              <td>اتصال، CalDAV، سرور MCP و لایه هوش مصنوعی</td>
+              <td>ادغام تقویم‌های خارجی، سرور MCP محلی، هوش مصنوعی BYOK و وب‌هوک‌ها</td>
+              <td><span class="badge badge-nice">برنامه‌ریزی‌شده</span></td>
+            </tr>
+            <tr>
+              <td><strong>فاز ۱۱</strong></td>
+              <td>کیفیت پروداکشن، کلاینت دسکتاپ/موبایل و انتشار</td>
+              <td>عرضه کلاینت Tauri برای ویندوز/لینوکس، پکیج اندروید و داکر Self-Host</td>
+              <td><span class="badge badge-nice">برنامه‌ریزی‌شده</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr />
+
+      <!-- 12. استراتژی کیفیت و آزمون‌ها -->
+      <h1 id="testing-and-quality" dir="auto">12. استراتژی آزمون و تضمین کیفیت (Testing &amp; QA)</h1>
+      <p dir="auto">پروژه با استانداردهای سخت‌گیرانه مهندسی نرم‌افزار هدایت می‌شود:</p>
+      
+      <ul dir="auto">
+        <li><strong>آزمون‌های واحد (Unit Tests):</strong> پوشش ۱۰۰٪ محاسبات زمانی، تقویم شمسی، اعتبارسنجی جهش‌ها و قوانین فیلترها.</li>
+        <li><strong>آزمون‌های یکپارچگی (Integration Tests):</strong> راستی‌آزمایی تراکنش‌های اتمیک در IndexedDB محلی و کانتینر واقعی PostgreSQL در CI سرور.</li>
+        <li><strong>تست بحرانی چرخه آفلاین (Critical Offline-to-Online Test):</strong>
+          <pre class="code"><code>کاربر آفلاین می‌شود
+→ ایجاد و ویرایش چند تسک در IndexedDB
+→ بستن کامل مرورگر و بازگشایی مجدد
+→ برقراری مجدد اینترنت
+→ اجرای همگام‌سازی و اطمینان از حل تعارض و حفظ ۱۰۰٪ داده‌ها</code></pre>
+        </li>
+        <li><strong>پایپ‌لاین CI:</strong> کنترل خودکار در هر Pull Request با اجرای <code>npm run lint</code>، <code>npm run typecheck</code>، تمام آزمون‌ها و بیلد کلیه بسته‌ها.</li>
+      </ul>
+
+      <hr />
+
+      <!-- 13. جمع‌بندی نهایی -->
+      <h1 id="final-summary" dir="auto">13. نتیجه‌گیری و مزیت غیرقابل شکست Orbit</h1>
+      <p dir="auto">
+        پلتفرم <strong>Orbit</strong> با تکیه بر این سه اصل اساسی به جایگاه متفاوتی در بازار نرم‌افزارهای بهره‌وری دست می‌یابد:
+      </p>
+      
+      <div class="table-container">
+        <table class="simple-table">
+          <thead>
+            <tr>
+              <th>اصل بنیادین</th>
+              <th>توضیح و دستاورد</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>True Local-First &amp; FOSS</strong></td>
+              <td>سرعت برق‌آسا، حریم خصوصی مطلق، فعالیت کامل بدون اینترنت و رهایی همیشگی از پرداخت اشتراک‌های ماهانه.</td>
+            </tr>
+            <tr>
+              <td><strong>تقویم بومی دوگانه خورشیدی/میلادی</strong></td>
+              <td>حل اساسی نیاز کاربران فارسی‌زبان بدون نیاز به استفاده از چندین افزونه و تقویم جانبی ناپایدار.</td>
+            </tr>
+            <tr>
+              <td><strong>هوش مصنوعی شفاف و غیرتحمیلی</strong></td>
+              <td>قدرت‌گیری از طریق مدل‌های آفلاین محلی (Ollama) یا کلید شخصی (BYOK) بدون ارسال داده‌ها به سرورهای واسط و بدون تحمیل هزینه به پروژه.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p dir="auto" style="text-align: center; margin-top: 2.5rem; color: #64748b; font-size: 0.9rem;">
+        سند معماری جامع پروژه Orbit • منبع رسمی طراحی محصول و توسعه مهندسی
+      </p>
+    </div>
+  </article>
+</body>
+</html>

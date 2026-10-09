@@ -4,6 +4,7 @@ import { SessionProvider } from '../core/auth/session-context';
 import { IndexedDbLocalStore } from '../core/storage/indexeddb-local-store';
 import { StoreProvider } from '../core/storage/store-context';
 import { SyncProvider } from '../core/sync/sync-context';
+import { ReminderProvider } from '../core/reminders/reminder-context';
 import { AppRoutes } from './routes';
 
 export function App() {
@@ -14,9 +15,11 @@ export function App() {
     <SessionProvider>
       <StoreProvider store={store}>
         <SyncProvider>
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
+          <ReminderProvider>
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </ReminderProvider>
         </SyncProvider>
       </StoreProvider>
     </SessionProvider>
