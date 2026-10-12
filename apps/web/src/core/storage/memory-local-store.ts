@@ -1,5 +1,11 @@
-import type { QueueStatus, SyncQueueEntry, TaskEntity } from '@orbit/shared-types';
-import type { AtomicTaskStore } from '@orbit/sync-engine';
+import type {
+  QueueStatus,
+  SyncQueueEntry,
+  TaskEntity,
+  TagEntity,
+  TagGroupEntity
+} from '@orbit/shared-types';
+import type { AtomicTagStore, AtomicTaskStore } from '@orbit/sync-engine';
 
 /**
  * In-memory AtomicTaskStore used only in tests and as a reference implementation.
@@ -7,8 +13,10 @@ import type { AtomicTaskStore } from '@orbit/sync-engine';
  * JavaScript's single-threaded execution makes its "atomic" operations safe in
  * practice, though they are not backed by a real transaction.
  */
-export class MemoryLocalStore implements AtomicTaskStore {
+export class MemoryLocalStore implements AtomicTaskStore, AtomicTagStore {
   private readonly tasks = new Map<string, TaskEntity>();
+  private readonly tags = new Map<string, TagEntity>();
+  private readonly tagGroups = new Map<string, TagGroupEntity>();
   private readonly queue = new Map<string, SyncQueueEntry>();
   private cursor: string | undefined;
 
@@ -132,5 +140,58 @@ export class MemoryLocalStore implements AtomicTaskStore {
 
   async saveCursor(cursor: string): Promise<void> {
     this.cursor = cursor;
+  }
+
+  async getTag(id: string): Promise<TagEntity | undefined> {
+    const tag = this.tags.get(id);
+    return tag === undefined ? undefined : structuredClone(tag);
+  }
+
+  async saveTag(tag: TagEntity): Promise<void> {
+    this.tags.set(tag.id, structuredClone(tag));
+  }
+
+  async listTags(options?: { includeDeleted?: boolean }): Promise<TagEntity[]> {
+    return [...this.tags.values()]
+      .filter((t) => (options?.includeDeleted ? true : t.deletedAt == null))
+      .map((t) => structuredClone(t));
+  }
+
+  async saveTagWithMutation(tag: TagEntity, mutation: SyncQueueEntry): Promise<void> {
+    const hasMutation = [...this.queue.values()].some(
+      (e) => e.idempotencyKey === mutation.idempotencyKey
+    );
+    this.tags.set(tag.id, structuredClone(tag));
+    if (!hasMutation) {
+      this.queue.set(mutation.id, structuredClone(mutation));
+    }
+  }
+
+  async getTagGroup(id: string): Promise<TagGroupEntity | undefined> {
+    const group = this.tagGroups.get(id);
+    return group === undefined ? undefined : structuredClone(group);
+  }
+
+  async saveTagGroup(group: TagGroupEntity): Promise<void> {
+    this.tagGroups.set(group.id, structuredClone(group));
+  }
+
+  async listTagGroups(options?: { includeDeleted?: boolean }): Promise<TagGroupEntity[]> {
+    return [...this.tagGroups.values()]
+      .filter((g) => (options?.includeDeleted ? true : g.deletedAt == null))
+      .map((g) => structuredClone(g));
+  }
+
+  async saveTagGroupWithMutation(
+    group: TagGroupEntity,
+    mutation: SyncQueueEntry
+  ): Promise<void> {
+    const hasMutation = [...this.queue.values()].some(
+      (e) => e.idempotencyKey === mutation.idempotencyKey
+    );
+    this.tagGroups.set(group.id, structuredClone(group));
+    if (!hasMutation) {
+      this.queue.set(mutation.id, structuredClone(mutation));
+    }
   }
 }

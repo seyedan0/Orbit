@@ -1,6 +1,7 @@
 import type { TaskEntity } from './task.js';
+import type { TagEntity, TagGroupEntity } from './tag.js';
 
-export type EntityType = 'TASK';
+export type EntityType = 'TASK' | 'TAG' | 'TAG_GROUP';
 export type MutationOperation = 'CREATE' | 'UPDATE' | 'DELETE';
 export type MutationPayloadType = 'FULL' | 'PARTIAL';
 
@@ -16,7 +17,7 @@ export interface MutationPayload {
   operation: MutationOperation;
   baseVersion: number;
   payloadType: MutationPayloadType;
-  payload: Partial<TaskEntity>;
+  payload: Partial<TaskEntity> | Partial<TagEntity> | Partial<TagGroupEntity>;
   fieldTimestamps: FieldTimestampMap;
   createdAt: string;
 }

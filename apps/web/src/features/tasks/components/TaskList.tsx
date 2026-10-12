@@ -1,4 +1,4 @@
-import type { TaskEntity } from '@orbit/shared-types';
+import type { TaskEntity, TagEntity } from '@orbit/shared-types';
 import { TaskItem } from './TaskItem';
 
 export interface TaskListProps {
@@ -7,6 +7,7 @@ export interface TaskListProps {
   onDelete?: ((task: TaskEntity) => void) | undefined;
   onRestore?: ((task: TaskEntity) => void) | undefined;
   disabled?: boolean | undefined;
+  availableTags?: TagEntity[] | undefined;
 }
 
 export function TaskList({
@@ -14,7 +15,8 @@ export function TaskList({
   onToggleCompletion,
   onDelete,
   onRestore,
-  disabled
+  disabled,
+  availableTags
 }: TaskListProps) {
   return (
     <ul className="task-list">
@@ -26,6 +28,7 @@ export function TaskList({
           onDelete={onDelete}
           onRestore={onRestore}
           disabled={disabled}
+          availableTags={availableTags}
         />
       ))}
     </ul>

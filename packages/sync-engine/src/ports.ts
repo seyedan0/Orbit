@@ -3,7 +3,9 @@ import type {
   PullResponse,
   QueueStatus,
   SyncQueueEntry,
-  TaskEntity
+  TaskEntity,
+  TagEntity,
+  TagGroupEntity
 } from '@orbit/shared-types';
 
 /**
@@ -30,6 +32,14 @@ export interface LocalStore {
   getCursor(): Promise<string | undefined>;
   saveCursor(cursor: string): Promise<void>;
   listTasks(projectId?: string, options?: { includeDeleted?: boolean }): Promise<TaskEntity[]>;
+
+  // Optional tag & tag group storage methods
+  getTag?(id: string): Promise<TagEntity | undefined>;
+  saveTag?(tag: TagEntity): Promise<void>;
+  listTags?(options?: { includeDeleted?: boolean }): Promise<TagEntity[]>;
+  getTagGroup?(id: string): Promise<TagGroupEntity | undefined>;
+  saveTagGroup?(group: TagGroupEntity): Promise<void>;
+  listTagGroups?(options?: { includeDeleted?: boolean }): Promise<TagGroupEntity[]>;
 }
 
 /**
@@ -43,7 +53,24 @@ export interface LocalStore {
  */
 export interface AtomicTaskStore extends LocalStore {
   saveTaskWithMutation(task: TaskEntity, mutation: SyncQueueEntry): Promise<void>;
+  saveTagWithMutation?(tag: TagEntity, mutation: SyncQueueEntry): Promise<void>;
+  saveTagGroupWithMutation?(group: TagGroupEntity, mutation: SyncQueueEntry): Promise<void>;
 }
+
+/**
+ * Local store port for Tag and TagGroup entities with atomic mutation registration.
+ */
+export interface AtomicTagStore {
+  getTag(id: string): Promise<TagEntity | undefined>;
+  saveTag(tag: TagEntity): Promise<void>;
+  listTags(options?: { includeDeleted?: boolean }): Promise<TagEntity[]>;
+  saveTagWithMutation(tag: TagEntity, mutation: SyncQueueEntry): Promise<void>;
+  getTagGroup(id: string): Promise<TagGroupEntity | undefined>;
+  saveTagGroup(group: TagGroupEntity): Promise<void>;
+  listTagGroups(options?: { includeDeleted?: boolean }): Promise<TagGroupEntity[]>;
+  saveTagGroupWithMutation(group: TagGroupEntity, mutation: SyncQueueEntry): Promise<void>;
+}
+
 
 export interface SyncTransport {
   push(mutations: MutationPayload[]): Promise<PushResult[]>;

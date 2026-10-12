@@ -1393,4 +1393,20 @@ describe('Task Reminders (P4-REM-001)', () => {
       reminders: nowIso
     });
   });
+
+  it('creates task with tags and includes tags in CREATE mutation fieldTimestamps (P5-TAG-001)', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      { title: 'Task with tags', tags: ['work', 'urgent'] },
+      { store, userId: 'user-1' }
+    );
+
+    expect(task.tags).toEqual(['work', 'urgent']);
+    const inStore = await store.getTask(task.id);
+    expect(inStore?.tags).toEqual(['work', 'urgent']);
+
+    const mutations = await store.listPendingMutations(10);
+    expect(mutations[0]?.fieldTimestamps.tags).toBeDefined();
+    expect((mutations[0]?.payload as TaskEntity).tags).toEqual(['work', 'urgent']);
+  });
 });
