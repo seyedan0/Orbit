@@ -1,4 +1,4 @@
-import type { SyncQueueEntry, TaskEntity } from '@orbit/shared-types';
+import type { SyncQueueEntry, TaskEntity, TaskPriority } from '@orbit/shared-types';
 import type { AtomicTaskStore } from '@orbit/sync-engine';
 import { getNextOccurrenceDate, parseRRule } from '../../../core/recurrence/recurrence';
 
@@ -10,6 +10,7 @@ export const INBOX_PROJECT_ID = 'inbox';
 
 export interface CreateTaskInput {
   title: string;
+  priority?: TaskPriority | undefined;
   dueDate?: string | null | undefined;
   startDate?: string | null | undefined;
   duration?: number | null | undefined;
@@ -108,7 +109,7 @@ export async function createTask(
     userId: deps.userId,
     title,
     kind: 'TASK',
-    priority: 0,
+    priority: input.priority ?? 0,
     isAllDay,
     allDay: isAllDay,
     startDate,
@@ -818,6 +819,160 @@ export async function rescheduleTask(
   };
 
   await store.saveTaskWithMutation(updatedTask, mutation);
+  return updatedTask;
+}
+
+export interface UpdateTaskInput {
+  title?: string | undefined;
+  priority?: TaskPriority | undefined;
+  dueDate?: string | null | undefined;
+  startDate?: string | null | undefined;
+  duration?: number | null | undefined;
+  isAllDay?: boolean | undefined;
+  repeatFlag?: string | null | undefined;
+  reminders?: string[] | undefined;
+  tags?: string[] | undefined;
+}
+
+export interface UpdateTaskDeps extends TaskServiceDeps {
+  idempotencyKey?: string;
+}
+
+/**
+ * Atomically updates a task's mutable fields with field-level LWW conflict resolution:
+ * 1. Verifies that the task exists in storage.
+ * 2. Validates title (non-empty), dates (startDate <= dueDate), and duration (non-negative).
+ * 3. Generates a partial UPDATE mutation for changed fields with corresponding fieldTimestamps.
+ * 4. Saves the updated TaskEntity and mutation atomically in the local store.
+ */
+export async function updateTask(
+  taskId: string,
+  updates: UpdateTaskInput,
+  deps: UpdateTaskDeps
+): Promise<TaskEntity> {
+  const task = await deps.store.getTask(taskId);
+  if (!task) {
+    throw new TaskNotFoundError(taskId);
+  }
+
+  if (updates.title !== undefined) {
+    const trimmedTitle = updates.title.trim();
+    if (trimmedTitle.length === 0) {
+      throw new TaskValidationError('عنوان task نمی‌تواند خالی باشد');
+    }
+  }
+
+  const nextStartDate: string | null =
+    updates.startDate !== undefined ? updates.startDate : (task.startDate ?? null);
+  const nextDueDate: string | null =
+    updates.dueDate !== undefined ? updates.dueDate : (task.dueDate ?? null);
+
+  if (
+    nextStartDate &&
+    nextDueDate &&
+    new Date(nextStartDate).getTime() > new Date(nextDueDate).getTime()
+  ) {
+    throw new TaskValidationError(
+      'تاریخ سررسید نمی‌تواند قبل از تاریخ شروع باشد'
+    );
+  }
+
+  if (
+    updates.duration !== undefined &&
+    updates.duration !== null &&
+    updates.duration < 0
+  ) {
+    throw new TaskValidationError('مدت‌زمان نمی‌تواند منفی باشد');
+  }
+
+  const now = deps.now ?? (() => new Date());
+  const timestamp = now().toISOString();
+  const newId = deps.newId ?? (() => crypto.randomUUID());
+  const mutationId = newId();
+  const idempotencyKey = deps.idempotencyKey ?? mutationId;
+
+  const nextLocalStatus = task.version === 0 ? 'CREATED' : 'UPDATED';
+
+  const isAllDayChanged = updates.isAllDay !== undefined;
+  const nextIsAllDay = isAllDayChanged ? Boolean(updates.isAllDay) : task.isAllDay;
+
+  const nextPriority: TaskPriority =
+    updates.priority !== undefined ? updates.priority : task.priority;
+
+  const updatedTask: TaskEntity = {
+    ...task,
+    ...(updates.title !== undefined ? { title: updates.title.trim() } : {}),
+    priority: nextPriority,
+    isAllDay: nextIsAllDay,
+    allDay: nextIsAllDay,
+    startDate: nextStartDate,
+    dueDate: nextDueDate,
+    duration: updates.duration !== undefined ? updates.duration : task.duration,
+    ...(updates.repeatFlag !== undefined ? { repeatFlag: updates.repeatFlag } : {}),
+    ...(updates.reminders !== undefined ? { reminders: [...updates.reminders] } : {}),
+    ...(updates.tags !== undefined ? { tags: [...updates.tags] } : {}),
+    updatedAt: timestamp,
+    localStatus: nextLocalStatus
+  };
+
+  const payload: Partial<TaskEntity> = {};
+  const fieldTimestamps: Record<string, string> = {};
+
+  if (updates.title !== undefined) {
+    payload.title = updatedTask.title;
+    fieldTimestamps.title = timestamp;
+  }
+  if (updates.priority !== undefined) {
+    payload.priority = updatedTask.priority;
+    fieldTimestamps.priority = timestamp;
+  }
+  if (updates.dueDate !== undefined) {
+    payload.dueDate = updatedTask.dueDate;
+    fieldTimestamps.dueDate = timestamp;
+  }
+  if (updates.startDate !== undefined) {
+    payload.startDate = updatedTask.startDate;
+    fieldTimestamps.startDate = timestamp;
+  }
+  if (updates.duration !== undefined) {
+    payload.duration = updatedTask.duration;
+    fieldTimestamps.duration = timestamp;
+  }
+  if (isAllDayChanged) {
+    payload.isAllDay = nextIsAllDay;
+    payload.allDay = nextIsAllDay;
+    fieldTimestamps.isAllDay = timestamp;
+  }
+  if (updates.repeatFlag !== undefined) {
+    payload.repeatFlag = updatedTask.repeatFlag;
+    fieldTimestamps.repeatFlag = timestamp;
+  }
+  if (updates.reminders !== undefined) {
+    payload.reminders = updatedTask.reminders;
+    fieldTimestamps.reminders = timestamp;
+  }
+  if (updates.tags !== undefined) {
+    payload.tags = updatedTask.tags;
+    fieldTimestamps.tags = timestamp;
+  }
+
+  const mutation: SyncQueueEntry = {
+    id: mutationId,
+    idempotencyKey,
+    entityType: 'TASK',
+    entityId: task.id,
+    operation: 'UPDATE',
+    baseVersion: task.version,
+    payloadType: 'PARTIAL',
+    payload,
+    fieldTimestamps,
+    createdAt: timestamp,
+    status: 'PENDING',
+    attemptCount: 0,
+    nextAttemptAt: timestamp
+  };
+
+  await deps.store.saveTaskWithMutation(updatedTask, mutation);
   return updatedTask;
 }
 

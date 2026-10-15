@@ -7,25 +7,26 @@
 - **مرحله:** فاز ۵، سازمان‌دهی، فیلترها و نماهای پیشرفته
 - **آخرین به‌روزرسانی:** 2026-10-15
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 40% (فاز ۵)
+- **درصد تقریبی پیشرفت:** 50% (فاز ۵)
 - **Branch فعال:** `feature/smart-lists-and-filters`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-پیاده‌سازی تسک P5-SMT-001 (سیستم لیست‌های هوشمند، ذخیره‌سازی محلی فیلترها با ثبت اتمیک جهش‌ها، سرویس LWW، صفحه نمایش تسک‌های فیلترشده SmartListPage و یکپارچه‌سازی نوار ناوبری سایدبار با نشانگر تعداد تسک‌های منطبق).
+پیاده‌سازی تسک P5-MTX-001 (نمای ماتریس آیزنهاور - Eisenhower Matrix 4-Quadrant Derived View با منطق خالص طبقه‌بندی، گرید ۲×۲ ریسپانسیو، قابلیت Drag & Drop بین ۴ ربع با ثبت جهش اتمیک UPDATE با LWW در task-service، افزودن سریع تسک در هر ربع و مسیر /matrix در سایدبار).
 
 ## کارهای در حال انجام
 
-- [x] ادغام شاخه `feature/json-rule-filter-engine` در `develop`
 - [x] پیاده‌سازی سیستم لیست‌های هوشمند و ذخیره‌سازی فیلترها (تسک P5-SMT-001)
+- [x] پیاده‌سازی نمای مشتق‌شده ماتریس آیزنهاور (تسک P5-MTX-001)
 - [ ] گام بعدی فاز ۵: رابط کاربری ساخت و ویرایش تعاملی فیلترهای هوشمند (Smart Filter Builder UI)
 
 ## کارهای انجام‌شده
 
-- [x] **P5-TAG-001:** سیستم مدیریت برچسب‌ها (Tags و Tag Groups)، مدل‌های دامنه، سرویس LWW، فرم تسک و کامپوننت‌های UI و ادغام در `develop`.
-- [x] **P5-FLT-001:** موتور فیلترهای هوشمند مبتنی بر JSON Rule DSL (`filter-evaluator.ts`، تایپ‌های `FilterRule`، `FieldRule`، `FilterGroupRule`، `SmartFilterEntity`، عملگرهای مقایسه‌ای و بازه‌های زمانی نسبی تقویم شمسی/میلادی).
+- [x] **P5-MTX-001:** پیاده‌سازی نمای ماتریس آیزنهاور (توابع خالص `categorizeTaskIntoQuadrant`، `getEisenhowerMatrixGroups` و `getQuadrantTargetUpdates` در `matrix-utils.ts`، گرید ۲×۲ ریسپانسیو و پالت رنگی ۴ ربع در `EisenhowerMatrixPage.tsx`، Drag & Drop بین ربع‌ها با به‌روزرسانی خوش‌بینانه و ثبت اتمیک جهش UPDATE با LWW در `task-service.ts`، ایجاد سریع تسک و تکمیل تسک، مسیر `/matrix` و لینک سایدبار `AppShell.tsx`).
 - [x] **P5-SMT-001:** سیستم لیست‌های هوشمند و ذخیره‌سازی فیلترها (پورت‌های `AtomicFilterStore`، پیاده‌سازی در `MemoryLocalStore` و `IndexedDbLocalStore`، سرویس `filter-service` با ۵ پیش‌تنظیم سیستمی، صفحه `SmartListPage` با مسیر `/filters/:filterId` و نمایش لیست‌های هوشمند با نشانگر شمارنده در سایدبار `AppShell`).
+- [x] **P5-FLT-001:** موتور فیلترهای هوشمند مبتنی بر JSON Rule DSL (`filter-evaluator.ts`، تایپ‌های `FilterRule`، `FieldRule`، `FilterGroupRule`، `SmartFilterEntity`، عملگرهای مقایسه‌ای و بازه‌های زمانی نسبی تقویم شمسی/میلادی).
+- [x] **P5-TAG-001:** سیستم مدیریت برچسب‌ها (Tags و Tag Groups)، مدل‌های دامنه، سرویس LWW، فرم تسک و کامپوننت‌های UI و ادغام در `develop`.
 
 - [x] ایجاد فایل مرکزی پیشرفت پروژه
 - [x] ایجاد پوشه مستندات
@@ -1426,6 +1427,52 @@
 - **گام بعدی (Handoff):**
   - ادغام `feature/smart-lists-and-filters` در `develop`.
   - پیاده‌سازی رابط کاربری سازنده تعاملی فیلترهای هوشمند (Smart Filter Builder Modal / Component).
+
+### 2026-10-15 | پیاده‌سازی نمای ماتریس آیزنهاور (تسک P5-MTX-001)
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی تسک P5-MTX-001 (نمای ماتریس آیزنهاور ۴ ربع بر اساس اولویت و سررسید، منطق مشتق‌سازی خالص، درگ‌اند-دراپ بین ربع‌ها با به‌روزرسانی خوش‌بینانه و ثبت اتمیک جهش UPDATE با LWW، ایجاد سریع تسک و یکپارچه‌سازی در مسیر /matrix و ناوبری سایدبار).
+- **انجام‌شده:**
+  - پیاده‌سازی ماژول مشتق‌سازی خالص ماتریس در `apps/web/src/features/matrix/matrix-utils.ts`:
+    * تابع `categorizeTaskIntoQuadrant`: دسته‌بندی قطعی در ۴ ربع (Q1: فوری و مهم با اولویت >= 3 و سررسید گذشته/امروز/فردا، Q2: مهم و غیرفوری با اولویت >= 3 و سررسید آینده دورتر یا بدون تاریخ، Q3: فوری و کم‌اهمیت با اولویت 1 و سررسید گذشته/امروز، Q4: نه فوری و نه مهم با اولویت 0 یا سایر تسک‌های غیراورژانسی).
+    * تابع `getEisenhowerMatrixGroups`: فیلتر تسک‌های فعال، دسته‌بندی در ربع‌ها و مرتب‌سازی استاندارد (تسک‌های تکمیل‌نشده، اولویت بالاتر، سررسید نزدیک‌تر و تاریخ ایجاد).
+    * تابع `getQuadrantTargetUpdates`: تعیین مقادیر خودکار priority، dueDate و isAllDay هنگام رها کردن تسک در ربع جدید یا ساخت سریع تسک در آن ربع.
+    * پیکربندی و پالت رنگی استاندارد `QUADRANT_CONFIGS` برای نمایش بصری ۴ ربع.
+  - پیاده‌سازی رابط کاربری صفحه ماتریس در `apps/web/src/features/matrix/pages/EisenhowerMatrixPage.tsx` و `EisenhowerMatrixPage.module.css`:
+    * گرید ۲×۲ ریسپانسیو با پالت رنگی استاندارد برای ۴ ربع.
+    * قابلیت HTML5 Drag & Drop بین ربع‌ها همراه با به‌روزرسانی خوش‌بینانه و ثبت اتمیک جهش UPDATE با پروتکل LWW در `task-service`.
+    * امکان ایجاد سریع تسک در پاورقی هر ربع با اعمال پیش‌تنظیم‌های همان ربع.
+    * امکان تیک زدن اتمام تسک با به‌روزرسانی خوش‌بینانه و کلید تغییر وضعیت نمایش کارهای تکمیل‌شده.
+  - افزودن متد `updateTask` با ثبت اتمیک جهش PARTIAL UPDATE و تایم‌استمپ‌های سطح فیلد (LWW) در `task-service.ts` و پشتیبانی از اولویت `priority` در `CreateTaskInput` و `createTask`.
+  - یکپارچه‌سازی ناوبری:
+    * افزودن مسیر `/matrix` در `apps/web/src/app/routes.tsx`.
+    * افزودن پیوند «ماتریس آیزنهاور» در نوار کناری `AppShell.tsx`.
+  - آزمون‌های جامع:
+    * فایل `matrix-utils.test.ts` شامل ۱۴ آزمون پوشش‌دهنده دسته‌بندی ۴ ربع، حذف تسک‌های حذف‌شده، مرتب‌سازی و نگاشت تغییرات هدف.
+    * فایل `EisenhowerMatrixPage.test.tsx` شامل آزمون‌های رندرینگ گرید، ربع‌ها، فرم‌های ایجاد سریع و نمایش تسک‌ها.
+    * افزودن آزمون‌های اعتبارسنجی `updateTask` و اولویت اولیه در `task-service.test.ts`.
+- **فایل‌ها:**
+  - `apps/web/src/features/matrix/matrix-utils.ts`
+  - `apps/web/src/features/matrix/index.ts`
+  - `apps/web/src/features/matrix/pages/EisenhowerMatrixPage.tsx`
+  - `apps/web/src/features/matrix/pages/EisenhowerMatrixPage.module.css`
+  - `apps/web/src/features/matrix/matrix-utils.test.ts`
+  - `apps/web/src/features/matrix/pages/EisenhowerMatrixPage.test.tsx`
+  - `apps/web/src/features/tasks/services/task-service.ts`
+  - `apps/web/src/features/tasks/services/task-service.test.ts`
+  - `apps/web/src/app/routes.tsx`
+  - `apps/web/src/layout/AppShell.tsx`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npm run test --workspace @orbit/web -- matrix`: ۱۷ آزمون با ۱۰۰٪ قبولی پاس شدند.
+  - `npm run test --workspace @orbit/web -- task-service`: ۷۷ آزمون با ۱۰۰٪ قبولی پاس شدند.
+  - `npm run typecheck`: کامپایل بدون خطا در سراسر ریشه، کلاینت وب و سرور.
+  - `git diff --check`: بدون خطای فرمت یا کاراکترهای اضافه.
+- **وضعیت Git:**
+  - کامیت مستقیم روی شاخه فعال `feature/smart-lists-and-filters` با عنوان `feat(matrix): implement eisenhower matrix 4-quadrant derived view` بدون ادغام در develop.
+- **گام بعدی (Handoff):**
+  - ادغام `feature/smart-lists-and-filters` در `develop`.
+  - پیاده‌سازی رابط کاربری سازنده تعاملی فیلترهای هوشمند (Smart Filter Builder UI).
 
 ## محدودیت‌های باقی‌مانده
 

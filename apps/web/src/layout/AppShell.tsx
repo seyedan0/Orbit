@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { to: '/today', label: 'امروز' },
   { to: '/tomorrow', label: 'فردا' },
   { to: '/calendar', label: 'تقویم' },
+  { to: '/matrix', label: 'ماتریس آیزنهاور' },
   { to: '/inbox', label: 'صندوق ورودی' },
   { to: '/settings', label: 'تنظیمات' }
 ] as const;

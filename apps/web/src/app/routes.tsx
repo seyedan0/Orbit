@@ -7,6 +7,7 @@ import { InboxPage } from '../features/tasks/pages/InboxPage';
 import { TodayPage } from '../features/tasks/pages/TodayPage';
 import { TomorrowPage } from '../features/tasks/pages/TomorrowPage';
 import { SmartListPage } from '../features/filters/pages/SmartListPage';
+import { EisenhowerMatrixPage } from '../features/matrix/pages/EisenhowerMatrixPage';
 import { AppShell } from '../layout/AppShell';
 import { NotFoundPage } from './NotFoundPage';
 
@@ -20,6 +21,7 @@ export function AppRoutes() {
           <Route path="/today" element={<TodayPage />} />
           <Route path="/tomorrow" element={<TomorrowPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/matrix" element={<EisenhowerMatrixPage />} />
           <Route path="/inbox" element={<InboxPage />} />
           <Route path="/filters/:filterId" element={<SmartListPage />} />
           <Route path="/settings" element={<SettingsPage />} />

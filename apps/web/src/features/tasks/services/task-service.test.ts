@@ -17,6 +17,7 @@ import {
   isDueTomorrow,
   filterTasksDueToday,
   filterTasksDueTomorrow,
+  updateTask,
   type CreateTaskInput
 } from './task-service';
 
@@ -1408,5 +1409,102 @@ describe('Task Reminders (P4-REM-001)', () => {
     const mutations = await store.listPendingMutations(10);
     expect(mutations[0]?.fieldTimestamps.tags).toBeDefined();
     expect((mutations[0]?.payload as TaskEntity).tags).toEqual(['work', 'urgent']);
+  });
+
+  it('creates task with custom priority (P5-MTX-001)', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      { title: 'High priority task', priority: 5 },
+      { store, userId: 'user-1' }
+    );
+
+    expect(task.priority).toBe(5);
+    const inStore = await store.getTask(task.id);
+    expect(inStore?.priority).toBe(5);
+  });
+});
+
+describe('updateTask (P5-MTX-001)', () => {
+  it('updates task priority, dueDate, and isAllDay with LWW sync mutation', async () => {
+    const store = makeStore();
+    const nowIso = FIXED_TIME;
+    const task = await createTask(
+      { title: 'Base task', priority: 0 },
+      { store, userId: 'user-1', now: () => new Date(nowIso) }
+    );
+
+    const updated = await updateTask(
+      task.id,
+      {
+        priority: 3,
+        dueDate: '2026-10-16T00:00:00.000Z',
+        isAllDay: true
+      },
+      {
+        store,
+        userId: 'user-1',
+        idempotencyKey: 'mut-update-matrix',
+        now: () => new Date(nowIso)
+      }
+    );
+
+    expect(updated.priority).toBe(3);
+    expect(updated.dueDate).toBe('2026-10-16T00:00:00.000Z');
+    expect(updated.isAllDay).toBe(true);
+
+    const inStore = await store.getTask(task.id);
+    expect(inStore?.priority).toBe(3);
+    expect(inStore?.dueDate).toBe('2026-10-16T00:00:00.000Z');
+
+    const mutations = await store.listPendingMutations(10);
+    const mut = mutations.find((m) => m.idempotencyKey === 'mut-update-matrix');
+    expect(mut).toBeDefined();
+    expect(mut?.operation).toBe('UPDATE');
+    expect(mut?.payloadType).toBe('PARTIAL');
+    expect(mut?.payload).toEqual({
+      priority: 3,
+      dueDate: '2026-10-16T00:00:00.000Z',
+      isAllDay: true,
+      allDay: true
+    });
+    expect(mut?.fieldTimestamps).toEqual({
+      priority: nowIso,
+      dueDate: nowIso,
+      isAllDay: nowIso
+    });
+  });
+
+  it('rejects updates on non-existent tasks', async () => {
+    const store = makeStore();
+    await expect(
+      updateTask('non-existent', { priority: 3 }, { store, userId: 'user-1' })
+    ).rejects.toThrow(TaskNotFoundError);
+  });
+
+  it('rejects invalid title and date ranges', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      { title: 'Valid task' },
+      { store, userId: 'user-1' }
+    );
+
+    await expect(
+      updateTask(task.id, { title: '   ' }, { store, userId: 'user-1' })
+    ).rejects.toThrow(TaskValidationError);
+
+    await expect(
+      updateTask(
+        task.id,
+        {
+          startDate: '2026-10-20T00:00:00.000Z',
+          dueDate: '2026-10-10T00:00:00.000Z'
+        },
+        { store, userId: 'user-1' }
+      )
+    ).rejects.toThrow(TaskValidationError);
+
+    await expect(
+      updateTask(task.id, { duration: -10 }, { store, userId: 'user-1' })
+    ).rejects.toThrow(TaskValidationError);
   });
 });
