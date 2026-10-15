@@ -389,8 +389,8 @@ function matchEnglishTime(input: string): TimeMatchResult | null {
 
   const match = timeRegex.exec(input);
   if (match && match.index !== undefined) {
-    let hour = 0;
-    let minute = 0;
+    let hour: number;
+    let minute: number;
 
     if (match[1] && match[3]) {
       // 5pm or at 10:30am
@@ -547,7 +547,6 @@ export function parseNaturalDate(
 
   // 3. Assemble target Date
   let targetDate: Date;
-  let isAllDay = true;
 
   if (dateMatch) {
     targetDate = new Date(dateMatch.targetDate.getTime());
@@ -556,12 +555,11 @@ export function parseNaturalDate(
     targetDate = new Date(referenceDate.getTime());
   }
 
+  const isAllDay = !timeMatch;
   if (timeMatch) {
     targetDate.setHours(timeMatch.hour, timeMatch.minute, 0, 0);
-    isAllDay = false;
   } else {
     targetDate.setHours(0, 0, 0, 0);
-    isAllDay = true;
   }
 
   // 4. Strip matched tokens cleanly
@@ -599,7 +597,7 @@ export function formatDetectedDateChip(
   const timeStr = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 
   if (calendarType === 'jalali') {
-    let dateLabel = '';
+    let dateLabel: string;
     if (diffDays === 0) {
       dateLabel = 'امروز';
     } else if (diffDays === 1) {
@@ -614,7 +612,7 @@ export function formatDetectedDateChip(
     const timeLabel = isAllDay ? '' : ` ساعت ${toPersianDigits(timeStr)}`;
     return `🗓️ ${dateLabel}${timeLabel}`;
   } else {
-    let dateLabel = '';
+    let dateLabel: string;
     if (diffDays === 0) {
       dateLabel = 'Today';
     } else if (diffDays === 1) {

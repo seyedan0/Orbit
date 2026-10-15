@@ -2,7 +2,6 @@ import {
   isFieldRule,
   isFilterGroupRule,
   type FieldRule,
-  type FilterFieldOperator,
   type FilterGroupRule,
   type FilterRule,
   type RelativeDateRange,

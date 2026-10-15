@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { TaskEntity, FilterRule, FieldRule, FilterGroupRule } from '@orbit/shared-types';
+import type { TaskEntity, FieldRule, FilterGroupRule } from '@orbit/shared-types';
 import { evaluateTaskFilter, filterTasks } from './filter-evaluator';
 
 describe('filter-evaluator (P5-FLT-001)', () => {

@@ -1,7 +1,8 @@
 import type { TaskEntity } from './task.js';
 import type { TagEntity, TagGroupEntity } from './tag.js';
+import type { SmartFilterEntity } from './filter.js';
 
-export type EntityType = 'TASK' | 'TAG' | 'TAG_GROUP';
+export type EntityType = 'TASK' | 'TAG' | 'TAG_GROUP' | 'SMART_FILTER';
 export type MutationOperation = 'CREATE' | 'UPDATE' | 'DELETE';
 export type MutationPayloadType = 'FULL' | 'PARTIAL';
 
@@ -17,7 +18,11 @@ export interface MutationPayload {
   operation: MutationOperation;
   baseVersion: number;
   payloadType: MutationPayloadType;
-  payload: Partial<TaskEntity> | Partial<TagEntity> | Partial<TagGroupEntity>;
+  payload:
+    | Partial<TaskEntity>
+    | Partial<TagEntity>
+    | Partial<TagGroupEntity>
+    | Partial<SmartFilterEntity>;
   fieldTimestamps: FieldTimestampMap;
   createdAt: string;
 }
