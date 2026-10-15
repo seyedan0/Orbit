@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import type { SmartFilterEntity } from '@orbit/shared-types';
+import type { SmartFilterEntity, TaskEntity } from '@orbit/shared-types';
 import { useSession } from '../core/auth/session-context';
 import { useStore } from '../core/storage/store-context';
 import { useSyncStatus } from '../core/sync/sync-context';
@@ -11,14 +11,24 @@ import {
   listAllSmartFilters,
   SYSTEM_FILTER_PRESETS
 } from '../features/filters/services/filter-service';
+import { SmartFilterModal } from '../features/filters/components/SmartFilterModal';
+import {
+  clearRecentSearches,
+  getRecentSearches,
+  saveRecentSearch,
+  searchTasks
+} from '../features/search/search-utils';
 import styles from './AppShell.module.css';
 
 const NAV_ITEMS = [
   { to: '/today', label: 'امروز' },
   { to: '/tomorrow', label: 'فردا' },
   { to: '/calendar', label: 'تقویم' },
+  { to: '/timeline', label: 'تایملاین' },
   { to: '/matrix', label: 'ماتریس آیزنهاور' },
   { to: '/inbox', label: 'صندوق ورودی' },
+  { to: '/archive', label: 'آرشیو' },
+  { to: '/trash', label: 'سطل زباله' },
   { to: '/settings', label: 'تنظیمات' }
 ] as const;
 
@@ -40,6 +50,14 @@ export function AppShell() {
     SYSTEM_FILTER_PRESETS.map((p) => structuredClone(p))
   );
   const [filterCounts, setFilterCounts] = useState<Record<string, number>>({});
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [filterToEdit, setFilterToEdit] = useState<SmartFilterEntity | null>(null);
+
+  // Search state (P5-SRC-001)
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => getRecentSearches());
+  const [allTasksForSearch, setAllTasksForSearch] = useState<TaskEntity[]>([]);
 
   const reloadFilters = useCallback(async () => {
     try {
@@ -48,6 +66,8 @@ export function AppShell() {
       setFilters(allFilters);
 
       const allTasks = await store.listTasks();
+      setAllTasksForSearch(allTasks);
+
       const counts: Record<string, number> = {};
       for (const f of allFilters) {
         counts[f.id] = filterTasks(allTasks, f.rule, { calendarType: 'JALALI' }).length;
@@ -61,6 +81,8 @@ export function AppShell() {
   useEffect(() => {
     void reloadFilters();
   }, [reloadFilters, location.pathname, syncState]);
+
+  const searchResults = searchQuery.trim() ? searchTasks(allTasksForSearch, searchQuery) : [];
 
   return (
     <div className={styles.shell}>
@@ -149,7 +171,20 @@ export function AppShell() {
         {/* Smart Filters (P5-SMT-001) */}
         <div className={styles.filtersSection} data-testid="sidebar-smart-filters">
           <div className={styles.filtersSectionHeader}>
-            <span className={styles.filtersSectionTitle}>فیلترهای هوشمند</span>
+            <span className={styles.filtersSectionTitle}>لیست‌های هوشمند</span>
+            <button
+              type="button"
+              className={styles.addFilterBtn}
+              onClick={() => {
+                setFilterToEdit(null);
+                setIsFilterModalOpen(true);
+              }}
+              title="افزودن لیست هوشمند جدید"
+              aria-label="افزودن لیست هوشمند جدید"
+              data-testid="add-smart-filter-btn"
+            >
+              +
+            </button>
           </div>
           <ul className={styles.filtersList}>
             {filters.map((filter) => {
@@ -205,9 +240,127 @@ export function AppShell() {
           خروج
         </button>
       </aside>
-      <main className={styles.content}>
-        <Outlet />
-      </main>
+      <div className={styles.mainWrapper}>
+        <header className={styles.topBar} data-testid="app-top-header">
+          <div className={styles.searchContainer}>
+            <input
+              type="search"
+              className={styles.searchInput}
+              placeholder="جستجو در تسک‌ها، برچسب‌ها و محتوا..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => {
+                setIsSearchFocused(true);
+                setRecentSearches(getRecentSearches());
+              }}
+              onBlur={() => {
+                // Short timeout to allow click events inside dropdown to fire
+                setTimeout(() => setIsSearchFocused(false), 200);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  const updated = saveRecentSearch(searchQuery);
+                  setRecentSearches(updated);
+                }
+              }}
+              data-testid="global-search-input"
+              aria-label="جستجوی تسک‌ها"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className={styles.searchClearBtn}
+                onClick={() => setSearchQuery('')}
+                data-testid="clear-search-btn"
+                aria-label="پاک کردن جستجو"
+              >
+                ✕
+              </button>
+            )}
+
+            {/* Auto-suggest recent searches dropdown */}
+            {isSearchFocused && !searchQuery && recentSearches.length > 0 && (
+              <div className={styles.recentDropdown} data-testid="search-recent-dropdown">
+                <div className={styles.recentHeader}>
+                  <span>جستجوهای اخیر</span>
+                  <button
+                    type="button"
+                    className={styles.clearHistoryBtn}
+                    onClick={() => {
+                      clearRecentSearches();
+                      setRecentSearches([]);
+                    }}
+                    data-testid="clear-recent-searches-btn"
+                  >
+                    پاکسازی تاریخچه
+                  </button>
+                </div>
+                {recentSearches.map((term) => (
+                  <div
+                    key={term}
+                    className={styles.recentItem}
+                    data-testid={`recent-search-${term}`}
+                    onMouseDown={() => {
+                      setSearchQuery(term);
+                    }}
+                  >
+                    <span>🔍</span>
+                    <span>{term}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Instant search results dropdown */}
+            {searchQuery.trim().length > 0 && (
+              <div className={styles.searchResultsDropdown} data-testid="search-results-dropdown">
+                <div className={styles.searchResultsHeader}>
+                  <span>نتایج برای «{searchQuery}» ({searchResults.length})</span>
+                </div>
+                {searchResults.length === 0 ? (
+                  <div className={styles.noResultsMessage}>موردی یافت نشد</div>
+                ) : (
+                  searchResults.slice(0, 10).map((task) => (
+                    <div
+                      key={task.id}
+                      className={styles.searchResultItem}
+                      data-testid={`search-result-${task.id}`}
+                    >
+                      <div className={styles.searchResultTitle}>{task.title}</div>
+                      <div className={styles.searchResultMeta}>
+                        {task.tags && task.tags.length > 0 && (
+                          <span style={{ color: '#6366f1' }}>#{task.tags.join(' #')}</span>
+                        )}
+                        <span style={{ color: task.completedAt ? '#198754' : '#6c757d' }}>
+                          {task.completedAt ? 'تکمیل شده' : 'باز'}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </header>
+
+        <main className={styles.content}>
+          <Outlet />
+        </main>
+      </div>
+
+      {isFilterModalOpen && (
+        <SmartFilterModal
+          isOpen={isFilterModalOpen}
+          onClose={() => {
+            setIsFilterModalOpen(false);
+            setFilterToEdit(null);
+          }}
+          initialFilter={filterToEdit}
+          onSaved={() => {
+            void reloadFilters();
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import type { SyncQueueEntry, TaskEntity, TaskPriority } from '@orbit/shared-types';
 import type { AtomicTaskStore } from '@orbit/sync-engine';
 import { getNextOccurrenceDate, parseRRule } from '../../../core/recurrence/recurrence';
+import { generateLexoRank } from '../../../core/ranking/lexorank';
 
 /**
  * Well-known projectId for the user's default Inbox.
@@ -1073,4 +1074,70 @@ export function filterTasksDueTomorrow(
       }
       return b.createdAt.localeCompare(a.createdAt);
     });
+}
+
+/**
+ * Reorders a task using fractional indexing (LexoRank) relative to its neighbors,
+ * updating position and registering an atomic LWW mutation with fieldTimestamps.position.
+ */
+export async function reorderTask(
+  store: AtomicTaskStore,
+  taskId: string,
+  prevTaskId?: string | null,
+  nextTaskId?: string | null,
+  deps?: Partial<TaskServiceDeps>
+): Promise<TaskEntity> {
+  const task = await store.getTask(taskId);
+  if (!task) {
+    throw new TaskNotFoundError(taskId);
+  }
+
+  let prevRank: string | null = null;
+  if (prevTaskId) {
+    const prevTask = await store.getTask(prevTaskId);
+    prevRank = prevTask?.position ?? null;
+  }
+
+  let nextRank: string | null = null;
+  if (nextTaskId) {
+    const nextTask = await store.getTask(nextTaskId);
+    nextRank = nextTask?.position ?? null;
+  }
+
+  const newPosition = generateLexoRank(prevRank, nextRank);
+  const now = deps?.now ?? (() => new Date());
+  const timestamp = now().toISOString();
+  const newId = deps?.newId ?? (() => crypto.randomUUID());
+  const mutationId = newId();
+  const nextLocalStatus = task.localStatus === 'CREATED' ? 'CREATED' : 'UPDATED';
+
+  const updatedTask: TaskEntity = {
+    ...task,
+    position: newPosition,
+    updatedAt: timestamp,
+    localStatus: nextLocalStatus
+  };
+
+  const mutation: SyncQueueEntry = {
+    id: mutationId,
+    idempotencyKey: mutationId,
+    entityType: 'TASK',
+    entityId: task.id,
+    operation: 'UPDATE',
+    baseVersion: task.version,
+    payloadType: 'PARTIAL',
+    payload: {
+      position: newPosition
+    },
+    fieldTimestamps: {
+      position: timestamp
+    },
+    createdAt: timestamp,
+    status: 'PENDING',
+    attemptCount: 0,
+    nextAttemptAt: timestamp
+  };
+
+  await store.saveTaskWithMutation(updatedTask, mutation);
+  return updatedTask;
 }

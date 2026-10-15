@@ -1,6 +1,6 @@
 import type { SmartFilterEntity, TaskEntity } from '@orbit/shared-types';
 import { useCallback, useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useSession } from '../../../core/auth/session-context';
 import { filterTasks } from '../../../core/filters';
 import { useStore } from '../../../core/storage/store-context';
@@ -15,14 +15,17 @@ import {
   restoreTask
 } from '../../tasks/services/task-service';
 import {
+  deleteSmartFilter,
   getSmartFilter,
   getSystemFilterById,
   isSystemFilterId
 } from '../services/filter-service';
+import { SmartFilterModal } from '../components/SmartFilterModal';
 import styles from './SmartListPage.module.css';
 
 export function SmartListPage() {
   const { filterId } = useParams<{ filterId: string }>();
+  const navigate = useNavigate();
   const { session } = useSession();
   const store = useStore();
 
@@ -33,6 +36,7 @@ export function SmartListPage() {
     return null;
   });
   const [tasks, setTasks] = useState<TaskEntity[]>([]);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [filterNotFound, setFilterNotFound] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -162,6 +166,19 @@ export function SmartListPage() {
     }
   };
 
+  const handleDeleteFilter = async () => {
+    if (!filter || isSystemFilterId(filter.id) || !session) return;
+    const confirmed = window.confirm(`آیا از حذف فیلتر «${filter.name}» اطمینان دارید؟`);
+    if (!confirmed) return;
+
+    try {
+      await deleteSmartFilter(filter.id, { store, userId: session.userId });
+      navigate('/inbox');
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'خطا در حذف فیلتر');
+    }
+  };
+
   if (filterNotFound) {
     return (
       <section className={styles.container} data-testid="filter-not-found">
@@ -194,9 +211,28 @@ export function SmartListPage() {
             <h1 className={styles.title} data-testid="filter-title">
               {filter?.name ?? 'فیلتر هوشمند'}
             </h1>
-            {filter && isSystemFilterId(filter.id) && (
+            {filter && isSystemFilterId(filter.id) ? (
               <span className={styles.filterSystemTag}>فیلتر سیستمی</span>
-            )}
+            ) : filter ? (
+              <div className={styles.customFilterActions}>
+                <button
+                  type="button"
+                  className={styles.editFilterBtn}
+                  onClick={() => setIsEditModalOpen(true)}
+                  data-testid="edit-smart-filter-btn"
+                >
+                  ویرایش فیلتر
+                </button>
+                <button
+                  type="button"
+                  className={styles.deleteFilterBtn}
+                  onClick={() => void handleDeleteFilter()}
+                  data-testid="delete-smart-filter-btn"
+                >
+                  حذف فیلتر
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -231,6 +267,18 @@ export function SmartListPage() {
           onToggleCompletion={handleToggleCompletion}
           onDelete={handleDelete}
           onRestore={handleRestore}
+        />
+      )}
+
+      {isEditModalOpen && filter && (
+        <SmartFilterModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          initialFilter={filter}
+          onSaved={(updated) => {
+            setFilter(updated);
+            void reload();
+          }}
         />
       )}
     </section>

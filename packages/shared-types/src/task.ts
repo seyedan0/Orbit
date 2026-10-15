@@ -29,6 +29,7 @@ export interface TaskEntity {
   reminders: string[];
   tags?: string[] | undefined;
   items: SubTaskItem[];
+  position?: string | undefined;
   version: number;
   localStatus: LocalStatus;
   createdAt: string;
