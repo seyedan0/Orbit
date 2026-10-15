@@ -1,8 +1,16 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import type { SmartFilterEntity } from '@orbit/shared-types';
 import { useSession } from '../core/auth/session-context';
+import { useStore } from '../core/storage/store-context';
 import { useSyncStatus } from '../core/sync/sync-context';
 import { useReminders } from '../core/reminders/reminder-context';
 import { formatReminderText } from '../core/reminders/reminder-utils';
+import { filterTasks } from '../core/filters';
+import {
+  listAllSmartFilters,
+  SYSTEM_FILTER_PRESETS
+} from '../features/filters/services/filter-service';
 import styles from './AppShell.module.css';
 
 const NAV_ITEMS = [
@@ -21,9 +29,37 @@ const SYNC_LABELS = {
 } as const;
 
 export function AppShell() {
-  const { signOut } = useSession();
+  const { session, signOut } = useSession();
+  const store = useStore();
+  const location = useLocation();
   const { syncState, triggerSync } = useSyncStatus();
   const { activeAlerts, completeAlert, snoozeAlert, dismissAlert } = useReminders();
+
+  const [filters, setFilters] = useState<SmartFilterEntity[]>(() =>
+    SYSTEM_FILTER_PRESETS.map((p) => structuredClone(p))
+  );
+  const [filterCounts, setFilterCounts] = useState<Record<string, number>>({});
+
+  const reloadFilters = useCallback(async () => {
+    try {
+      const userId = session?.userId ?? 'default';
+      const allFilters = await listAllSmartFilters({ store, userId });
+      setFilters(allFilters);
+
+      const allTasks = await store.listTasks();
+      const counts: Record<string, number> = {};
+      for (const f of allFilters) {
+        counts[f.id] = filterTasks(allTasks, f.rule, { calendarType: 'JALALI' }).length;
+      }
+      setFilterCounts(counts);
+    } catch {
+      // In test or non-interactive environments, default to presets
+    }
+  }, [session?.userId, store]);
+
+  useEffect(() => {
+    void reloadFilters();
+  }, [reloadFilters, location.pathname, syncState]);
 
   return (
     <div className={styles.shell}>
@@ -109,6 +145,41 @@ export function AppShell() {
             ))}
           </ul>
         </nav>
+        {/* Smart Filters (P5-SMT-001) */}
+        <div className={styles.filtersSection} data-testid="sidebar-smart-filters">
+          <div className={styles.filtersSectionHeader}>
+            <span className={styles.filtersSectionTitle}>فیلترهای هوشمند</span>
+          </div>
+          <ul className={styles.filtersList}>
+            {filters.map((filter) => {
+              const count = filterCounts[filter.id] ?? 0;
+              return (
+                <li key={filter.id}>
+                  <NavLink
+                    to={`/filters/${filter.id}`}
+                    className={styles.filterLink ?? ''}
+                    data-testid={`nav-filter-${filter.id}`}
+                  >
+                    <div className={styles.filterInfo}>
+                      <span
+                        className={styles.filterDot}
+                        style={{ backgroundColor: filter.color || '#6366f1' }}
+                        aria-hidden="true"
+                      />
+                      <span className={styles.filterName}>{filter.name}</span>
+                    </div>
+                    <span
+                      className={styles.filterBadge}
+                      data-testid={`badge-filter-${filter.id}`}
+                    >
+                      {count}
+                    </span>
+                  </NavLink>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
         <div className={styles.syncSection}>
           <div className={styles.syncHeader}>
             <span

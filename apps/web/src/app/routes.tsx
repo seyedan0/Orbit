@@ -6,6 +6,7 @@ import { CalendarPage } from '../features/calendar/pages/CalendarPage';
 import { InboxPage } from '../features/tasks/pages/InboxPage';
 import { TodayPage } from '../features/tasks/pages/TodayPage';
 import { TomorrowPage } from '../features/tasks/pages/TomorrowPage';
+import { SmartListPage } from '../features/filters/pages/SmartListPage';
 import { AppShell } from '../layout/AppShell';
 import { NotFoundPage } from './NotFoundPage';
 
@@ -20,6 +21,7 @@ export function AppRoutes() {
           <Route path="/tomorrow" element={<TomorrowPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/inbox" element={<InboxPage />} />
+          <Route path="/filters/:filterId" element={<SmartListPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>

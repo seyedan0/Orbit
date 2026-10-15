@@ -3,9 +3,10 @@ import type {
   SyncQueueEntry,
   TaskEntity,
   TagEntity,
-  TagGroupEntity
+  TagGroupEntity,
+  SmartFilterEntity
 } from '@orbit/shared-types';
-import type { AtomicTagStore, AtomicTaskStore } from '@orbit/sync-engine';
+import type { AtomicFilterStore, AtomicTagStore, AtomicTaskStore } from '@orbit/sync-engine';
 import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
 
 // ---- Schema ----
@@ -24,6 +25,10 @@ interface OrbitDBSchema extends DBSchema {
     key: string;
     value: TagGroupEntity;
   };
+  smartFilters: {
+    key: string;
+    value: SmartFilterEntity;
+  };
   mutations: {
     key: string;
     value: SyncQueueEntry;
@@ -37,7 +42,7 @@ interface OrbitDBSchema extends DBSchema {
 
 type OrbitDB = IDBPDatabase<OrbitDBSchema>;
 
-const CURRENT_VERSION = 2;
+const CURRENT_VERSION = 3;
 
 // ---- Implementation ----
 
@@ -48,7 +53,7 @@ const CURRENT_VERSION = 2;
  * The `dbName` parameter is primarily useful in tests (unique names per test
  * ensure isolation when using fake-indexeddb).
  */
-export class IndexedDbLocalStore implements AtomicTaskStore, AtomicTagStore {
+export class IndexedDbLocalStore implements AtomicTaskStore, AtomicTagStore, AtomicFilterStore {
   private db: OrbitDB | undefined;
 
   constructor(
@@ -78,6 +83,11 @@ export class IndexedDbLocalStore implements AtomicTaskStore, AtomicTagStore {
           }
           if (!db.objectStoreNames.contains('tagGroups')) {
             db.createObjectStore('tagGroups', { keyPath: 'id' });
+          }
+        }
+        if (oldVersion < 3) {
+          if (!db.objectStoreNames.contains('smartFilters')) {
+            db.createObjectStore('smartFilters', { keyPath: 'id' });
           }
         }
       }
@@ -302,6 +312,45 @@ export class IndexedDbLocalStore implements AtomicTaskStore, AtomicTagStore {
       await mutationsStore.add(mutation);
     }
     await groupsStore.put(group);
+    await tx.done;
+  }
+
+  async getSmartFilter(id: string): Promise<SmartFilterEntity | undefined> {
+    const db = await this.getDb();
+    return db.get('smartFilters', id);
+  }
+
+  async saveSmartFilter(filter: SmartFilterEntity): Promise<void> {
+    const db = await this.getDb();
+    await db.put('smartFilters', filter);
+  }
+
+  async listSmartFilters(options?: { includeDeleted?: boolean }): Promise<SmartFilterEntity[]> {
+    const db = await this.getDb();
+    const all = await db.getAll('smartFilters');
+    if (options?.includeDeleted) {
+      return all;
+    }
+    return all.filter((f) => f.deletedAt == null);
+  }
+
+  async saveSmartFilterWithMutation(
+    filter: SmartFilterEntity,
+    mutation: SyncQueueEntry
+  ): Promise<void> {
+    const db = await this.getDb();
+    const tx = db.transaction(['smartFilters', 'mutations'], 'readwrite');
+    const mutationsStore = tx.objectStore('mutations');
+    const filtersStore = tx.objectStore('smartFilters');
+
+    const existing = await mutationsStore
+      .index('by-idempotencyKey')
+      .get(mutation.idempotencyKey);
+
+    if (existing === undefined) {
+      await mutationsStore.add(mutation);
+    }
+    await filtersStore.put(filter);
     await tx.done;
   }
 }

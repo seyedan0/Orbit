@@ -5,7 +5,8 @@ import type {
   SyncQueueEntry,
   TaskEntity,
   TagEntity,
-  TagGroupEntity
+  TagGroupEntity,
+  SmartFilterEntity
 } from '@orbit/shared-types';
 
 /**
@@ -40,6 +41,11 @@ export interface LocalStore {
   getTagGroup?(id: string): Promise<TagGroupEntity | undefined>;
   saveTagGroup?(group: TagGroupEntity): Promise<void>;
   listTagGroups?(options?: { includeDeleted?: boolean }): Promise<TagGroupEntity[]>;
+
+  // Optional smart filter storage methods
+  getSmartFilter?(id: string): Promise<SmartFilterEntity | undefined>;
+  saveSmartFilter?(filter: SmartFilterEntity): Promise<void>;
+  listSmartFilters?(options?: { includeDeleted?: boolean }): Promise<SmartFilterEntity[]>;
 }
 
 /**
@@ -55,6 +61,7 @@ export interface AtomicTaskStore extends LocalStore {
   saveTaskWithMutation(task: TaskEntity, mutation: SyncQueueEntry): Promise<void>;
   saveTagWithMutation?(tag: TagEntity, mutation: SyncQueueEntry): Promise<void>;
   saveTagGroupWithMutation?(group: TagGroupEntity, mutation: SyncQueueEntry): Promise<void>;
+  saveSmartFilterWithMutation?(filter: SmartFilterEntity, mutation: SyncQueueEntry): Promise<void>;
 }
 
 /**
@@ -69,6 +76,16 @@ export interface AtomicTagStore {
   saveTagGroup(group: TagGroupEntity): Promise<void>;
   listTagGroups(options?: { includeDeleted?: boolean }): Promise<TagGroupEntity[]>;
   saveTagGroupWithMutation(group: TagGroupEntity, mutation: SyncQueueEntry): Promise<void>;
+}
+
+/**
+ * Local store port for SmartFilterEntity with atomic mutation registration.
+ */
+export interface AtomicFilterStore {
+  getSmartFilter(id: string): Promise<SmartFilterEntity | undefined>;
+  saveSmartFilter(filter: SmartFilterEntity): Promise<void>;
+  listSmartFilters(options?: { includeDeleted?: boolean }): Promise<SmartFilterEntity[]>;
+  saveSmartFilterWithMutation(filter: SmartFilterEntity, mutation: SyncQueueEntry): Promise<void>;
 }
 
 

@@ -3,9 +3,10 @@ import type {
   SyncQueueEntry,
   TaskEntity,
   TagEntity,
-  TagGroupEntity
+  TagGroupEntity,
+  SmartFilterEntity
 } from '@orbit/shared-types';
-import type { AtomicTagStore, AtomicTaskStore } from '@orbit/sync-engine';
+import type { AtomicFilterStore, AtomicTagStore, AtomicTaskStore } from '@orbit/sync-engine';
 
 /**
  * In-memory AtomicTaskStore used only in tests and as a reference implementation.
@@ -13,10 +14,11 @@ import type { AtomicTagStore, AtomicTaskStore } from '@orbit/sync-engine';
  * JavaScript's single-threaded execution makes its "atomic" operations safe in
  * practice, though they are not backed by a real transaction.
  */
-export class MemoryLocalStore implements AtomicTaskStore, AtomicTagStore {
+export class MemoryLocalStore implements AtomicTaskStore, AtomicTagStore, AtomicFilterStore {
   private readonly tasks = new Map<string, TaskEntity>();
   private readonly tags = new Map<string, TagEntity>();
   private readonly tagGroups = new Map<string, TagGroupEntity>();
+  private readonly smartFilters = new Map<string, SmartFilterEntity>();
   private readonly queue = new Map<string, SyncQueueEntry>();
   private cursor: string | undefined;
 
@@ -190,6 +192,34 @@ export class MemoryLocalStore implements AtomicTaskStore, AtomicTagStore {
       (e) => e.idempotencyKey === mutation.idempotencyKey
     );
     this.tagGroups.set(group.id, structuredClone(group));
+    if (!hasMutation) {
+      this.queue.set(mutation.id, structuredClone(mutation));
+    }
+  }
+
+  async getSmartFilter(id: string): Promise<SmartFilterEntity | undefined> {
+    const filter = this.smartFilters.get(id);
+    return filter === undefined ? undefined : structuredClone(filter);
+  }
+
+  async saveSmartFilter(filter: SmartFilterEntity): Promise<void> {
+    this.smartFilters.set(filter.id, structuredClone(filter));
+  }
+
+  async listSmartFilters(options?: { includeDeleted?: boolean }): Promise<SmartFilterEntity[]> {
+    return [...this.smartFilters.values()]
+      .filter((f) => (options?.includeDeleted ? true : f.deletedAt == null))
+      .map((f) => structuredClone(f));
+  }
+
+  async saveSmartFilterWithMutation(
+    filter: SmartFilterEntity,
+    mutation: SyncQueueEntry
+  ): Promise<void> {
+    const hasMutation = [...this.queue.values()].some(
+      (e) => e.idempotencyKey === mutation.idempotencyKey
+    );
+    this.smartFilters.set(filter.id, structuredClone(filter));
     if (!hasMutation) {
       this.queue.set(mutation.id, structuredClone(mutation));
     }

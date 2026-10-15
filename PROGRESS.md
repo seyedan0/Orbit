@@ -7,24 +7,25 @@
 - **مرحله:** فاز ۵، سازمان‌دهی، فیلترها و نماهای پیشرفته
 - **آخرین به‌روزرسانی:** 2026-10-15
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 25% (فاز ۵)
-- **Branch فعال:** `feature/json-rule-filter-engine`
+- **درصد تقریبی پیشرفت:** 40% (فاز ۵)
+- **Branch فعال:** `feature/smart-lists-and-filters`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-پیاده‌سازی موتور فیلترهای هوشمند مبتنی بر JSON Rule DSL (تسک P5-FLT-001)، تایپ‌ها و گارد‌های دامنه‌ای در `shared-types`، ماژول ارزیابی خالص در `apps/web/src/core/filters` با ارزیابی دقیق اولویت، نوع، تگ‌ها، وضعیت تکمیل و بازه‌های زمانی نسبی شمسی/میلادی.
+پیاده‌سازی تسک P5-SMT-001 (سیستم لیست‌های هوشمند، ذخیره‌سازی محلی فیلترها با ثبت اتمیک جهش‌ها، سرویس LWW، صفحه نمایش تسک‌های فیلترشده SmartListPage و یکپارچه‌سازی نوار ناوبری سایدبار با نشانگر تعداد تسک‌های منطبق).
 
 ## کارهای در حال انجام
 
-- [x] ادغام شاخه `feature/tags-management` با حفظ تاریخچه صریح در `develop`
-- [x] پیاده‌سازی موتور فیلترهای هوشمند مبتنی بر JSON Rule DSL (تسک P5-FLT-001)
-- [ ] گام بعدی فاز ۵: رابط کاربری ساخت و ذخیره فیلترهای هوشمند (Smart Filter Builder UI & Management)
+- [x] ادغام شاخه `feature/json-rule-filter-engine` در `develop`
+- [x] پیاده‌سازی سیستم لیست‌های هوشمند و ذخیره‌سازی فیلترها (تسک P5-SMT-001)
+- [ ] گام بعدی فاز ۵: رابط کاربری ساخت و ویرایش تعاملی فیلترهای هوشمند (Smart Filter Builder UI)
 
 ## کارهای انجام‌شده
 
 - [x] **P5-TAG-001:** سیستم مدیریت برچسب‌ها (Tags و Tag Groups)، مدل‌های دامنه، سرویس LWW، فرم تسک و کامپوننت‌های UI و ادغام در `develop`.
 - [x] **P5-FLT-001:** موتور فیلترهای هوشمند مبتنی بر JSON Rule DSL (`filter-evaluator.ts`، تایپ‌های `FilterRule`، `FieldRule`، `FilterGroupRule`، `SmartFilterEntity`، عملگرهای مقایسه‌ای و بازه‌های زمانی نسبی تقویم شمسی/میلادی).
+- [x] **P5-SMT-001:** سیستم لیست‌های هوشمند و ذخیره‌سازی فیلترها (پورت‌های `AtomicFilterStore`، پیاده‌سازی در `MemoryLocalStore` و `IndexedDbLocalStore`، سرویس `filter-service` با ۵ پیش‌تنظیم سیستمی، صفحه `SmartListPage` با مسیر `/filters/:filterId` و نمایش لیست‌های هوشمند با نشانگر شمارنده در سایدبار `AppShell`).
 
 - [x] ایجاد فایل مرکزی پیشرفت پروژه
 - [x] ایجاد پوشه مستندات
@@ -1365,9 +1366,69 @@
   - حذف شاخه `feature/tags-management` به صورت لوکال و ریموت.
   - ساخت و استقرار روی شاخه تمیز `feature/json-rule-filter-engine`.
 - **گام بعدی (Handoff):**
-  - پیاده‌سازی رابط کاربری سازنده فیلتر هوشمند و کامپوننت‌های انتخاب شروط فیلتر و ذخیره در IndexedDB/Sync.
+  - ادغام `feature/json-rule-filter-engine` در `develop` و پیاده‌سازی سیستم لیست‌های هوشمند و ذخیره‌سازی محلی فیلترها (P5-SMT-001).
+
+### 2026-10-15 | پیاده‌سازی سیستم لیست‌های هوشمند و ذخیره‌سازی محلی فیلترها (P5-SMT-001)
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی ذخیره‌سازی محلی و ثبت اتمیک جهش‌های همگام‌سازی برای `SmartFilterEntity`، سرویس مدیریت فیلترهای هوشمند با حل تعارض LWW و پیش‌تنظیم‌های سیستمی پرکاربرد، صفحه نمایش تسک‌های فیلترشده (`SmartListPage`) و نمایش لیست‌های هوشمند در نوار ناوبری سایدبار به همراه نشانگر تعداد تسک‌های منطبق.
+- **انجام‌شده:**
+  - **پورت‌ها و قراردادهای لایه همگام‌سازی (`packages/sync-engine/src/ports.ts` و `packages/shared-types`):**
+    - افزودن `'SMART_FILTER'` به تایپ `EntityType` و الحاق `Partial<SmartFilterEntity>` به پی‌لود `MutationPayload`.
+    - تعریف پورت `AtomicFilterStore` با متدهای `getSmartFilter`، `saveSmartFilter`، `listSmartFilters` و `saveSmartFilterWithMutation`.
+    - افزودن متدهای اختیاری فیلترها به `LocalStore` و `AtomicTaskStore`.
+  - **پیاده‌سازی در استورهای محلی (`MemoryLocalStore` و `IndexedDbLocalStore`):**
+    - پیاده‌سازی کامل اینترفیس `AtomicFilterStore` در `MemoryLocalStore` جهت استفاده در تست‌ها.
+    - ارتقای نسخه دیتابیس `IndexedDbLocalStore` به نسخه ۳ و ایجاد object store جدید `smartFilters`.
+    - پیاده‌سازی تراکنش اتمیک همزمان فیلتر و جهش صف در `saveSmartFilterWithMutation` با پشتیبانی از idempotency key.
+    - به‌روزرسانی تایپ `WebStore` در `store-context.tsx`.
+  - **سرویس فیلترهای هوشمند (`apps/web/src/features/filters/services/filter-service.ts`):**
+    - تعریف ۵ پیش‌تنظیم سیستمی پرکاربرد: «سررسید گذشته» (`system-overdue`)، «اولویت بالا» (`system-high-priority`)، «بدون تاریخ» (`system-no-date`)، «امروز» (`system-today`) و «هفته جاری» (`system-this-week`).
+    - متدهای `isSystemFilterId` و `getSystemFilterById` و جلوگیری از حذف یا ویرایش فیلترهای سیستمی با خطای `SystemFilterModificationError`.
+    - پیاده‌سازی CRUD فیلترهای هوشمند کاربر (`createSmartFilter`, `updateSmartFilter`, `deleteSmartFilter`, `getSmartFilter`, `listUserSmartFilters`, `listAllSmartFilters`).
+    - ثبت اتمیک جهش‌های `CREATE`, `UPDATE` (با پی‌لود جزئی PARTIAL) و `DELETE` (حذف نرم با `deletedAt`) همراه با متادیتای LWW `fieldTimestamps` و افزایش نسخه.
+  - **صفحه نمایش تسک‌های فیلترشده (`apps/web/src/features/filters/pages/SmartListPage.tsx`):**
+    - پیاده‌سازی صفحه با استخراج پارامتر `filterId` از URL.
+    - بازیابی فیلتر و فیلتر کردن تسک‌های دیتابیس از طریق موتور خالص `filterTasks`.
+    - هدر اختصاصی شامل آیکون رنگی، عنوان فیلتر، برچسب فیلتر سیستمی و نشانگر شمارنده تعداد تسک‌های منطبق.
+    - پشتیبانی از ایجاد تسک، تغییر وضعیت تکمیل، حذف با بنر بازگردانی (Undo) و حالت‌های بارگذاری/خالی/خطای فیلتر ناموجود.
+    - ثبت مسیر `/filters/:filterId` در [routes.tsx](file:///d:/Programing/Orbit/apps/web/src/app/routes.tsx).
+  - **یکپارچه‌سازی ناوبری سایدبار (`apps/web/src/layout/AppShell.tsx`):**
+    - افزودن بخش «فیلترهای هوشمند» در سایدبار ناوبری.
+    - رندر پیوندهای فعال به هر فیلتر هوشمند با دات رنگی، عنوان و بج تعداد تسک‌های منطبق زنده.
+    - استایل‌دهی واکنش‌گرا و مدرن در `AppShell.module.css`.
+  - **آزمون‌های واحد و یکپارچه‌سازی:**
+    - ایجاد `apps/web/src/features/filters/services/filter-service.test.ts` با ۱۶ آزمون جامع.
+    - ایجاد `apps/web/src/features/filters/pages/SmartListPage.test.tsx` با ۴ آزمون کامپوننت.
+- **فایل‌ها:**
+  - `packages/shared-types/src/sync.ts`
+  - `packages/sync-engine/src/ports.ts`
+  - `packages/sync-engine/src/index.ts`
+  - `apps/web/src/core/storage/memory-local-store.ts`
+  - `apps/web/src/core/storage/indexeddb-local-store.ts`
+  - `apps/web/src/core/storage/store-context.tsx`
+  - `apps/web/src/features/filters/services/filter-service.ts`
+  - `apps/web/src/features/filters/services/filter-service.test.ts`
+  - `apps/web/src/features/filters/pages/SmartListPage.tsx`
+  - `apps/web/src/features/filters/pages/SmartListPage.module.css`
+  - `apps/web/src/features/filters/pages/SmartListPage.test.tsx`
+  - `apps/web/src/features/filters/index.ts`
+  - `apps/web/src/layout/AppShell.tsx`
+  - `apps/web/src/layout/AppShell.module.css`
+  - `apps/web/src/app/routes.tsx`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npx vitest run filter-service SmartListPage`: ۲۰ آزمون از ۲۰ آزمون با موفقیت پاس شدند (۱۰۰٪ قبولی).
+  - `npm run typecheck`: بدون خطا در root، web و server.
+  - `git diff --check`: بدون خطا.
+- **وضعیت Git:**
+  - ایجاد شاخه کاری `feature/smart-lists-and-filters` از آخرین نسخه `develop`.
+- **گام بعدی (Handoff):**
+  - ادغام `feature/smart-lists-and-filters` در `develop`.
+  - پیاده‌سازی رابط کاربری سازنده تعاملی فیلترهای هوشمند (Smart Filter Builder Modal / Component).
 
 ## محدودیت‌های باقی‌مانده
+
 
 
 - **بررسی دستی مرورگر:** InboxPage در مرورگر واقعی تست نشده.

@@ -1,4 +1,5 @@
 export type {
+  AtomicFilterStore,
   AtomicTagStore,
   AtomicTaskStore,
   LocalStore,
