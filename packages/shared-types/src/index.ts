@@ -18,3 +18,14 @@ export type {
   SyncQueueEntry
 } from './sync.js';
 export type { TagEntity, TagGroupEntity } from './tag.js';
+export type {
+  FieldRule,
+  FilterFieldOperator,
+  FilterGroupRule,
+  FilterRule,
+  FilterTargetField,
+  LogicalOperator,
+  RelativeDateRange,
+  SmartFilterEntity
+} from './filter.js';
+export { isFieldRule, isFilterGroupRule } from './filter.js';
