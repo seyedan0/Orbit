@@ -11,7 +11,6 @@ import {
   isSystemFilterId,
   listAllSmartFilters,
   listUserSmartFilters,
-  SYSTEM_FILTER_PRESET_IDS,
   SYSTEM_FILTER_PRESETS,
   SYSTEM_HIGH_PRIORITY_FILTER_ID,
   SYSTEM_NO_DATE_FILTER_ID,

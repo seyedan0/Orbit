@@ -9,7 +9,6 @@ export const LEXO_CHARSET =
   '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
 const MIN_CHAR = LEXO_CHARSET[0]!; // '0'
-const MAX_CHAR = LEXO_CHARSET[LEXO_CHARSET.length - 1]!; // 'z'
 const MID_CHAR = 'V'; // index 31, midpoint of 62 chars
 const INITIAL_DEFAULT_RANK = 'a0';
 

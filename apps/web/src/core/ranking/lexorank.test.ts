@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   generateLexoRank,
-  getLexoRankAfter,
-  getLexoRankBefore,
   rebalanceRanks
 } from './lexorank';
 import { MemoryLocalStore } from '../storage/memory-local-store';

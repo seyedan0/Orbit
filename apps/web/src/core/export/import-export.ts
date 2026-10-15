@@ -50,12 +50,20 @@ export function importTasksFromJson(jsonString: string): ImportResult {
     throw new Error('ساختار فایل پشتیبان باید یک آبجکت یا آرایه معتبر باشد.');
   }
 
-  const raw = parsed as Record<string, any>;
+  const raw = parsed as Record<string, unknown>;
 
   // Case 1: Native Orbit backup
   if (Array.isArray(raw.tasks) && (raw.orbitVersion || raw.version || raw.exportedAt)) {
-    const tasks = raw.tasks.filter((t: any) => t && typeof t.title === 'string' && t.title.trim().length > 0);
-    const tags = Array.isArray(raw.tags) ? raw.tags : [];
+    const tasks = raw.tasks.filter(
+      (t): t is TaskEntity =>
+        Boolean(
+          t &&
+            typeof t === 'object' &&
+            typeof (t as Record<string, unknown>).title === 'string' &&
+            ((t as Record<string, unknown>).title as string).trim().length > 0
+        )
+    );
+    const tags = Array.isArray(raw.tags) ? (raw.tags as TagEntity[]) : [];
     return {
       tasks,
       tags,
@@ -66,34 +74,40 @@ export function importTasksFromJson(jsonString: string): ImportResult {
   // Case 2: Array of raw tasks (Orbit or Generic)
   if (Array.isArray(parsed)) {
     // Check if Todoist items (have 'content' property instead of 'title')
-    const isTodoist = parsed.some((item) => item && typeof item.content === 'string' && !item.title);
+    const isTodoist = parsed.some(
+      (item) =>
+        item &&
+        typeof item === 'object' &&
+        typeof (item as Record<string, unknown>).content === 'string' &&
+        !(item as Record<string, unknown>).title
+    );
     if (isTodoist) {
-      return parseTodoistItems(parsed);
+      return parseTodoistItems(parsed as Array<Record<string, unknown>>);
     }
 
     // Default generic / TickTick task array
-    return parseTickTickOrGenericItems(parsed);
+    return parseTickTickOrGenericItems(parsed as Array<Record<string, unknown>>);
   }
 
   // Case 3: Todoist export object { items: [...] }
   if (Array.isArray(raw.items)) {
-    return parseTodoistItems(raw.items);
+    return parseTodoistItems(raw.items as Array<Record<string, unknown>>);
   }
 
   // Case 4: TickTick export object { tasks: [...] } or { items: [...] }
   if (Array.isArray(raw.tasks)) {
-    return parseTickTickOrGenericItems(raw.tasks);
+    return parseTickTickOrGenericItems(raw.tasks as Array<Record<string, unknown>>);
   }
 
   throw new Error('فرمت پشتیبان شناسایی نشد. لطفاً از خروجی‌های معتبر Orbit، Todoist یا TickTick استفاده کنید.');
 }
 
-function parseTodoistItems(items: any[]): ImportResult {
+function parseTodoistItems(items: Array<Record<string, unknown>>): ImportResult {
   const tasks: ImportResult['tasks'] = [];
 
   for (const item of items) {
     if (!item || typeof item !== 'object') continue;
-    const title = (item.content || item.title || '').trim();
+    const title = String(item.content || item.title || '').trim();
     if (!title) continue;
 
     // Todoist priority: 4=urgent(P5), 3=high(P3), 2=medium(P1), 1=normal(P0)
@@ -104,22 +118,25 @@ function parseTodoistItems(items: any[]): ImportResult {
     else if (item.priority === 1) priority = 0;
 
     let dueDate: string | null = null;
-    if (item.due?.date) {
-      dueDate = new Date(item.due.date).toISOString();
+    const dueObj = item.due as Record<string, unknown> | undefined;
+    if (dueObj?.date) {
+      dueDate = new Date(String(dueObj.date)).toISOString();
     } else if (item.dueDate) {
-      dueDate = new Date(item.dueDate).toISOString();
+      dueDate = new Date(String(item.dueDate)).toISOString();
     }
 
-    const tags: string[] = Array.isArray(item.labels) ? item.labels : [];
+    const tags: string[] = Array.isArray(item.labels)
+      ? item.labels.map(String)
+      : [];
 
     tasks.push({
       title,
-      content: item.description || '',
+      content: typeof item.description === 'string' ? item.description : '',
       priority,
       dueDate,
       tags,
       kind: 'TASK',
-      isAllDay: item.due?.is_recurring ? false : true,
+      isAllDay: dueObj?.is_recurring ? false : true,
       completedAt: item.checked || item.is_completed ? new Date().toISOString() : null,
       reminders: []
     });
@@ -131,12 +148,12 @@ function parseTodoistItems(items: any[]): ImportResult {
   };
 }
 
-function parseTickTickOrGenericItems(items: any[]): ImportResult {
+function parseTickTickOrGenericItems(items: Array<Record<string, unknown>>): ImportResult {
   const tasks: ImportResult['tasks'] = [];
 
   for (const item of items) {
     if (!item || typeof item !== 'object') continue;
-    const title = (item.title || item.content || '').trim();
+    const title = String(item.title || item.content || '').trim();
     if (!title) continue;
 
     // TickTick priority: 0=none, 1=low, 3=medium, 5=high
@@ -147,26 +164,26 @@ function parseTickTickOrGenericItems(items: any[]): ImportResult {
 
     let dueDate: string | null = null;
     if (item.dueDate) {
-      dueDate = new Date(item.dueDate).toISOString();
+      dueDate = new Date(String(item.dueDate)).toISOString();
     } else if (item.startDate) {
-      dueDate = new Date(item.startDate).toISOString();
+      dueDate = new Date(String(item.startDate)).toISOString();
     }
 
     const tags: string[] = Array.isArray(item.tags)
-      ? item.tags
+      ? item.tags.map(String)
       : Array.isArray(item.labels)
-        ? item.labels
+        ? item.labels.map(String)
         : [];
 
     tasks.push({
       title,
-      content: item.content || item.desc || '',
+      content: String(item.content || item.desc || ''),
       priority,
       dueDate,
       tags,
       kind: 'TASK',
       isAllDay: Boolean(item.isAllDay ?? item.allDay ?? false),
-      completedAt: item.completedTime || item.completedAt ? new Date(item.completedTime || item.completedAt).toISOString() : null,
+      completedAt: item.completedTime || item.completedAt ? new Date(String(item.completedTime || item.completedAt)).toISOString() : null,
       reminders: []
     });
   }
