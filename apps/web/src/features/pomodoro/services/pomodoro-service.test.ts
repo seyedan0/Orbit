@@ -4,6 +4,7 @@ import {
   cancelFocusSession,
   completeFocusSession,
   getTodayFocusSummary,
+  getWeeklyFocusStats,
   loadPomodoroSettings,
   pauseFocusSession,
   resumeFocusSession,
@@ -206,11 +207,69 @@ describe('pomodoro-service', () => {
       longBreakInterval: 3,
       autoStartBreaks: true,
       autoStartWork: true,
-      soundEnabled: false
+      soundEnabled: false,
+      ambientSoundType: 'brown' as const,
+      ambientSoundVolume: 0.7
     };
 
     savePomodoroSettings(custom);
     const loaded = loadPomodoroSettings();
     expect(loaded).toEqual(custom);
+  });
+
+  it('computes weekly focus analytics, daily breakdowns, task/tag distribution and streak', async () => {
+    // Create sample task with tags
+    const task1 = {
+      id: 'task-w1',
+      projectId: 'inbox',
+      userId,
+      title: 'تسک تحلیل داده',
+      kind: 'TASK' as const,
+      priority: 3 as const,
+      isAllDay: false,
+      tags: ['coding', 'analytics'],
+      items: [],
+      reminders: [],
+      timeZone: 'Asia/Tehran',
+      version: 1,
+      localStatus: 'SYNCED' as const,
+      createdAt: '2026-10-15T08:00:00.000Z',
+      updatedAt: '2026-10-15T08:00:00.000Z'
+    };
+    await store.saveTask(task1);
+
+    // Day 0 (today: 2026-10-15): 2 completed sessions on task-w1 (25m each = 50m total)
+    const s1 = await startFocusSession(store, { taskId: 'task-w1' }, { userId, now: () => new Date('2026-10-15T09:00:00.000Z') });
+    await completeFocusSession(store, s1.id, { userId, now: () => new Date('2026-10-15T09:25:00.000Z') }, 1500);
+
+    const s2 = await startFocusSession(store, { taskId: 'task-w1' }, { userId, now: () => new Date('2026-10-15T11:00:00.000Z') });
+    await completeFocusSession(store, s2.id, { userId, now: () => new Date('2026-10-15T11:25:00.000Z') }, 1500);
+
+    // Day 1 ago (yesterday: 2026-10-14): 1 completed session (30m)
+    const s3 = await startFocusSession(store, {}, { userId, now: () => new Date('2026-10-14T10:00:00.000Z') });
+    await completeFocusSession(store, s3.id, { userId, now: () => new Date('2026-10-14T10:30:00.000Z') }, 1800);
+
+    // Day 0: 1 cancelled session
+    const s4 = await startFocusSession(store, {}, { userId, now: () => new Date('2026-10-15T12:00:00.000Z') });
+    await cancelFocusSession(store, s4.id, { userId, now: () => new Date('2026-10-15T12:05:00.000Z') }, 300);
+
+    const stats = await getWeeklyFocusStats(store, userId, new Date('2026-10-15T12:00:00.000Z'));
+
+    expect(stats.dailyStats).toHaveLength(7);
+    expect(stats.totalFocusMinutes).toBe(80); // 50m today + 30m yesterday
+    expect(stats.dailyAverageMinutes).toBe(11); // 80 / 7
+    expect(stats.totalCompletedSessions).toBe(3);
+    expect(stats.totalCancelledSessions).toBe(1);
+    expect(stats.completionRatePercent).toBe(75); // 3 out of 4 = 75%
+    expect(stats.streakDays).toBe(2); // today and yesterday
+
+    // Task breakdown
+    expect(stats.topTasks.length).toBeGreaterThanOrEqual(1);
+    expect(stats.topTasks[0]?.taskId).toBe('task-w1');
+    expect(stats.topTasks[0]?.focusMinutes).toBe(50);
+
+    // Tag breakdown
+    expect(stats.tagDistribution).toHaveLength(2);
+    expect(stats.tagDistribution.find((t) => t.tag === 'coding')?.focusMinutes).toBe(50);
   });
 });

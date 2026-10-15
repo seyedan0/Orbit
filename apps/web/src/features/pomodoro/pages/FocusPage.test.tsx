@@ -125,4 +125,23 @@ describe('FocusPage Component (P6-FOC-001 & P6-POM-001)', () => {
     expect(html).toContain('data-testid="select-task-btn"');
     expect(html).toContain('+ اتصال به یک تسک');
   });
+
+  it('renders weekly analytics toggle button for focus insights (P6-STA-001)', () => {
+    const store = new MemoryLocalStore();
+
+    const html = renderToStaticMarkup(
+      <SessionProvider>
+        <StoreProvider store={store}>
+          <MemoryRouter initialEntries={['/focus']}>
+            <Routes>
+              <Route path="/focus" element={<FocusPage />} />
+            </Routes>
+          </MemoryRouter>
+        </StoreProvider>
+      </SessionProvider>
+    );
+
+    expect(html).toContain('data-testid="toggle-analytics-btn"');
+    expect(html).toContain('مشاهده آمار و نمودار هفتگی');
+  });
 });

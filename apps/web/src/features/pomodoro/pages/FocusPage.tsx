@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type {
+  AmbientSoundType,
   FocusSessionEntity,
   FocusSessionMode,
   PomodoroSettings,
@@ -18,13 +19,17 @@ import {
   cancelFocusSession,
   completeFocusSession,
   getTodayFocusSummary,
+  getWeeklyFocusStats,
   loadPomodoroSettings,
   pauseFocusSession,
   resumeFocusSession,
   savePomodoroSettings,
   startFocusSession,
-  type TodayFocusSummary
+  type TodayFocusSummary,
+  type WeeklyFocusStats
 } from '../services/pomodoro-service';
+import { ambientSoundManager } from '../services/ambient-sound';
+import { FocusAnalyticsCard } from '../components/FocusAnalyticsCard';
 import styles from './FocusPage.module.css';
 
 const RADIUS = 110;
@@ -41,6 +46,10 @@ export function FocusPage() {
   const [settings, setSettings] = useState<PomodoroSettings>(() => loadPomodoroSettings());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDistractionFree, setIsDistractionFree] = useState(false);
+
+  // Weekly Focus Analytics State
+  const [weeklyStats, setWeeklyStats] = useState<WeeklyFocusStats | null>(null);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   // Task association
   const [currentTask, setCurrentTask] = useState<TaskEntity | null>(null);
@@ -91,11 +100,15 @@ export function FocusPage() {
     };
   }, [store, taskIdParam]);
 
-  // Load today summary
+  // Load today summary & weekly stats
   const refreshSummary = useCallback(async () => {
     try {
-      const sum = await getTodayFocusSummary(store, userId);
+      const [sum, wStats] = await Promise.all([
+        getTodayFocusSummary(store, userId),
+        getWeeklyFocusStats(store, userId, new Date())
+      ]);
       setSummary(sum);
+      setWeeklyStats(wStats);
     } catch {
       // In tests or offline, handle gracefully
     }
@@ -104,6 +117,31 @@ export function FocusPage() {
   useEffect(() => {
     void refreshSummary();
   }, [refreshSummary]);
+
+  // Clean up ambient sound on unmount
+  useEffect(() => {
+    return () => {
+      ambientSoundManager.stop();
+    };
+  }, []);
+
+  // Sync ambient sound helper
+  const syncAmbientSound = useCallback(
+    (currentSettings: PomodoroSettings, currentMode: FocusSessionMode, shouldPlay: boolean) => {
+      if (
+        shouldPlay &&
+        currentMode === 'WORK' &&
+        currentSettings.ambientSoundType &&
+        currentSettings.ambientSoundType !== 'none'
+      ) {
+        ambientSoundManager.setVolume(currentSettings.ambientSoundVolume ?? 0.5);
+        ambientSoundManager.play(currentSettings.ambientSoundType);
+      } else {
+        ambientSoundManager.stop();
+      }
+    },
+    []
+  );
 
   // Get duration for mode based on settings
   const getDurationForMode = useCallback(
@@ -118,6 +156,7 @@ export function FocusPage() {
   // Switch Mode directly
   const switchMode = useCallback(
     async (newMode: FocusSessionMode) => {
+      ambientSoundManager.stop();
       if (activeSession && isRunning) {
         await cancelFocusSession(store, activeSession.id, { userId });
       }
@@ -145,6 +184,7 @@ export function FocusPage() {
       setPausedAtTimestamp(null);
       setIsPaused(false);
       setIsRunning(true);
+      syncAmbientSound(settings, mode, true);
       await resumeFocusSession(store, activeSession.id, { userId });
       return;
     }
@@ -169,11 +209,13 @@ export function FocusPage() {
     setAccumulatedPausedMs(0);
     setIsRunning(true);
     setIsPaused(false);
+    syncAmbientSound(settings, mode, true);
   };
 
   // Pause
   const handlePause = async () => {
     if (!isRunning || !activeSession) return;
+    ambientSoundManager.stop();
     const now = Date.now();
     setPausedAtTimestamp(now);
     setIsRunning(false);
@@ -183,6 +225,7 @@ export function FocusPage() {
 
   // Complete Session
   const handleComplete = useCallback(async () => {
+    ambientSoundManager.stop();
     if (!activeSession) return;
     const actualSeconds = targetDurationSeconds - remainingSecondsRef.current;
     const result = await completeFocusSession(store, activeSession.id, { userId, settings }, actualSeconds);
@@ -219,6 +262,7 @@ export function FocusPage() {
 
   // Cancel / Reset
   const handleReset = async () => {
+    ambientSoundManager.stop();
     if (activeSession) {
       const actualSeconds = targetDurationSeconds - remainingSeconds;
       await cancelFocusSession(store, activeSession.id, { userId }, actualSeconds);
@@ -234,6 +278,7 @@ export function FocusPage() {
 
   // Skip
   const handleSkip = async () => {
+    ambientSoundManager.stop();
     if (activeSession) {
       await cancelFocusSession(store, activeSession.id, { userId });
     }
@@ -553,6 +598,25 @@ export function FocusPage() {
         </div>
       </div>
 
+      {/* Weekly Analytics Toggle & Card */}
+      <button
+        type="button"
+        className={styles.analyticsToggleBtn}
+        onClick={() => setShowAnalytics((prev) => !prev)}
+        data-testid="toggle-analytics-btn"
+        title={showAnalytics ? 'مخفی‌سازی گزارش تحلیلی' : 'مشاهده گزارش تحلیلی هفتگی'}
+      >
+        <span>📊</span>
+        <span>{showAnalytics ? 'بستن آمار هفتگی' : 'مشاهده آمار و نمودار هفتگی'}</span>
+      </button>
+
+      {showAnalytics && weeklyStats && (
+        <FocusAnalyticsCard
+          stats={weeklyStats}
+          onClose={() => setShowAnalytics(false)}
+        />
+      )}
+
       {/* Quick Settings Drawer / Modal */}
       {isSettingsOpen && (
         <div
@@ -653,6 +717,59 @@ export function FocusPage() {
                 data-testid="setting-long-break-interval"
               />
             </div>
+
+            {/* Ambient Sound & White Noise Settings */}
+            <div className={styles.settingRow}>
+              <span className={styles.settingLabel}>صدای محیطی / نویز سفید:</span>
+              <select
+                value={settings.ambientSoundType ?? 'none'}
+                onChange={(e) => {
+                  const newType = e.target.value as AmbientSoundType;
+                  const updated = {
+                    ...settings,
+                    ambientSoundType: newType
+                  };
+                  setSettings(updated);
+                  if (isRunning && mode === 'WORK') {
+                    syncAmbientSound(updated, mode, true);
+                  }
+                }}
+                className={styles.settingSelect}
+                data-testid="setting-ambient-sound-type"
+              >
+                <option value="none">خاموش (بدون صدا)</option>
+                <option value="white">نویز سفید (White Noise)</option>
+                <option value="pink">نویز صورتی (Pink Noise)</option>
+                <option value="brown">نویز قهوه‌ای (Brownian Noise)</option>
+                <option value="rain">شبیه‌ساز باران (Rain Sound)</option>
+              </select>
+            </div>
+
+            {settings.ambientSoundType && settings.ambientSoundType !== 'none' && (
+              <div className={styles.settingRow}>
+                <span className={styles.settingLabel}>
+                  بلندی صدای محیطی ({Math.round((settings.ambientSoundVolume ?? 0.5) * 100)}%):
+                </span>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={settings.ambientSoundVolume ?? 0.5}
+                  onChange={(e) => {
+                    const vol = Number(e.target.value);
+                    const updated = {
+                      ...settings,
+                      ambientSoundVolume: vol
+                    };
+                    setSettings(updated);
+                    ambientSoundManager.setVolume(vol);
+                  }}
+                  className={styles.settingRange}
+                  data-testid="setting-ambient-sound-volume"
+                />
+              </div>
+            )}
 
             <div className={styles.settingRow}>
               <span className={styles.settingLabel}>صدای زنگ پایان (Web Audio):</span>

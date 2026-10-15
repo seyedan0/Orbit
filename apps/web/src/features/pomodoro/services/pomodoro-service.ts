@@ -2,10 +2,12 @@ import type {
   FocusSessionEntity,
   FocusSessionMode,
   PomodoroSettings,
-  SyncQueueEntry
+  SyncQueueEntry,
+  TaskEntity
 } from '@orbit/shared-types';
 import { DEFAULT_POMODORO_SETTINGS } from '@orbit/shared-types';
 import type { AtomicFocusStore } from '@orbit/sync-engine';
+import { getPersianWeekday, PERSIAN_WEEKDAY_NAMES } from '../../../core/calendar/jalali';
 
 export const POMODORO_SETTINGS_STORAGE_KEY = 'orbit_pomodoro_settings';
 
@@ -36,6 +38,37 @@ export interface TodayFocusSummary {
   completedSessions: FocusSessionEntity[];
 }
 
+export interface DailyFocusStat {
+  date: string;
+  dayLabel: string;
+  focusMinutes: number;
+  completedPomodoros: number;
+}
+
+export interface TaskFocusStat {
+  taskId: string;
+  taskTitle: string;
+  focusMinutes: number;
+  pomodoroCount: number;
+}
+
+export interface TagFocusStat {
+  tag: string;
+  focusMinutes: number;
+}
+
+export interface WeeklyFocusStats {
+  totalFocusMinutes: number;
+  dailyAverageMinutes: number;
+  totalCompletedSessions: number;
+  totalCancelledSessions: number;
+  completionRatePercent: number;
+  streakDays: number;
+  dailyStats: DailyFocusStat[];
+  topTasks: TaskFocusStat[];
+  tagDistribution: TagFocusStat[];
+}
+
 /**
  * Loads user Pomodoro settings from localStorage, falling back to default settings.
  */
@@ -52,7 +85,9 @@ export function loadPomodoroSettings(): PomodoroSettings {
       longBreakInterval: parsed.longBreakInterval ?? DEFAULT_POMODORO_SETTINGS.longBreakInterval,
       autoStartBreaks: parsed.autoStartBreaks ?? DEFAULT_POMODORO_SETTINGS.autoStartBreaks,
       autoStartWork: parsed.autoStartWork ?? DEFAULT_POMODORO_SETTINGS.autoStartWork,
-      soundEnabled: parsed.soundEnabled ?? DEFAULT_POMODORO_SETTINGS.soundEnabled
+      soundEnabled: parsed.soundEnabled ?? DEFAULT_POMODORO_SETTINGS.soundEnabled,
+      ambientSoundType: parsed.ambientSoundType ?? DEFAULT_POMODORO_SETTINGS.ambientSoundType,
+      ambientSoundVolume: parsed.ambientSoundVolume ?? DEFAULT_POMODORO_SETTINGS.ambientSoundVolume
     };
   } catch {
     return { ...DEFAULT_POMODORO_SETTINGS };
@@ -436,5 +471,159 @@ export async function getTodayFocusSummary(
     totalFocusMinutes,
     completedPomodoros: completedToday.length,
     completedSessions: completedToday
+  };
+}
+
+/**
+ * Calculates focus analytics for the last 7 days ending at referenceDate.
+ * Computes daily breakdown, top tasks, tag distribution, streak, and completion rate.
+ */
+export async function getWeeklyFocusStats(
+  store: AtomicFocusStore & { listTasks?: () => Promise<TaskEntity[]> },
+  userId: string,
+  referenceDate: Date = new Date()
+): Promise<WeeklyFocusStats> {
+  const sessions = await store.listFocusSessions({ includeCancelled: true });
+  const tasks = store.listTasks ? await store.listTasks() : [];
+  const tasksMap = new Map<string, TaskEntity>(tasks.map((t) => [t.id, t]));
+
+  // Build 7 calendar days ending at referenceDate (chronological order)
+  const dailyStats: DailyFocusStat[] = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(
+      referenceDate.getFullYear(),
+      referenceDate.getMonth(),
+      referenceDate.getDate() - i,
+      0,
+      0,
+      0,
+      0
+    );
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const key = `${y}-${m}-${day}`;
+
+    const weekdayIdx = getPersianWeekday(d);
+    const dayLabel = PERSIAN_WEEKDAY_NAMES[weekdayIdx];
+
+    dailyStats.push({
+      date: key,
+      dayLabel,
+      focusMinutes: 0,
+      completedPomodoros: 0
+    });
+  }
+
+  const startMs = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate() - 6,
+    0,
+    0,
+    0,
+    0
+  ).getTime();
+
+  const endMs = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate(),
+    23,
+    59,
+    59,
+    999
+  ).getTime();
+
+  const userSessions = sessions.filter((s) => s.userId === userId && s.mode === 'WORK');
+
+  let totalCompletedSessions = 0;
+  let totalCancelledSessions = 0;
+  const taskMap = new Map<string, TaskFocusStat>();
+  const tagMap = new Map<string, number>();
+
+  for (const session of userSessions) {
+    const sessionTime = session.completedAt
+      ? Date.parse(session.completedAt)
+      : session.cancelledAt
+      ? Date.parse(session.cancelledAt)
+      : Date.parse(session.startedAt);
+
+    if (sessionTime < startMs || sessionTime > endMs) {
+      continue;
+    }
+
+    if (session.status === 'COMPLETED') {
+      totalCompletedSessions++;
+      const sDate = new Date(sessionTime);
+      const key = `${sDate.getFullYear()}-${String(sDate.getMonth() + 1).padStart(2, '0')}-${String(sDate.getDate()).padStart(2, '0')}`;
+      const dayStat = dailyStats.find((d) => d.date === key);
+      const mins = Math.max(0, Math.round((session.actualDurationSeconds || 0) / 60));
+
+      if (dayStat) {
+        dayStat.focusMinutes += mins;
+        dayStat.completedPomodoros += 1;
+      }
+
+      // Task distribution
+      const taskId = session.taskId || 'unassigned';
+      const task = session.taskId ? tasksMap.get(session.taskId) : undefined;
+      const taskTitle = task ? task.title : session.taskId ? 'تسک حذف شده یا نامشخص' : 'بدون انتساب تسک';
+
+      const existingTask = taskMap.get(taskId) ?? {
+        taskId,
+        taskTitle,
+        focusMinutes: 0,
+        pomodoroCount: 0
+      };
+      existingTask.focusMinutes += mins;
+      existingTask.pomodoroCount += 1;
+      taskMap.set(taskId, existingTask);
+
+      // Tag distribution
+      if (task?.tags && task.tags.length > 0) {
+        for (const tag of task.tags) {
+          tagMap.set(tag, (tagMap.get(tag) || 0) + mins);
+        }
+      }
+    } else if (session.status === 'CANCELLED') {
+      totalCancelledSessions++;
+    }
+  }
+
+  const totalFocusMinutes = dailyStats.reduce((sum, d) => sum + d.focusMinutes, 0);
+  const dailyAverageMinutes = Math.round(totalFocusMinutes / 7);
+
+  const totalSessions = totalCompletedSessions + totalCancelledSessions;
+  const completionRatePercent =
+    totalSessions > 0 ? Math.round((totalCompletedSessions / totalSessions) * 100) : 100;
+
+  // Streak: count backwards from today (day index 6)
+  let streakDays = 0;
+  for (let i = dailyStats.length - 1; i >= 0; i--) {
+    const day = dailyStats[i];
+    if (day && day.completedPomodoros > 0) {
+      streakDays++;
+    } else {
+      break;
+    }
+  }
+
+  const topTasks = [...taskMap.values()].sort((a, b) => b.focusMinutes - a.focusMinutes);
+  const tagDistribution = [...tagMap.entries()]
+    .map(([tag, mins]) => ({ tag, focusMinutes: mins }))
+    .sort((a, b) => b.focusMinutes - a.focusMinutes);
+
+  return {
+    totalFocusMinutes,
+    dailyAverageMinutes,
+    totalCompletedSessions,
+    totalCancelledSessions,
+    completionRatePercent,
+    streakDays,
+    dailyStats,
+    topTasks,
+    tagDistribution
   };
 }

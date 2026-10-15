@@ -30,6 +30,7 @@ export type {
 } from './filter.js';
 export { isFieldRule, isFilterGroupRule } from './filter.js';
 export type {
+  AmbientSoundType,
   FocusSessionEntity,
   FocusSessionMode,
   FocusSessionStatus,

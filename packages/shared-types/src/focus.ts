@@ -23,6 +23,8 @@ export interface FocusSessionEntity {
   deletedAt?: string | null | undefined;
 }
 
+export type AmbientSoundType = 'none' | 'white' | 'pink' | 'brown' | 'rain';
+
 export interface PomodoroSettings {
   workDurationMinutes: number;
   shortBreakMinutes: number;
@@ -31,6 +33,8 @@ export interface PomodoroSettings {
   autoStartBreaks: boolean;
   autoStartWork: boolean;
   soundEnabled: boolean;
+  ambientSoundType?: AmbientSoundType | undefined;
+  ambientSoundVolume?: number | undefined;
 }
 
 export const DEFAULT_POMODORO_SETTINGS: PomodoroSettings = {
@@ -40,5 +44,8 @@ export const DEFAULT_POMODORO_SETTINGS: PomodoroSettings = {
   longBreakInterval: 4,
   autoStartBreaks: false,
   autoStartWork: false,
-  soundEnabled: true
+  soundEnabled: true,
+  ambientSoundType: 'none',
+  ambientSoundVolume: 0.5
 };
+
