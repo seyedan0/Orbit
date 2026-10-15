@@ -6,7 +6,8 @@ import type {
   TaskEntity,
   TagEntity,
   TagGroupEntity,
-  SmartFilterEntity
+  SmartFilterEntity,
+  FocusSessionEntity
 } from '@orbit/shared-types';
 
 /**
@@ -46,6 +47,11 @@ export interface LocalStore {
   getSmartFilter?(id: string): Promise<SmartFilterEntity | undefined>;
   saveSmartFilter?(filter: SmartFilterEntity): Promise<void>;
   listSmartFilters?(options?: { includeDeleted?: boolean }): Promise<SmartFilterEntity[]>;
+
+  // Optional focus session storage methods
+  getFocusSession?(id: string): Promise<FocusSessionEntity | undefined>;
+  saveFocusSession?(session: FocusSessionEntity): Promise<void>;
+  listFocusSessions?(options?: { taskId?: string; includeCancelled?: boolean }): Promise<FocusSessionEntity[]>;
 }
 
 /**
@@ -62,6 +68,7 @@ export interface AtomicTaskStore extends LocalStore {
   saveTagWithMutation?(tag: TagEntity, mutation: SyncQueueEntry): Promise<void>;
   saveTagGroupWithMutation?(group: TagGroupEntity, mutation: SyncQueueEntry): Promise<void>;
   saveSmartFilterWithMutation?(filter: SmartFilterEntity, mutation: SyncQueueEntry): Promise<void>;
+  saveFocusSessionWithMutation?(session: FocusSessionEntity, mutation: SyncQueueEntry): Promise<void>;
 }
 
 /**
@@ -86,6 +93,16 @@ export interface AtomicFilterStore {
   saveSmartFilter(filter: SmartFilterEntity): Promise<void>;
   listSmartFilters(options?: { includeDeleted?: boolean }): Promise<SmartFilterEntity[]>;
   saveSmartFilterWithMutation(filter: SmartFilterEntity, mutation: SyncQueueEntry): Promise<void>;
+}
+
+/**
+ * Local store port for FocusSessionEntity with atomic mutation registration.
+ */
+export interface AtomicFocusStore {
+  getFocusSession(id: string): Promise<FocusSessionEntity | undefined>;
+  saveFocusSession(session: FocusSessionEntity): Promise<void>;
+  listFocusSessions(options?: { taskId?: string; includeCancelled?: boolean }): Promise<FocusSessionEntity[]>;
+  saveFocusSessionWithMutation(session: FocusSessionEntity, mutation: SyncQueueEntry): Promise<void>;
 }
 
 

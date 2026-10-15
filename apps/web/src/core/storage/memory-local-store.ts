@@ -4,9 +4,15 @@ import type {
   TaskEntity,
   TagEntity,
   TagGroupEntity,
-  SmartFilterEntity
+  SmartFilterEntity,
+  FocusSessionEntity
 } from '@orbit/shared-types';
-import type { AtomicFilterStore, AtomicTagStore, AtomicTaskStore } from '@orbit/sync-engine';
+import type {
+  AtomicFilterStore,
+  AtomicFocusStore,
+  AtomicTagStore,
+  AtomicTaskStore
+} from '@orbit/sync-engine';
 
 /**
  * In-memory AtomicTaskStore used only in tests and as a reference implementation.
@@ -14,11 +20,12 @@ import type { AtomicFilterStore, AtomicTagStore, AtomicTaskStore } from '@orbit/
  * JavaScript's single-threaded execution makes its "atomic" operations safe in
  * practice, though they are not backed by a real transaction.
  */
-export class MemoryLocalStore implements AtomicTaskStore, AtomicTagStore, AtomicFilterStore {
+export class MemoryLocalStore implements AtomicTaskStore, AtomicTagStore, AtomicFilterStore, AtomicFocusStore {
   private readonly tasks = new Map<string, TaskEntity>();
   private readonly tags = new Map<string, TagEntity>();
   private readonly tagGroups = new Map<string, TagGroupEntity>();
   private readonly smartFilters = new Map<string, SmartFilterEntity>();
+  private readonly focusSessions = new Map<string, FocusSessionEntity>();
   private readonly queue = new Map<string, SyncQueueEntry>();
   private cursor: string | undefined;
 
@@ -220,6 +227,41 @@ export class MemoryLocalStore implements AtomicTaskStore, AtomicTagStore, Atomic
       (e) => e.idempotencyKey === mutation.idempotencyKey
     );
     this.smartFilters.set(filter.id, structuredClone(filter));
+    if (!hasMutation) {
+      this.queue.set(mutation.id, structuredClone(mutation));
+    }
+  }
+
+  async getFocusSession(id: string): Promise<FocusSessionEntity | undefined> {
+    const session = this.focusSessions.get(id);
+    return session === undefined ? undefined : structuredClone(session);
+  }
+
+  async saveFocusSession(session: FocusSessionEntity): Promise<void> {
+    this.focusSessions.set(session.id, structuredClone(session));
+  }
+
+  async listFocusSessions(options?: {
+    taskId?: string;
+    includeCancelled?: boolean;
+  }): Promise<FocusSessionEntity[]> {
+    return [...this.focusSessions.values()]
+      .filter((s) => {
+        if (options?.taskId && s.taskId !== options.taskId) return false;
+        if (!options?.includeCancelled && s.status === 'CANCELLED') return false;
+        return true;
+      })
+      .map((s) => structuredClone(s));
+  }
+
+  async saveFocusSessionWithMutation(
+    session: FocusSessionEntity,
+    mutation: SyncQueueEntry
+  ): Promise<void> {
+    const hasMutation = [...this.queue.values()].some(
+      (e) => e.idempotencyKey === mutation.idempotencyKey
+    );
+    this.focusSessions.set(session.id, structuredClone(session));
     if (!hasMutation) {
       this.queue.set(mutation.id, structuredClone(mutation));
     }

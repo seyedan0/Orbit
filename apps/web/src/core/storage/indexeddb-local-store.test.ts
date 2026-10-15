@@ -403,4 +403,70 @@ describe('IndexedDbLocalStore', () => {
     expect(restoredList.find((t) => t.id === task.id)).toBeDefined();
     expect(restoredList.find((t) => t.id === task.id)?.deletedAt).toBeNull();
   });
+
+  it('persists focus sessions atomically with mutation and supports taskId filtering', async () => {
+    const dbName = `test-focus-${crypto.randomUUID()}`;
+    const store = new IndexedDbLocalStore(dbName);
+
+    const session1 = {
+      id: crypto.randomUUID(),
+      userId: 'user-1',
+      taskId: 'task-101',
+      mode: 'WORK' as const,
+      status: 'COMPLETED' as const,
+      targetDurationMinutes: 25,
+      actualDurationSeconds: 1500,
+      startedAt: '2026-10-15T08:00:00.000Z',
+      completedAt: '2026-10-15T08:25:00.000Z',
+      cycleNumber: 1,
+      version: 1,
+      localStatus: 'CREATED' as const,
+      createdAt: '2026-10-15T08:00:00.000Z',
+      updatedAt: '2026-10-15T08:25:00.000Z'
+    };
+    const mut1: SyncQueueEntry = {
+      id: crypto.randomUUID(),
+      idempotencyKey: crypto.randomUUID(),
+      entityType: 'FOCUS_SESSION',
+      entityId: session1.id,
+      operation: 'CREATE',
+      baseVersion: 0,
+      payloadType: 'FULL',
+      payload: session1,
+      fieldTimestamps: {},
+      createdAt: session1.createdAt,
+      status: 'PENDING',
+      attemptCount: 0,
+      nextAttemptAt: '2026-10-15T08:00:00.000Z'
+    };
+
+    await store.saveFocusSessionWithMutation(session1, mut1);
+
+    // Verify retrieval
+    const retrieved = await store.getFocusSession(session1.id);
+    expect(retrieved).toEqual(session1);
+
+    // Verify index by taskId
+    const taskSessions = await store.listFocusSessions({ taskId: 'task-101' });
+    expect(taskSessions).toHaveLength(1);
+    expect(taskSessions[0]?.id).toBe(session1.id);
+
+    // Add a cancelled session
+    const session2 = {
+      ...session1,
+      id: crypto.randomUUID(),
+      status: 'CANCELLED' as const,
+      cancelledAt: '2026-10-15T08:10:00.000Z'
+    };
+    await store.saveFocusSession(session2);
+
+    // Default exclude cancelled
+    const activeOnly = await store.listFocusSessions({ taskId: 'task-101' });
+    expect(activeOnly).toHaveLength(1);
+
+    // Include cancelled
+    const allSessions = await store.listFocusSessions({ taskId: 'task-101', includeCancelled: true });
+    expect(allSessions).toHaveLength(2);
+  });
 });
+

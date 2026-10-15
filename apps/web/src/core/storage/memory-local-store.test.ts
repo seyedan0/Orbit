@@ -211,4 +211,65 @@ describe('MemoryLocalStore', () => {
     await store.saveCursor('c-42');
     expect(await store.getCursor()).toBe('c-42');
   });
+
+  // ---- focus sessions ----
+
+  it('saves, retrieves, and lists focus sessions', async () => {
+    const store = new MemoryLocalStore(() => NOW);
+    const session = {
+      id: 'session-1',
+      userId: 'user-1',
+      taskId: 'task-1',
+      mode: 'WORK' as const,
+      status: 'COMPLETED' as const,
+      targetDurationMinutes: 25,
+      actualDurationSeconds: 1500,
+      startedAt: '2026-10-15T08:00:00.000Z',
+      completedAt: '2026-10-15T08:25:00.000Z',
+      cycleNumber: 1,
+      version: 1,
+      localStatus: 'CREATED' as const,
+      createdAt: '2026-10-15T08:00:00.000Z',
+      updatedAt: '2026-10-15T08:25:00.000Z'
+    };
+
+    await store.saveFocusSession(session);
+    const retrieved = await store.getFocusSession('session-1');
+    expect(retrieved).toEqual(session);
+
+    const listByTask = await store.listFocusSessions({ taskId: 'task-1' });
+    expect(listByTask).toHaveLength(1);
+    expect(listByTask[0]?.id).toBe('session-1');
+
+    const emptyByTask = await store.listFocusSessions({ taskId: 'other-task' });
+    expect(emptyByTask).toHaveLength(0);
+  });
+
+  it('supports atomic saveFocusSessionWithMutation', async () => {
+    const store = new MemoryLocalStore(() => NOW);
+    const session = {
+      id: 'session-2',
+      userId: 'user-1',
+      mode: 'SHORT_BREAK' as const,
+      status: 'ACTIVE' as const,
+      targetDurationMinutes: 5,
+      actualDurationSeconds: 0,
+      startedAt: '2026-10-15T08:30:00.000Z',
+      cycleNumber: 1,
+      version: 1,
+      localStatus: 'CREATED' as const,
+      createdAt: '2026-10-15T08:30:00.000Z',
+      updatedAt: '2026-10-15T08:30:00.000Z'
+    };
+    const mut = mutation('m-focus-1', '2026-10-15T08:30:00.000Z', {
+      entityType: 'FOCUS_SESSION',
+      entityId: session.id,
+      payload: session
+    });
+
+    await store.saveFocusSessionWithMutation(session, mut);
+    expect(await store.getFocusSession('session-2')).toBeDefined();
+    expect(await store.getMutation('m-focus-1')).toBeDefined();
+  });
 });
+

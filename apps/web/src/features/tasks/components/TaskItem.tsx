@@ -6,6 +6,7 @@ export interface TaskItemProps {
   onToggleCompletion?: ((task: TaskEntity) => void) | undefined;
   onDelete?: ((task: TaskEntity) => void) | undefined;
   onRestore?: ((task: TaskEntity) => void) | undefined;
+  onStartFocus?: ((task: TaskEntity) => void) | undefined;
   disabled?: boolean | undefined;
   availableTags?: TagEntity[] | undefined;
   tagsMap?: Record<string, TagEntity> | Map<string, TagEntity> | undefined;
@@ -36,6 +37,7 @@ export function TaskItem({
   onToggleCompletion,
   onDelete,
   onRestore,
+  onStartFocus,
   disabled,
   availableTags,
   tagsMap
@@ -151,6 +153,31 @@ export function TaskItem({
         >
           حذف
         </button>
+      )}
+      {!isDeleted && !isCompleted && isTask && (
+        <a
+          href={`/focus?taskId=${task.id}`}
+          onClick={(e) => {
+            if (onStartFocus) {
+              e.preventDefault();
+              onStartFocus(task);
+            }
+          }}
+          className="btn-focus"
+          title="شروع تمرکز (Focus)"
+          aria-label={`شروع تمرکز روی ${task.title}`}
+          data-testid={`task-focus-${task.id}`}
+          style={{
+            textDecoration: 'none',
+            cursor: 'pointer',
+            fontSize: '1rem',
+            padding: '0 0.35rem',
+            display: 'inline-flex',
+            alignItems: 'center'
+          }}
+        >
+          🍅
+        </a>
       )}
     </li>
   );

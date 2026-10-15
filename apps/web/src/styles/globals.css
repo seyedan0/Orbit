@@ -364,6 +364,49 @@ body {
   cursor: not-allowed;
 }
 
+.auth-guest-separator {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.25rem 0 1rem;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.auth-guest-separator::before,
+.auth-guest-separator::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.auth-guest-separator span {
+  padding: 0 0.5rem;
+}
+
+.auth-guest-btn {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  background: transparent;
+  color: #4f7cff;
+  border: 1px dashed #4f7cff;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.auth-guest-btn:hover:not(:disabled) {
+  background: rgba(79, 124, 255, 0.08);
+}
+
+.auth-guest-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ---- Tags Selector & Badges (P5-TAG-001) ---- */
 
 .task-tags-selector {

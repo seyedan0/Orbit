@@ -71,6 +71,15 @@ export function SignInPage() {
     }
   };
 
+  const handleGuestLogin = async () => {
+    try {
+      await signIn();
+      navigate(from, { replace: true });
+    } catch (err: unknown) {
+      setLocalError(err instanceof Error ? err.message : 'خطایی رخ داد.');
+    }
+  };
+
   const displayedError = localError || sessionError;
 
   return (
@@ -158,6 +167,20 @@ export function SignInPage() {
               : 'ایجاد حساب کاربری'}
         </button>
       </form>
+
+      <div className="auth-guest-separator">
+        <span>یا</span>
+      </div>
+
+      <button
+        type="button"
+        onClick={handleGuestLogin}
+        disabled={isLoading}
+        className="auth-guest-btn"
+        data-testid="auth-guest"
+      >
+        ⚡ ورود به عنوان کاربر محلی (آفلاین / بدون سرور)
+      </button>
     </section>
   );
 }

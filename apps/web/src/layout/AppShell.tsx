@@ -26,6 +26,7 @@ const NAV_ITEMS = [
   { to: '/calendar', label: 'تقویم' },
   { to: '/timeline', label: 'تایملاین' },
   { to: '/matrix', label: 'ماتریس آیزنهاور' },
+  { to: '/focus', label: 'حالت تمرکز (Focus)', icon: '⏱️' },
   { to: '/inbox', label: 'صندوق ورودی' },
   { to: '/archive', label: 'آرشیو' },
   { to: '/trash', label: 'سطل زباله' },
@@ -162,7 +163,7 @@ export function AppShell() {
                   aria-label={item.label}
                   data-testid={`nav-${item.to.replace('/', '')}`}
                 >
-                  {item.label}
+                  {'icon' in item ? `${item.icon} ` : ''}{item.label}
                 </NavLink>
               </li>
             ))}

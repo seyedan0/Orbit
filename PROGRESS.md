@@ -4,23 +4,55 @@
 
 ## وضعیت کلی
 
-- **مرحله:** فاز ۶، تمرکز و پومودورو (آغاز فاز ۶ - انتشار نسخه رسمی v0.5.0)
+- **مرحله:** فاز ۶، تمرکز و پومودورو (تکمیل ۱۰۰٪ فاز ۶: تایمر تاب‌آور، مود تمام‌صفحه بدون حواس‌پرتی، سنتز صوتی نویزهای پس‌زمینه با Web Audio API، و تحلیل‌های آماری و نمودارهای هفتگی تمرکز)
 - **آخرین به‌روزرسانی:** 2026-10-15
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 0% (فاز ۶) / 100% (فاز ۵ با موفقیت تکمیل و منتشر شد)
-- **Branch فعال:** `develop`
+- **درصد تقریبی پیشرفت:** 100% (فاز ۶) / 100% (فاز ۵)
+- **Branch فعال:** `feature/pomodoro-focus`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-آماده‌سازی الزامات، طراحی ساختار دامنه و آغاز اولین تحویل‌پذیر فاز ۶ (Focus & Pomodoro) شامل تایمر کار/استراحت استاندارد متصل به Task، حالت تمرکز بدون حواس‌پرتی (Focus Mode)، صداهای زمینه (White Noise) و ثبت آمارهای تمرکز.
+آماده‌سازی نهایی و انتظار تأیید کاربر جهت عبور از Exit Gate فاز ۶، ادغام شاخه `feature/pomodoro-focus` در `develop` و انتشار نسخه پایدار بعدی.
 
 ## کارهای در حال انجام
 
-- [ ] تسک P6-POM-001: طراحی هسته دامنه تایمر پومودورو، چرخه‌های کار/استراحت و ثبت جهش‌های همگام‌سازی
-- [ ] تسک P6-FOC-001: پیاده‌سازی نمای تمام‌صفحه تمرکز (Distraction-Free Focus Mode) با اتصال به تسک جاری
+- [ ] بازبینی نهایی و درگاه خروج (Exit Gate) فاز ۶ پیش از ادغام در `develop`
 
 ## کارهای انجام‌شده
+
+- [x] **P6-SND-001:** پیاده‌سازی موتور سنتز صوتی آفلاین نویزهای محیطی (`ambient-sound.ts`) با بهره‌گیری از Web Audio API خالص (بدون وابستگی به فایل صوتی یا کتابخانه خارجی) شامل نویز سفید (White Noise)، نویز صورتی (Pink Noise با فیلتر Paul Kellet 1/f)، نویز قهوه‌ای (Brownian Noise با الگوریتم Leaky Integrator) و شبیه‌ساز صدای باران (Rain simulation با ترکیب نویز فیلترشده و ترنزینت‌های فرکانس بالا)، کنترل شیب ملایم تغییر حجم صدا (linearRamp volume ramp-in/out)، انتخاب‌گر نوع صدا و اسلایدر بلندی صدا در کشوی تنظیمات `FocusPage.tsx`، و همگام‌سازی خودکار پخش/توقف صدا با شروع/توقف/استراحت تایمر تمرکز.
+- [x] **P6-STA-001:** پیاده‌سازی سیستم تحلیل و آمار تمرکز هفتگی (`getWeeklyFocusStats` در `pomodoro-service.ts`) شامل محاسبه مجموع دقایق و ساعات تمرکز، میانگین روزانه، زنجیره استمرار روزهای متوالی (Streak)، نرخ تکمیل دوره‌ها، تفکیک تسک‌های برتر متمرکز و توزیع برچسب‌ها با برچسب‌های روزهای هفته هماهنگ با تقویم جلالی/میلادی، کامپوننت ویجت `FocusAnalyticsCard.tsx` با نمودار میله‌ای ۷ روز گذشته با Pure CSS/SVG، و اتصال دکمه تعاملی نمایش/مخفی‌سازی به صفحه `FocusPage.tsx`.
+- [x] **P6-POM-001:** طراحی هسته دامنه تایمر پومودورو (`FocusSessionEntity`، `PomodoroSettings`)، پورت `AtomicFocusStore`، ارتقای پایگاه داده محلی IndexedDB به نسخه ۴ همراه با شاخص `by-taskId`، پیاده‌سازی ذخیره‌سازهای `IndexedDbLocalStore` و `MemoryLocalStore`، موتور محاسباتی تاب‌آور در برابر sleep و throttling پس‌زمینه تب‌ها (`pomodoro-timer.ts`) با استخراج زمان باقیمانده بر اساس اختلاف زمانی و کسر پیشرفت، زنگ dual-tone پایان دوره کاملاً مستقل بر پایه Web Audio API (`playPomodoroChime`) و سرویس مدیریت چرخه حیات نشست‌های تمرکز (`pomodoro-service.ts`) با LWW sync mutations و خلاصه‌ساز روزانه.
+- [x] **P6-FOC-001:** نمای تمام‌صفحه و بدون حواس‌پرتی تمرکز (`FocusPage.tsx` و `FocusPage.module.css`) با حلقه پیشرفت دایره‌ای SVG شمارش معکوس MM:SS، اتصال به تسک جاری با دکمه سریع 🍅 در `TaskItem.tsx` و مسیر `/focus?taskId=...`، کنترل‌های اجرا/توقف/اتمام زودهنگام/پرش/بازنشانی، نشانگر چرخه‌ها (`🍅 🍅 ⚪ ⚪`)، کشوی تنظیمات پومودورو، کارت آمار خلاصه تمرکز امروز و افزودن مسیر `/focus` و لینک ناوبری با آیکون ⏱️ در سایدبار `AppShell.tsx`.
+
+## فعالیت AIها
+
+### 2026-10-15 | P6-SND-001 & P6-STA-001 | سنتز صوتی نویزهای محیطی (Web Audio API) و تحلیل و نمودارهای هفتگی تمرکز
+
+- **عامل:** Antigravity
+- **شاخه:** `feature/pomodoro-focus`
+- **انجام‌شده:**
+  - **سنتز نویزهای محیطی و اصوات آرامش‌بخش آفلاین (P6-SND-001):**
+    - طراحی و ساخت `AmbientSoundEngine` و تکینگی سراسری `ambientSoundManager` در `ambient-sound.ts` بدون نیاز به هیچ‌گونه فایل صوتی یا ریکوئست شبکه (Zero-dependency & Offline-first Web Audio API).
+    - نویز سفید (`WhiteNoise`): بافر تصادفی یکنواخت بازه `[-1, 1]`.
+    - نویز صورتی (`PinkNoise`): فیلتر چندقطبی آلگوریتم Paul Kellet با افت متعادل ۳dB در هر اکتاو و چگالی طیفی 1/f.
+    - نویز قهوه‌ای (`BrownNoise`): فیلتر انتگرال‌گیر نشتی‌دار (Leaky Integrator) با شیب ۶dB در هر اکتاو برای ایجاد صدای گرم و عمیق.
+    - شبیه‌ساز باران (`RainSimulation`): نویز قهوه‌ای فیلترشده (Lowpass 1800Hz) همراه با ترنزینت‌های فرکانس بالای تصادفی شبیه قطرات باران.
+    - تنظیمات نرم شیب ورودی/خروجی صدا با `linearRampToValueAtTime` جهت جلوگیری از شوک صوتی یا کلیک بلندگو.
+    - افزودن فیلدهای `ambientSoundType` و `ambientSoundVolume` به `PomodoroSettings` در `packages/shared-types`.
+    - ادغام انتخاب‌گر صدا و اسلایدر بلندی در کشوی تنظیمات پومودورو در `FocusPage.tsx`.
+    - همگام‌سازی هوشمند خودکار: شروع اتوماتیک صدای انتخابی هنگام استارت/رزومه تمرکز کاری (`WORK`)، و توقف تدریجی هنگام مکث، اتمام، پرش، بازنشانی یا شروع استراحت.
+    - ۸ آزمون واحد در `ambient-sound.test.ts`.
+  - **تحلیل‌های آماری و نمودارهای تمرکز هفتگی (P6-STA-001):**
+    - پیاده‌سازی تابع `getWeeklyFocusStats` در `pomodoro-service.ts` با محاسبه مجموع دقایق تمرکز ۷ روز گذشته، میانگین روزانه، نرخ تکمیل جلسات در برابر لغوشده‌ها، زنجیره استمرار روزانه (Streak)، تفکیک تسک‌های متمرکز و توزیع زمانی برچسب‌ها با برچسب روزهای هفته مطابق با تقویم جلالی/میلادی.
+    - طراحی کامپوننت ویجت `FocusAnalyticsCard.tsx` و استایل‌های شیشه‌ای مدرن `FocusAnalyticsCard.module.css` شامل کارت‌های ۴ شاخص کلیدی، نمودار میله‌ای ۷ روز گذشته با CSS/SVG و مقیاس‌بندی ارتفاع داینامیک، تفکیک تسک‌های برتر و تراشه‌های برچسب‌ها.
+    - تعبیه دکمه تاگل تعاملی (`toggle-analytics-btn`) در صفحه `FocusPage.tsx` برای مشاهده گزارش آماری بدون به هم زدن تمرکز.
+    - ۴ آزمون کامپوننت در `FocusAnalyticsCard.test.tsx` و تست‌های مربوطه در `pomodoro-service.test.ts` و `FocusPage.test.tsx`.
+  - **آزمون‌ها و درگاه کیفیت:**
+    - اجرای موفق ۳۰ تست تمرکز، اصوات محیطی و آمار (`npm run test --workspace @orbit/web -- pomodoro ambient stats`).
+    - اجرای موفق `npm run typecheck` روی کل مونورپو بدون خطا.
+
 
 - [x] **انتشار نسخه v0.5.0:** ادغام بدون fast-forward کامل فاز ۵ در `develop` و `main` با تگ نسخه رسمی `v0.5.0` و عبور از درگاه خروج (Exit Gate).
 - [x] **P5-BLD-001:** رابط کاربری تعاملی ساخت و ویرایش لیست‌های هوشمند (`SmartFilterModal.tsx`) با فیلدهای نام، رنگ (`PRESET_TAG_COLORS`)، آیکون، عملگر منطقی AND/OR، ردیف‌های شرط داینامیک، دکمه `+ New Filter` در سایدبار `AppShell.tsx`، و دکمه‌های ویرایش و حذف لیست‌های سفارشی با تأیید و حذف نرم اتمیک در `SmartListPage.tsx`.
@@ -91,6 +123,34 @@
 - [x] **P5-TAG-001:** پیاده‌سازی سیستم مدیریت Tags و Tag Groups در `shared-types`، ایجاد سرویس `tag-service` با جهش‌های اتمیک LWW، انتساب و جداسازی تگ از تسک، انتخاب‌گر برچسب‌ها در `TaskForm`، نمایش برچسب‌های رنگی تگ در `TaskItem`، و آزمون‌های دامنه و کامپوننت
 
 ## فعالیت AIها
+
+### 2026-10-15 | P6-POM-001 & P6-FOC-001 | پیاده‌سازی هسته دامنه پومودورو، ذخیره‌سازی محلی، تایمر تاب‌آور، زنگ Web Audio و صفحه تمام‌صفحه Focus Mode
+
+- **عامل:** Antigravity
+- **شاخه:** `feature/pomodoro-focus`
+- **انجام‌شده:**
+  - **قراردادهای دامنه و انواع داده (`packages/shared-types`):**
+    - تعریف `FocusSessionMode = 'WORK' | 'SHORT_BREAK' | 'LONG_BREAK'`، `FocusSessionStatus = 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'CANCELLED'`، `FocusSessionEntity`، و `PomodoroSettings` در `focus.ts`.
+    - افزودن `'FOCUS_SESSION'` به `EntityType` و الحاق `FocusSessionEntity` به پیلود جهش‌های همگام‌سازی `MutationPayload`.
+    - اکسپورت قراردادها و پیش‌تنظیمات استاندارد (`DEFAULT_POMODORO_SETTINGS`) از `index.ts`.
+  - **پورت‌های ذخیره‌سازی محلی و همگام‌سازی اتمیک (`packages/sync-engine` و `apps/web`):**
+    - ایجاد اینترفیس `AtomicFocusStore` در `packages/sync-engine/src/ports.ts` با متدهای `saveFocusSessionWithMutation`، `getFocusSession` و `listFocusSessions` با فیلترهای اختیاری `taskId` و `includeCancelled`.
+    - ارتقای پایگاه داده IndexedDB مرورگر به نسخه ۴ با ایجاد مخزن اشیای `focusSessions` و شاخص `by-taskId` در `indexeddb-local-store.ts`.
+    - پیاده‌سازی متدهای اتمیک ذخیره‌سازی و خواندن در هر دو استور `IndexedDbLocalStore` و `MemoryLocalStore` با حل تعارض LWW.
+  - **موتور تایمر تاب‌آور و زنگ صوتی (`apps/web/src/features/pomodoro/services/`):**
+    - طراحی موتور محاسباتی `pomodoro-timer.ts` مستقل از شمارش ساده تیک‌های تایمر و مصون در برابر throttling مرورگر با محاسبه اختلاف زمانی دقیق `startedAtTimestamp`، `pausedAtTimestamp` و `accumulatedPausedMs`.
+    - ساخت ماژول تولید صدای زنگ پایان پومودورو (`playPomodoroChime`) با Web Audio API خالص بدون نیاز به فایل‌ها یا کتابخانه‌های جانبی.
+    - پیاده‌سازی سرویس `pomodoro-service.ts` با عملیات `startFocusSession`، `pauseFocusSession`، `resumeFocusSession`، `completeFocusSession` (با پیشروی خودکار چرخه‌ها و تعیین مود بعدی)، `cancelFocusSession`، خلاصه‌ساز `getTodayFocusSummary` و پایدارسازی تنظیمات پومودورو در `localStorage`.
+    - ایجاد آزمون‌های جامع در `pomodoro-timer.test.ts` و `pomodoro-service.test.ts`.
+  - **صفحه تمرکز بدون حواس‌پرتی و یکپارچه‌سازی رابط کاربری (`apps/web`):**
+    - ساخت کامپوننت `FocusPage.tsx` و استایل‌های مدرن `FocusPage.module.css` شامل حلقه پیشرفت SVG دایره‌ای، نمایشگر MM:SS، کنترل‌های Start/Pause، Complete Early، Skip، Reset، نشانگر چرخه‌های پومودورو (`🍅 🍅 ⚪ ⚪`)، کشوی تنظیمات سریع و کارت آمار تمرکز امروز.
+    - افزودن دکمه میانبر شروع تمرکز (`🍅`) در `TaskItem.tsx` و اتصال مستقیم تسک از طریق کوئری پارامتر `/focus?taskId=<id>`.
+    - افزودن مسیر `/focus` در `routes.tsx` و آیتم «حالت تمرکز (Focus)» با آیکون ⏱️ در منوی سایدبار `AppShell.tsx`.
+    - افزودن آزمون‌های کامپوننت در `FocusPage.test.tsx`، `TaskItem.test.tsx` و `AppShell.test.tsx`.
+  - **ارزیابی درگاه کیفیت و سلامت کد:**
+    - پاس شدن ۱۶ آزمون پومودورو و تمرکز و کل ۴۹۰ آزمون وب و سرور بدون خطا.
+    - اجرای موفق `npm run typecheck` و `npm run lint` با ۰ خطا و ۰ هشدار.
+    - بیلد موفق سراسری بسته‌های کلاینت و سرور (`npm run build`).
 
 ### 2026-10-15 | فاز ۵: سازمان‌دهی، فیلترها و نماهای پیشرفته | اتمام فاز ۵، عبور از Exit Gate و انتشار رسمی نسخه v0.5.0
 

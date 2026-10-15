@@ -4,9 +4,15 @@ import type {
   TaskEntity,
   TagEntity,
   TagGroupEntity,
-  SmartFilterEntity
+  SmartFilterEntity,
+  FocusSessionEntity
 } from '@orbit/shared-types';
-import type { AtomicFilterStore, AtomicTagStore, AtomicTaskStore } from '@orbit/sync-engine';
+import type {
+  AtomicFilterStore,
+  AtomicFocusStore,
+  AtomicTagStore,
+  AtomicTaskStore
+} from '@orbit/sync-engine';
 import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
 
 // ---- Schema ----
@@ -29,6 +35,11 @@ interface OrbitDBSchema extends DBSchema {
     key: string;
     value: SmartFilterEntity;
   };
+  focusSessions: {
+    key: string;
+    value: FocusSessionEntity;
+    indexes: { 'by-taskId': string };
+  };
   mutations: {
     key: string;
     value: SyncQueueEntry;
@@ -42,7 +53,7 @@ interface OrbitDBSchema extends DBSchema {
 
 type OrbitDB = IDBPDatabase<OrbitDBSchema>;
 
-const CURRENT_VERSION = 3;
+const CURRENT_VERSION = 4;
 
 // ---- Implementation ----
 
@@ -53,7 +64,7 @@ const CURRENT_VERSION = 3;
  * The `dbName` parameter is primarily useful in tests (unique names per test
  * ensure isolation when using fake-indexeddb).
  */
-export class IndexedDbLocalStore implements AtomicTaskStore, AtomicTagStore, AtomicFilterStore {
+export class IndexedDbLocalStore implements AtomicTaskStore, AtomicTagStore, AtomicFilterStore, AtomicFocusStore {
   private db: OrbitDB | undefined;
 
   constructor(
@@ -88,6 +99,12 @@ export class IndexedDbLocalStore implements AtomicTaskStore, AtomicTagStore, Ato
         if (oldVersion < 3) {
           if (!db.objectStoreNames.contains('smartFilters')) {
             db.createObjectStore('smartFilters', { keyPath: 'id' });
+          }
+        }
+        if (oldVersion < 4) {
+          if (!db.objectStoreNames.contains('focusSessions')) {
+            const focusSessions = db.createObjectStore('focusSessions', { keyPath: 'id' });
+            focusSessions.createIndex('by-taskId', 'taskId');
           }
         }
       }
@@ -351,6 +368,50 @@ export class IndexedDbLocalStore implements AtomicTaskStore, AtomicTagStore, Ato
       await mutationsStore.add(mutation);
     }
     await filtersStore.put(filter);
+    await tx.done;
+  }
+
+  async getFocusSession(id: string): Promise<FocusSessionEntity | undefined> {
+    const db = await this.getDb();
+    return db.get('focusSessions', id);
+  }
+
+  async saveFocusSession(session: FocusSessionEntity): Promise<void> {
+    const db = await this.getDb();
+    await db.put('focusSessions', session);
+  }
+
+  async listFocusSessions(options?: {
+    taskId?: string;
+    includeCancelled?: boolean;
+  }): Promise<FocusSessionEntity[]> {
+    const db = await this.getDb();
+    const all = options?.taskId
+      ? await db.getAllFromIndex('focusSessions', 'by-taskId', options.taskId)
+      : await db.getAll('focusSessions');
+    if (options?.includeCancelled) {
+      return all;
+    }
+    return all.filter((s) => s.status !== 'CANCELLED');
+  }
+
+  async saveFocusSessionWithMutation(
+    session: FocusSessionEntity,
+    mutation: SyncQueueEntry
+  ): Promise<void> {
+    const db = await this.getDb();
+    const tx = db.transaction(['focusSessions', 'mutations'], 'readwrite');
+    const mutationsStore = tx.objectStore('mutations');
+    const focusStore = tx.objectStore('focusSessions');
+
+    const existing = await mutationsStore
+      .index('by-idempotencyKey')
+      .get(mutation.idempotencyKey);
+
+    if (existing === undefined) {
+      await mutationsStore.add(mutation);
+    }
+    await focusStore.put(session);
     await tx.done;
   }
 }
