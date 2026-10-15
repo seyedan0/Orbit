@@ -29,3 +29,11 @@ export type {
   SmartFilterEntity
 } from './filter.js';
 export { isFieldRule, isFilterGroupRule } from './filter.js';
+export type {
+  FocusSessionEntity,
+  FocusSessionMode,
+  FocusSessionStatus,
+  PomodoroSettings
+} from './focus.js';
+export { DEFAULT_POMODORO_SETTINGS } from './focus.js';
+

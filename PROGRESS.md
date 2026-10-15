@@ -4,23 +4,26 @@
 
 ## وضعیت کلی
 
-- **مرحله:** فاز ۶، تمرکز و پومودورو (آغاز فاز ۶ - انتشار نسخه رسمی v0.5.0)
+- **مرحله:** فاز ۶، تمرکز و پومودورو (پیاده‌سازی موفق تایمر تاب‌آور، دامنه Sessions، پورت‌های ذخیره‌سازی محلی و حالت تمام‌صفحه بدون حواس‌پرتی)
 - **آخرین به‌روزرسانی:** 2026-10-15
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 0% (فاز ۶) / 100% (فاز ۵ با موفقیت تکمیل و منتشر شد)
-- **Branch فعال:** `develop`
+- **درصد تقریبی پیشرفت:** 50% (فاز ۶) / 100% (فاز ۵ با موفقیت تکمیل و منتشر شد)
+- **Branch فعال:** `feature/pomodoro-focus`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-آماده‌سازی الزامات، طراحی ساختار دامنه و آغاز اولین تحویل‌پذیر فاز ۶ (Focus & Pomodoro) شامل تایمر کار/استراحت استاندارد متصل به Task، حالت تمرکز بدون حواس‌پرتی (Focus Mode)، صداهای زمینه (White Noise) و ثبت آمارهای تمرکز.
+پیاده‌سازی قابلیت‌های تکمیلی فاز ۶ (Focus & Pomodoro) شامل اصوات زمینه (White/Brown/Pink Noise)، ردیابی گزارشات تفصیلی تمرکز، و اتصال خودکار وضعیت جلسه تمرکز به سرور همگام‌سازی.
 
 ## کارهای در حال انجام
 
-- [ ] تسک P6-POM-001: طراحی هسته دامنه تایمر پومودورو، چرخه‌های کار/استراحت و ثبت جهش‌های همگام‌سازی
-- [ ] تسک P6-FOC-001: پیاده‌سازی نمای تمام‌صفحه تمرکز (Distraction-Free Focus Mode) با اتصال به تسک جاری
+- [ ] تسک P6-SND-001: تولید و پخش صداهای پس‌زمینه و نویزهای سفید (White Noise / Ambient Sounds) با Web Audio API بدون دارایی‌های خارجی
+- [ ] تسک P6-ANL-001: نمودارهای آماری روزانه و هفتگی تمرکز و اتصال به تقویم
 
 ## کارهای انجام‌شده
+
+- [x] **P6-POM-001:** طراحی هسته دامنه تایمر پومودورو (`FocusSessionEntity`، `PomodoroSettings`)، پورت `AtomicFocusStore`، ارتقای پایگاه داده محلی IndexedDB به نسخه ۴ همراه با شاخص `by-taskId`، پیاده‌سازی ذخیره‌سازهای `IndexedDbLocalStore` و `MemoryLocalStore`، موتور محاسباتی تاب‌آور در برابر sleep و throttling پس‌زمینه تب‌ها (`pomodoro-timer.ts`) با استخراج زمان باقیمانده بر اساس اختلاف زمانی و کسر پیشرفت، زنگ dual-tone پایان دوره کاملاً مستقل بر پایه Web Audio API (`playPomodoroChime`) و سرویس مدیریت چرخه حیات نشست‌های تمرکز (`pomodoro-service.ts`) با LWW sync mutations و خلاصه‌ساز روزانه.
+- [x] **P6-FOC-001:** نمای تمام‌صفحه و بدون حواس‌پرتی تمرکز (`FocusPage.tsx` و `FocusPage.module.css`) با حلقه پیشرفت دایره‌ای SVG شمارش معکوس MM:SS، اتصال به تسک جاری با دکمه سریع 🍅 در `TaskItem.tsx` و مسیر `/focus?taskId=...`، کنترل‌های اجرا/توقف/اتمام زودهنگام/پرش/بازنشانی، نشانگر چرخه‌ها (`🍅 🍅 ⚪ ⚪`)، کشوی تنظیمات پومودورو، کارت آمار خلاصه تمرکز امروز و افزودن مسیر `/focus` و لینک ناوبری با آیکون ⏱️ در سایدبار `AppShell.tsx`.
 
 - [x] **انتشار نسخه v0.5.0:** ادغام بدون fast-forward کامل فاز ۵ در `develop` و `main` با تگ نسخه رسمی `v0.5.0` و عبور از درگاه خروج (Exit Gate).
 - [x] **P5-BLD-001:** رابط کاربری تعاملی ساخت و ویرایش لیست‌های هوشمند (`SmartFilterModal.tsx`) با فیلدهای نام، رنگ (`PRESET_TAG_COLORS`)، آیکون، عملگر منطقی AND/OR، ردیف‌های شرط داینامیک، دکمه `+ New Filter` در سایدبار `AppShell.tsx`، و دکمه‌های ویرایش و حذف لیست‌های سفارشی با تأیید و حذف نرم اتمیک در `SmartListPage.tsx`.
@@ -91,6 +94,34 @@
 - [x] **P5-TAG-001:** پیاده‌سازی سیستم مدیریت Tags و Tag Groups در `shared-types`، ایجاد سرویس `tag-service` با جهش‌های اتمیک LWW، انتساب و جداسازی تگ از تسک، انتخاب‌گر برچسب‌ها در `TaskForm`، نمایش برچسب‌های رنگی تگ در `TaskItem`، و آزمون‌های دامنه و کامپوننت
 
 ## فعالیت AIها
+
+### 2026-10-15 | P6-POM-001 & P6-FOC-001 | پیاده‌سازی هسته دامنه پومودورو، ذخیره‌سازی محلی، تایمر تاب‌آور، زنگ Web Audio و صفحه تمام‌صفحه Focus Mode
+
+- **عامل:** Antigravity
+- **شاخه:** `feature/pomodoro-focus`
+- **انجام‌شده:**
+  - **قراردادهای دامنه و انواع داده (`packages/shared-types`):**
+    - تعریف `FocusSessionMode = 'WORK' | 'SHORT_BREAK' | 'LONG_BREAK'`، `FocusSessionStatus = 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'CANCELLED'`، `FocusSessionEntity`، و `PomodoroSettings` در `focus.ts`.
+    - افزودن `'FOCUS_SESSION'` به `EntityType` و الحاق `FocusSessionEntity` به پیلود جهش‌های همگام‌سازی `MutationPayload`.
+    - اکسپورت قراردادها و پیش‌تنظیمات استاندارد (`DEFAULT_POMODORO_SETTINGS`) از `index.ts`.
+  - **پورت‌های ذخیره‌سازی محلی و همگام‌سازی اتمیک (`packages/sync-engine` و `apps/web`):**
+    - ایجاد اینترفیس `AtomicFocusStore` در `packages/sync-engine/src/ports.ts` با متدهای `saveFocusSessionWithMutation`، `getFocusSession` و `listFocusSessions` با فیلترهای اختیاری `taskId` و `includeCancelled`.
+    - ارتقای پایگاه داده IndexedDB مرورگر به نسخه ۴ با ایجاد مخزن اشیای `focusSessions` و شاخص `by-taskId` در `indexeddb-local-store.ts`.
+    - پیاده‌سازی متدهای اتمیک ذخیره‌سازی و خواندن در هر دو استور `IndexedDbLocalStore` و `MemoryLocalStore` با حل تعارض LWW.
+  - **موتور تایمر تاب‌آور و زنگ صوتی (`apps/web/src/features/pomodoro/services/`):**
+    - طراحی موتور محاسباتی `pomodoro-timer.ts` مستقل از شمارش ساده تیک‌های تایمر و مصون در برابر throttling مرورگر با محاسبه اختلاف زمانی دقیق `startedAtTimestamp`، `pausedAtTimestamp` و `accumulatedPausedMs`.
+    - ساخت ماژول تولید صدای زنگ پایان پومودورو (`playPomodoroChime`) با Web Audio API خالص بدون نیاز به فایل‌ها یا کتابخانه‌های جانبی.
+    - پیاده‌سازی سرویس `pomodoro-service.ts` با عملیات `startFocusSession`، `pauseFocusSession`، `resumeFocusSession`، `completeFocusSession` (با پیشروی خودکار چرخه‌ها و تعیین مود بعدی)، `cancelFocusSession`، خلاصه‌ساز `getTodayFocusSummary` و پایدارسازی تنظیمات پومودورو در `localStorage`.
+    - ایجاد آزمون‌های جامع در `pomodoro-timer.test.ts` و `pomodoro-service.test.ts`.
+  - **صفحه تمرکز بدون حواس‌پرتی و یکپارچه‌سازی رابط کاربری (`apps/web`):**
+    - ساخت کامپوننت `FocusPage.tsx` و استایل‌های مدرن `FocusPage.module.css` شامل حلقه پیشرفت SVG دایره‌ای، نمایشگر MM:SS، کنترل‌های Start/Pause، Complete Early، Skip، Reset، نشانگر چرخه‌های پومودورو (`🍅 🍅 ⚪ ⚪`)، کشوی تنظیمات سریع و کارت آمار تمرکز امروز.
+    - افزودن دکمه میانبر شروع تمرکز (`🍅`) در `TaskItem.tsx` و اتصال مستقیم تسک از طریق کوئری پارامتر `/focus?taskId=<id>`.
+    - افزودن مسیر `/focus` در `routes.tsx` و آیتم «حالت تمرکز (Focus)» با آیکون ⏱️ در منوی سایدبار `AppShell.tsx`.
+    - افزودن آزمون‌های کامپوننت در `FocusPage.test.tsx`، `TaskItem.test.tsx` و `AppShell.test.tsx`.
+  - **ارزیابی درگاه کیفیت و سلامت کد:**
+    - پاس شدن ۱۶ آزمون پومودورو و تمرکز و کل ۴۹۰ آزمون وب و سرور بدون خطا.
+    - اجرای موفق `npm run typecheck` و `npm run lint` با ۰ خطا و ۰ هشدار.
+    - بیلد موفق سراسری بسته‌های کلاینت و سرور (`npm run build`).
 
 ### 2026-10-15 | فاز ۵: سازمان‌دهی، فیلترها و نماهای پیشرفته | اتمام فاز ۵، عبور از Exit Gate و انتشار رسمی نسخه v0.5.0
 

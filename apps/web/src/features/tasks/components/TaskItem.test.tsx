@@ -196,4 +196,13 @@ describe('TaskItem', () => {
       expect(html).not.toContain('#work');
     });
   });
+
+  it('renders quick-start focus button (🍅) for open tasks with link to /focus?taskId=<id>', () => {
+    const task = makeTask({ id: 'task-focus-xyz', kind: 'TASK', completedAt: null, deletedAt: null });
+    const html = renderToStaticMarkup(<TaskItem task={task} />);
+
+    expect(html).toContain('data-testid="task-focus-task-focus-xyz"');
+    expect(html).toContain('href="/focus?taskId=task-focus-xyz"');
+    expect(html).toContain('🍅');
+  });
 });

@@ -1,11 +1,12 @@
 import type {
   AtomicFilterStore,
+  AtomicFocusStore,
   AtomicTagStore,
   AtomicTaskStore
 } from '@orbit/sync-engine';
 import { createContext, useContext, type ReactNode } from 'react';
 
-export type WebStore = AtomicTaskStore & AtomicTagStore & AtomicFilterStore;
+export type WebStore = AtomicTaskStore & AtomicTagStore & AtomicFilterStore & AtomicFocusStore;
 
 const StoreContext = createContext<WebStore | undefined>(undefined);
 

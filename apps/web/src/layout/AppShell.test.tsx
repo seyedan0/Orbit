@@ -33,6 +33,8 @@ describe('AppShell with sync status integration', () => {
     expect(html).toContain('فردا');
     expect(html).toContain('تقویم');
     expect(html).toContain('صندوق ورودی');
+    expect(html).toContain('حالت تمرکز (Focus)');
+    expect(html).toContain('data-testid="nav-focus"');
     expect(html).toContain('تنظیمات');
 
     // Verify sync status badge

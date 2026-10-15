@@ -27,4 +27,5 @@ if (typeof (globalThis as Record<string, unknown>).window === 'undefined') {
     removeEventListener: () => {},
     dispatchEvent: () => true
   };
+  (globalThis as Record<string, unknown>).localStorage = localStorage;
 }
