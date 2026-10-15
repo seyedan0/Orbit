@@ -9,6 +9,7 @@ import { TomorrowPage } from '../features/tasks/pages/TomorrowPage';
 import { SmartListPage } from '../features/filters/pages/SmartListPage';
 import { EisenhowerMatrixPage } from '../features/matrix/pages/EisenhowerMatrixPage';
 import { TimelinePage } from '../features/timeline/pages/TimelinePage';
+import { FocusPage } from '../features/pomodoro/pages/FocusPage';
 import { TrashPage } from '../features/tasks/pages/TrashPage';
 import { ArchivePage } from '../features/tasks/pages/ArchivePage';
 import { AppShell } from '../layout/AppShell';
@@ -26,6 +27,7 @@ export function AppRoutes() {
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/timeline" element={<TimelinePage />} />
           <Route path="/matrix" element={<EisenhowerMatrixPage />} />
+          <Route path="/focus" element={<FocusPage />} />
           <Route path="/inbox" element={<InboxPage />} />
           <Route path="/filters/:filterId" element={<SmartListPage />} />
           <Route path="/archive" element={<ArchivePage />} />
