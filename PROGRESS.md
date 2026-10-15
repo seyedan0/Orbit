@@ -5,22 +5,26 @@
 ## وضعیت کلی
 
 - **مرحله:** فاز ۵، سازمان‌دهی، فیلترها و نماهای پیشرفته
-- **آخرین به‌روزرسانی:** 2026-10-09
+- **آخرین به‌روزرسانی:** 2026-10-15
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 10% (فاز ۵) - تکمیل رسمی فاز ۴ و ادغام در main
-- **Branch فعال:** `feature/tags-management`
+- **درصد تقریبی پیشرفت:** 25% (فاز ۵)
+- **Branch فعال:** `feature/json-rule-filter-engine`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-پیاده‌سازی تسک P5-TAG-001 (سیستم مدیریت برچسب‌ها Tags و گروه‌های برچسب Tag Groups)، مدل‌های دامنه `TagEntity` و `TagGroupEntity`، افزودن فیلد اختیاری `tags?: string[]` به `TaskEntity`، پیاده‌سازی سرویس `tag-service` با جهش‌های اتمیک LWW، انتخاب‌گر برچسب‌ها در `TaskForm`، و نمایش برچسب‌های رنگی تگ در `TaskItem`.
+پیاده‌سازی موتور فیلترهای هوشمند مبتنی بر JSON Rule DSL (تسک P5-FLT-001)، تایپ‌ها و گارد‌های دامنه‌ای در `shared-types`، ماژول ارزیابی خالص در `apps/web/src/core/filters` با ارزیابی دقیق اولویت، نوع، تگ‌ها، وضعیت تکمیل و بازه‌های زمانی نسبی شمسی/میلادی.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی و ادغام شاخه `feature/tags-management` در `develop`
-- [ ] گام بعدی فاز ۵: پیاده‌سازی موتور فیلترهای هوشمند مبتنی بر JSON Rule DSL (تسک P5-FLT-001)
+- [x] ادغام شاخه `feature/tags-management` با حفظ تاریخچه صریح در `develop`
+- [x] پیاده‌سازی موتور فیلترهای هوشمند مبتنی بر JSON Rule DSL (تسک P5-FLT-001)
+- [ ] گام بعدی فاز ۵: رابط کاربری ساخت و ذخیره فیلترهای هوشمند (Smart Filter Builder UI & Management)
 
 ## کارهای انجام‌شده
+
+- [x] **P5-TAG-001:** سیستم مدیریت برچسب‌ها (Tags و Tag Groups)، مدل‌های دامنه، سرویس LWW، فرم تسک و کامپوننت‌های UI و ادغام در `develop`.
+- [x] **P5-FLT-001:** موتور فیلترهای هوشمند مبتنی بر JSON Rule DSL (`filter-evaluator.ts`، تایپ‌های `FilterRule`، `FieldRule`، `FilterGroupRule`، `SmartFilterEntity`، عملگرهای مقایسه‌ای و بازه‌های زمانی نسبی تقویم شمسی/میلادی).
 
 - [x] ایجاد فایل مرکزی پیشرفت پروژه
 - [x] ایجاد پوشه مستندات
@@ -1323,15 +1327,48 @@
 - **اعتبارسنجی:**
   - اجرای کامل اعتبارسنجی‌های شش‌گانه الزامی (`npm ci`, `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build`, `git diff --check`).
 - **وضعیت PR:**
-  - آماده ثبت PR از شاخه `feature/calendar-jalali-foundation` به `develop`.
+
+### 2026-10-15 | پیاده‌سازی موتور فیلترهای هوشمند مبتنی بر JSON Rule DSL (P5-FLT-001)
+
+- **عامل:** Antigravity
+- **هدف:** طراحی و پیاده‌سازی موتور فیلترهای هوشمند تسک‌ها مبتنی بر ساختار داده استاندارد و توسعه‌پذیر JSON Rule DSL با پشتیبانی از عملگرهای منطقی AND/OR، عملگرهای فیلد (برابری، تضاد، شامل‌بودن متنی و آرایه‌ای، شمول مجموعه‌ای، مقایسه‌های عددی و تاریخی، و بازه‌های زمانی نسبی شمسی/میلادی).
+- **انجام‌شده:**
+  - **ساختار داده و تایپ‌های دامنه (`packages/shared-types/src/filter.ts`):**
+    - تعریف عملگرهای فیلد (`FilterFieldOperator`): `eq`, `neq`, `contains`, `not_contains`, `gt`, `gte`, `lt`, `lte`, `in`, `not_in`, `within`, `is_null`, `is_not_null`.
+    - تعریف بازه‌های زمانی نسبی (`RelativeDateRange`): `today`, `tomorrow`, `this_week`, `next_week`, `overdue`, `no_date`.
+    - تعریف فیلدهای هدف (`FilterTargetField`): `title`, `content`, `desc`, `kind`, `priority`, `tags`, `projectId`, `dueDate`, `startDate`, `isCompleted`, `completedAt`, `isAllDay`, `repeatFlag`.
+    - تعریف قواعد فیلد (`FieldRule`) و گروه‌های منطقی (`FilterGroupRule` با عملگرهای `AND`/`OR`).
+    - تعریف موجودیت فیلتر هوشمند (`SmartFilterEntity`) برای ذخیره‌سازی، ترتیب‌بندی و همگام‌سازی فیلترهای سفارشی کاربر.
+    - توابع تشخیص نوع (`isFieldRule` و `isFilterGroupRule`).
+    - صادرات کامل از ریشه پکیج `packages/shared-types/src/index.ts`.
+  - **موتور ارزیابی محض تسک‌ها (`apps/web/src/core/filters/filter-evaluator.ts`):**
+    - پیاده‌سازی تابع محض `evaluateTaskFilter(task, rule, context)`.
+    - پیاده‌سازی تابع محض فیلتر آرایه‌ای `filterTasks(tasks, rule, context)`.
+    - ارزیابی دقیق فیلدهای `priority`, `kind`, `title`, `content/desc`, `tags`, `dueDate`, `completedAt`, `isCompleted`.
+    - پشتیبانی از تقویم شمسی (جلالی) و میلادی در ارزیابی بازه‌های زمانی نسبی هفته جاری (`this_week`: شنبه تا جمعه در شمسی، دوشنبه تا یکشنبه در میلادی) و هفته بعد (`next_week`).
+    - محاسبه دقیق تاخیر (`overdue`): تسک‌های تکمیل‌شده هرگز معوق محسوب نمی‌شوند؛ تسک‌های تمام‌روز (`isAllDay`) تنها پس از پایان روز مربوطه معوق تلقی می‌شوند.
+    - صادرات ماژولار از طریق `apps/web/src/core/filters/index.ts`.
+  - **مجموعه آزمون‌های جامع (`apps/web/src/core/filters/filter-evaluator.test.ts`):**
+    - پیاده‌سازی ۲۸ آزمون تفکیک‌شده شامل اعتبارسنجی تساوی متنی و ارقام، بررسی تگ‌ها و شمول زیررشته، شمول مجموعه‌ای، مقایسه‌های عددی و ترتیبی تاریخ‌ها، بررسی مقادیر تهی، بازه‌های نسبی امروز، فردا، هفته جاری و بعد، تاخیر، بدون تاریخ، و درخت‌های شروط تودرتوی عمیق.
+- **فایل‌ها:**
+  - `packages/shared-types/src/filter.ts`
+  - `packages/shared-types/src/index.ts`
+  - `apps/web/src/core/filters/filter-evaluator.ts`
+  - `apps/web/src/core/filters/index.ts`
+  - `apps/web/src/core/filters/filter-evaluator.test.ts`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npx vitest run filter`: ۲۸ تست از ۲۸ تست موفقیت‌آمیز پاس شدند (۱۰۰٪ قبولی).
+  - `npm run typecheck`: بررسی تایپ‌اسکریپت کل مونوریپو با ۰ خطا و خروجی موفقیت‌آمیز.
+- **وضعیت Git:**
+  - ادغام صریح شاخه `feature/tags-management` در `develop` با کامیت مرج `--no-ff`.
+  - حذف شاخه `feature/tags-management` به صورت لوکال و ریموت.
+  - ساخت و استقرار روی شاخه تمیز `feature/json-rule-filter-engine`.
 - **گام بعدی (Handoff):**
-  - ادغام `feature/calendar-jalali-foundation` در `develop`.
-  - اجرای تسک بعدی فاز ۴ (نماهای Upcoming و تقویم کامل هفتگی و ماهانه).
-
-
-
+  - پیاده‌سازی رابط کاربری سازنده فیلتر هوشمند و کامپوننت‌های انتخاب شروط فیلتر و ذخیره در IndexedDB/Sync.
 
 ## محدودیت‌های باقی‌مانده
+
 
 - **بررسی دستی مرورگر:** InboxPage در مرورگر واقعی تست نشده.
 - **`INBOX_PROJECT_ID = 'inbox'`:** placeholder تا فاز ۳ (حساب کاربری). پس از account system باید به list ID واقعی کاربر تغییر کند.
