@@ -19,6 +19,7 @@ export interface CreateTaskInput {
   timezone?: string | null | undefined;
   repeatFlag?: string | null | undefined;
   reminders?: string[] | undefined;
+  tags?: string[] | undefined;
 }
 
 export interface TaskServiceDeps {
@@ -117,6 +118,7 @@ export async function createTask(
     timezone: timeZone,
     repeatFlag,
     reminders: input.reminders ? [...input.reminders] : [],
+    tags: input.tags ? [...input.tags] : [],
     items: [],
     version: 0,
     localStatus: 'CREATED',
@@ -143,6 +145,7 @@ export async function createTask(
       timeZone: timestamp,
       reminders: timestamp,
       items: timestamp,
+      ...(input.tags && input.tags.length > 0 ? { tags: timestamp } : {}),
       ...(startDate !== null ? { startDate: timestamp } : {}),
       ...(dueDate !== null ? { dueDate: timestamp } : {}),
       ...(duration !== null ? { duration: timestamp } : {}),

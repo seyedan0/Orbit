@@ -4,21 +4,21 @@
 
 ## وضعیت کلی
 
-- **مرحله:** فاز ۴، مدیریت زمان و تقویم
+- **مرحله:** فاز ۵، سازمان‌دهی، فیلترها و نماهای پیشرفته
 - **آخرین به‌روزرسانی:** 2026-10-09
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 90% (فاز ۴)
-- **Branch فعال:** `feature/web-natural-date-parsing`
+- **درصد تقریبی پیشرفت:** 10% (فاز ۵) - تکمیل رسمی فاز ۴ و ادغام در main
+- **Branch فعال:** `feature/tags-management`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-پیاده‌سازی موتور سبک و مستقل پردازش زبان طبیعی تاریخ و زمان به دو زبان فارسی و انگلیسی (Natural Language Date Parsing) برای ایجاد هوشمند تسک‌ها، تشخیص درلحظه هنگام تایپ عنوان، نمایش تراشه برجسته تاریخ (`smart-date-chip`)، اعمال خودکار بر روی `dueDate` و `isAllDay`، و پالایش تمیز عنوان تسک از عبارات زمانی.
+پیاده‌سازی تسک P5-TAG-001 (سیستم مدیریت برچسب‌ها Tags و گروه‌های برچسب Tag Groups)، مدل‌های دامنه `TagEntity` و `TagGroupEntity`، افزودن فیلد اختیاری `tags?: string[]` به `TaskEntity`، پیاده‌سازی سرویس `tag-service` با جهش‌های اتمیک LWW، انتخاب‌گر برچسب‌ها در `TaskForm`، و نمایش برچسب‌های رنگی تگ در `TaskItem`.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی شاخه `feature/web-natural-date-parsing` توسط کاربر
-- [ ] گام بعدی: نهایی‌سازی دروازه خروج فاز ۴ و آغاز فاز ۵ (سازمان‌دهی، تگ‌ها، فیلترهای هوشمند و نماهای پیشرفته)
+- [ ] بازبینی و ادغام شاخه `feature/tags-management` در `develop`
+- [ ] گام بعدی فاز ۵: پیاده‌سازی موتور فیلترهای هوشمند مبتنی بر JSON Rule DSL (تسک P5-FLT-001)
 
 ## کارهای انجام‌شده
 
@@ -76,8 +76,79 @@
 - [x] **P4-REC-001:** پیاده‌سازی موتور تکرار تسک‌ها (Recurring Tasks Engine بر پایه RRULE) با پشتیبانی دوگانه تقویم شمسی/میلادی، محاسبات سال‌های کبیسه، چرخه حیات تکمیل تسک و نشانگرهای بصری UI
 - [x] **P4-REM-001:** پیاده‌سازی موتور یادآورهای درون‌برنامه‌ای و مرورگر (Reminders Engine) با اسنوز (+10 دقیقه)، کنترل‌های تکمیل تسک، پیش‌تنظیم‌های استاندارد، هشدارهای صوتی و دسکتاپ، و نشانگرهای زنگوله 🔔 در تسک‌ها و تقویم
 - [x] **P4-NLP-001:** پیاده‌سازی موتور پردازش زبان طبیعی تاریخ و زمان دو زبانه (فارسی و انگلیسی)، تشخیص درلحظه عنوان، تراشه هوشمند تاریخ (`smart-date-chip`) و پالایش عنوان تسک
+- [x] ادغام رسمی فاز ۴ در `develop` و انتشار ریلیز فاز ۴ در `main` (کامیت `ee0171f` با پیام `release: merge Phase 4 completion into main`) و شاخه‌بندی فاز ۵ (`feature/tags-management`)
+- [x] **P5-TAG-001:** پیاده‌سازی سیستم مدیریت Tags و Tag Groups در `shared-types`، ایجاد سرویس `tag-service` با جهش‌های اتمیک LWW، انتساب و جداسازی تگ از تسک، انتخاب‌گر برچسب‌ها در `TaskForm`، نمایش برچسب‌های رنگی تگ در `TaskItem`، و آزمون‌های دامنه و کامپوننت
 
 ## فعالیت AIها
+
+### 2026-10-09 | P5-TAG-001 | پیاده‌سازی سیستم مدیریت Tags و Tag Groups و آغاز رسمی فاز ۵
+
+- **عامل:** Antigravity
+- **هدف:** اجرای کامل گام بستن فاز ۴ (ادغام صریح بدون fast-forward در develop، حذف شاخه فیچر، انتشار ریلیز فاز ۴ در main با کامیت `release: merge Phase 4 completion into main` و ایجاد شاخه `feature/tags-management`) و پیاده‌سازی نخستین تسک فاز ۵ یعنی سیستم مدیریت برچسب‌ها (Tags) و گروه‌های برچسب (Tag Groups) همراه با جهش‌های اتمیک LWW، انتساب تگ به تسک، انتخاب‌گر تگ‌ها در TaskForm و نمایش برچسب‌های رنگی تگ در TaskItem.
+- **انجام‌شده:**
+  - عملیات گیت و پایان رسمی فاز ۴:
+    - ادغام `feature/web-natural-date-parsing` در `develop` با `--no-ff` (کامیت `41e77f8`).
+    - حذف محلی و ریموت شاخه `feature/web-natural-date-parsing`.
+    - ادغام `develop` در `main` با `--no-ff` و پیام `release: merge Phase 4 completion into main` (کامیت `ee0171f`).
+    - سوئیچ به `develop` و ایجاد شاخه جدید `feature/tags-management`.
+  - مدل‌های داده در `packages/shared-types`:
+    - ایجاد `TagEntity` و `TagGroupEntity` در `packages/shared-types/src/tag.ts`.
+    - افزودن فیلد اختیاری `tags?: string[]` به `TaskEntity` در `task.ts`.
+    - توسعه `EntityType` به `'TASK' | 'TAG' | 'TAG_GROUP'` و ارتقای `MutationPayload.payload` جهت پشتیبانی از برچسب‌ها و گروه‌ها.
+    - بازصادرات تایپ‌ها در `packages/shared-types/src/index.ts`.
+  - درگاه ذخیره‌سازی محلی در `packages/sync-engine` و `apps/web`:
+    - تعریف `AtomicTagStore` در `ports.ts` و صادرات در `sync-engine/index.ts`.
+    - ارتقای `MemoryLocalStore` با نگاشت‌های حافظه‌ای `tags` و `tagGroups` و توابع اتمیک `saveTagWithMutation` و `saveTagGroupWithMutation`.
+    - ارتقای `IndexedDbLocalStore` به نسخه ۲ دیتابیس محلی با ایجاد مخازن `tags` و `tagGroups` و تراکنش‌های اتمیک.
+    - ارتقای `store-context.tsx` به نوع یکپارچه `WebStore` (`AtomicTaskStore & AtomicTagStore`).
+  - سرویس دامنه در `apps/web/src/features/tags/services/tag-service.ts`:
+    - پیاده‌سازی توابع کامل CRUD برای Tags: `createTag`, `updateTag`, `deleteTag` (حذف نرم), `listTags`, `getTag`.
+    - پیاده‌سازی توابع CRUD برای Tag Groups: `createTagGroup`, `updateTagGroup`, `deleteTagGroup`, `listTagGroups`.
+    - پیاده‌سازی انتساب و جداسازی تگ به تسک با جهش‌های جزئی (PARTIAL UPDATE) و حل تعارض LWW: `attachTagToTask`, `detachTagFromTask`, `setTaskTags`.
+    - اعتبارسنجی ورودی‌ها با خطاهای دامنه `TagValidationError`, `TagNotFoundError`, `TagGroupNotFoundError`.
+    - پشتیبانی از پالت پیش‌فرض رنگ‌ها `PRESET_TAG_COLORS` و رنگ پیش‌فرض `#6366f1`.
+    - ارتقای `createTask` در `task-service.ts` جهت پذیرش `tags` در ورودی و ثبت در جهش اولیه CREATE با `fieldTimestamps.tags`.
+  - یکپارچه‌سازی رابط کاربری:
+    - `TaskForm.tsx`: تعبیه انتخاب‌گر برچسب‌ها با تراشه‌های قابل کلیک (`.task-tag-chip`)، برچسب‌های پیشنهادی پیش‌فرض، مدیریت وضعیت انتخاب، استایل‌های فعال و ارسال آرایه `tags` در `onSubmit`.
+    - `TaskItem.tsx`: نمایش برچسب‌های رنگی تگ (`.task-tag-badge`) با محاسبه داینامیک رنگ بر اساس پالت هارمونیک یا رنگ سفارشی تگ، و پنهان‌سازی خودکار در صورت حذف تسک.
+    - `TaskList.tsx` و `InboxPage.tsx`: بارگذاری تگ‌ها از استور محلی و تزریق به فرم و آیتم‌های تسک.
+    - `globals.css`: طراحی استایل‌های ظریف و مدرن برای تراشه‌ها، دکمه‌های انتخاب و برچسب‌های رنگی تگ با هماهنگی Dark/Light Mode.
+  - آزمون‌ها و اعتبارسنجی:
+    - ۱۲ آزمون واحد جامع در `tag-service.test.ts` برای تمام سناریوهای تگ، گروه‌ها، انتساب به تسک، حذف نرم و Idempotency.
+    - آزمون ایجاد تسک با تگ در `task-service.test.ts`.
+    - ۳ آزمون کامپوننت برای انتخاب‌گر تگ‌ها در `TaskForm.test.tsx`.
+    - ۳ آزمون کامپوننت برای برچسب‌های رنگی در `TaskItem.test.tsx`.
+    - اجرای موفق تمام ۳۵ تست آزمون‌های ماژولار تفکیک‌شده (`npx vitest run tag TaskForm TaskItem`).
+    - اجرای موفق تمام ۳۴۷ تست وب بدون خطا (`npm run test --workspace @orbit/web`).
+    - قبولی کامل بررسی نوع‌ها (`npm run typecheck`) بدون هیچ‌گونه هشدار یا خطای تایپ‌اسکریپت.
+- **فایل‌ها:**
+  - `packages/shared-types/src/tag.ts`
+  - `packages/shared-types/src/task.ts`
+  - `packages/shared-types/src/sync.ts`
+  - `packages/shared-types/src/index.ts`
+  - `packages/sync-engine/src/ports.ts`
+  - `packages/sync-engine/src/index.ts`
+  - `apps/web/src/core/storage/memory-local-store.ts`
+  - `apps/web/src/core/storage/indexeddb-local-store.ts`
+  - `apps/web/src/core/storage/store-context.tsx`
+  - `apps/web/src/features/tags/services/tag-service.ts`
+  - `apps/web/src/features/tags/services/tag-service.test.ts`
+  - `apps/web/src/features/tasks/services/task-service.ts`
+  - `apps/web/src/features/tasks/services/task-service.test.ts`
+  - `apps/web/src/features/tasks/components/TaskForm.tsx`
+  - `apps/web/src/features/tasks/components/TaskForm.test.tsx`
+  - `apps/web/src/features/tasks/components/TaskItem.tsx`
+  - `apps/web/src/features/tasks/components/TaskItem.test.tsx`
+  - `apps/web/src/features/tasks/components/TaskList.tsx`
+  - `apps/web/src/features/tasks/pages/InboxPage.tsx`
+  - `apps/web/src/styles/globals.css`
+  - `apps/server/src/sync/repositories/in-memory-sync.repository.ts`
+  - `docs/roadmap.md`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:** اجرای موفق `npm run typecheck`، `npx vitest run tag TaskForm TaskItem` (۳۵ تست)، `npm run test --workspace @orbit/web` (۳۴۷ تست)، `git diff --check`.
+- **گام بعدی:** بازبینی و ادغام `feature/tags-management` در `develop` و آغاز تسک بعدی فاز ۵ (موتور فیلترهای هوشمند JSON Rule DSL - P5-FLT-001).
+
 
 ### 2026-10-09 | P4-NLP-001 | پیاده‌سازی پردازش زبان طبیعی تاریخ و زمان دو زبانه (فارسی و انگلیسی)
 

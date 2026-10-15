@@ -1,4 +1,4 @@
-import type { TaskEntity } from '@orbit/shared-types';
+import type { TaskEntity, TagEntity } from '@orbit/shared-types';
 import { useCallback, useEffect, useState } from 'react';
 import { useSession } from '../../../core/auth/session-context';
 import { useStore } from '../../../core/storage/store-context';
@@ -18,13 +18,18 @@ export function InboxPage() {
   const { session } = useSession();
   const store = useStore();
   const [tasks, setTasks] = useState<TaskEntity[]>([]);
+  const [tags, setTags] = useState<TagEntity[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);
   const [lastDeletedTask, setLastDeletedTask] = useState<TaskEntity | null>(null);
 
   const reload = useCallback(async () => {
-    const list = await store.listTasks(INBOX_PROJECT_ID);
+    const [list, tagList] = await Promise.all([
+      store.listTasks(INBOX_PROJECT_ID),
+      store.listTags ? store.listTags() : Promise.resolve([])
+    ]);
     setTasks([...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+    setTags(tagList);
     setLoading(false);
   }, [store]);
 
@@ -44,7 +49,8 @@ export function InboxPage() {
         dueDate: options?.dueDate,
         isAllDay: options?.isAllDay,
         repeatFlag: options?.repeatFlag,
-        reminders: options?.reminders
+        reminders: options?.reminders,
+        tags: options?.tags
       },
       { store, userId: session.userId }
     );
@@ -134,7 +140,7 @@ export function InboxPage() {
     <section className="inbox">
       <h1>صندوق ورودی</h1>
 
-      <TaskForm onSubmit={handleCreate} />
+      <TaskForm onSubmit={handleCreate} availableTags={tags} />
       {actionError && <p className="error-msg">{actionError}</p>}
 
       {lastDeletedTask && (
@@ -160,6 +166,7 @@ export function InboxPage() {
           onToggleCompletion={handleToggleCompletion}
           onDelete={handleDelete}
           onRestore={handleRestore}
+          availableTags={tags}
         />
       )}
     </section>

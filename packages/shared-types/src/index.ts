@@ -17,3 +17,4 @@ export type {
   QueueStatus,
   SyncQueueEntry
 } from './sync.js';
+export type { TagEntity, TagGroupEntity } from './tag.js';

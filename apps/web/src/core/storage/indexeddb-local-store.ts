@@ -1,5 +1,11 @@
-import type { QueueStatus, SyncQueueEntry, TaskEntity } from '@orbit/shared-types';
-import type { AtomicTaskStore } from '@orbit/sync-engine';
+import type {
+  QueueStatus,
+  SyncQueueEntry,
+  TaskEntity,
+  TagEntity,
+  TagGroupEntity
+} from '@orbit/shared-types';
+import type { AtomicTagStore, AtomicTaskStore } from '@orbit/sync-engine';
 import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
 
 // ---- Schema ----
@@ -9,6 +15,14 @@ interface OrbitDBSchema extends DBSchema {
     key: string;
     value: TaskEntity;
     indexes: { 'by-projectId': string };
+  };
+  tags: {
+    key: string;
+    value: TagEntity;
+  };
+  tagGroups: {
+    key: string;
+    value: TagGroupEntity;
   };
   mutations: {
     key: string;
@@ -23,7 +37,7 @@ interface OrbitDBSchema extends DBSchema {
 
 type OrbitDB = IDBPDatabase<OrbitDBSchema>;
 
-const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 2;
 
 // ---- Implementation ----
 
@@ -34,7 +48,7 @@ const CURRENT_VERSION = 1;
  * The `dbName` parameter is primarily useful in tests (unique names per test
  * ensure isolation when using fake-indexeddb).
  */
-export class IndexedDbLocalStore implements AtomicTaskStore {
+export class IndexedDbLocalStore implements AtomicTaskStore, AtomicTagStore {
   private db: OrbitDB | undefined;
 
   constructor(
@@ -45,17 +59,27 @@ export class IndexedDbLocalStore implements AtomicTaskStore {
   private async getDb(): Promise<OrbitDB> {
     if (this.db !== undefined) return this.db;
     this.db = await openDB<OrbitDBSchema>(this.dbName, CURRENT_VERSION, {
-      upgrade(db) {
-        // tasks store with projectId index for listTasks
-        const tasks = db.createObjectStore('tasks', { keyPath: 'id' });
-        tasks.createIndex('by-projectId', 'projectId');
+      upgrade(db, oldVersion) {
+        if (oldVersion < 1) {
+          // tasks store with projectId index for listTasks
+          const tasks = db.createObjectStore('tasks', { keyPath: 'id' });
+          tasks.createIndex('by-projectId', 'projectId');
 
-        // mutations store with idempotencyKey index for deduplication
-        const mutations = db.createObjectStore('mutations', { keyPath: 'id' });
-        mutations.createIndex('by-idempotencyKey', 'idempotencyKey');
+          // mutations store with idempotencyKey index for deduplication
+          const mutations = db.createObjectStore('mutations', { keyPath: 'id' });
+          mutations.createIndex('by-idempotencyKey', 'idempotencyKey');
 
-        // meta store for cursor and future key-value metadata
-        db.createObjectStore('meta', { keyPath: 'key' });
+          // meta store for cursor and future key-value metadata
+          db.createObjectStore('meta', { keyPath: 'key' });
+        }
+        if (oldVersion < 2) {
+          if (!db.objectStoreNames.contains('tags')) {
+            db.createObjectStore('tags', { keyPath: 'id' });
+          }
+          if (!db.objectStoreNames.contains('tagGroups')) {
+            db.createObjectStore('tagGroups', { keyPath: 'id' });
+          }
+        }
       }
     });
     return this.db;
@@ -204,5 +228,80 @@ export class IndexedDbLocalStore implements AtomicTaskStore {
   async saveCursor(cursor: string): Promise<void> {
     const db = await this.getDb();
     await db.put('meta', { key: 'cursor', value: cursor });
+  }
+
+  async getTag(id: string): Promise<TagEntity | undefined> {
+    const db = await this.getDb();
+    return db.get('tags', id);
+  }
+
+  async saveTag(tag: TagEntity): Promise<void> {
+    const db = await this.getDb();
+    await db.put('tags', tag);
+  }
+
+  async listTags(options?: { includeDeleted?: boolean }): Promise<TagEntity[]> {
+    const db = await this.getDb();
+    const all = await db.getAll('tags');
+    if (options?.includeDeleted) {
+      return all;
+    }
+    return all.filter((t) => t.deletedAt == null);
+  }
+
+  async saveTagWithMutation(tag: TagEntity, mutation: SyncQueueEntry): Promise<void> {
+    const db = await this.getDb();
+    const tx = db.transaction(['tags', 'mutations'], 'readwrite');
+    const mutationsStore = tx.objectStore('mutations');
+    const tagsStore = tx.objectStore('tags');
+
+    const existing = await mutationsStore
+      .index('by-idempotencyKey')
+      .get(mutation.idempotencyKey);
+
+    if (existing === undefined) {
+      await mutationsStore.add(mutation);
+    }
+    await tagsStore.put(tag);
+    await tx.done;
+  }
+
+  async getTagGroup(id: string): Promise<TagGroupEntity | undefined> {
+    const db = await this.getDb();
+    return db.get('tagGroups', id);
+  }
+
+  async saveTagGroup(group: TagGroupEntity): Promise<void> {
+    const db = await this.getDb();
+    await db.put('tagGroups', group);
+  }
+
+  async listTagGroups(options?: { includeDeleted?: boolean }): Promise<TagGroupEntity[]> {
+    const db = await this.getDb();
+    const all = await db.getAll('tagGroups');
+    if (options?.includeDeleted) {
+      return all;
+    }
+    return all.filter((g) => g.deletedAt == null);
+  }
+
+  async saveTagGroupWithMutation(
+    group: TagGroupEntity,
+    mutation: SyncQueueEntry
+  ): Promise<void> {
+    const db = await this.getDb();
+    const tx = db.transaction(['tagGroups', 'mutations'], 'readwrite');
+    const mutationsStore = tx.objectStore('mutations');
+    const groupsStore = tx.objectStore('tagGroups');
+
+    const existing = await mutationsStore
+      .index('by-idempotencyKey')
+      .get(mutation.idempotencyKey);
+
+    if (existing === undefined) {
+      await mutationsStore.add(mutation);
+    }
+    await groupsStore.put(group);
+    await tx.done;
   }
 }
