@@ -6,6 +6,8 @@ export interface TaskListProps {
   onToggleCompletion?: ((task: TaskEntity) => void) | undefined;
   onDelete?: ((task: TaskEntity) => void) | undefined;
   onRestore?: ((task: TaskEntity) => void) | undefined;
+  onStartFocus?: ((task: TaskEntity) => void) | undefined;
+  onSelectTask?: ((task: TaskEntity) => void) | undefined;
   disabled?: boolean | undefined;
   availableTags?: TagEntity[] | undefined;
 }
@@ -15,6 +17,8 @@ export function TaskList({
   onToggleCompletion,
   onDelete,
   onRestore,
+  onStartFocus,
+  onSelectTask,
   disabled,
   availableTags
 }: TaskListProps) {
@@ -27,6 +31,8 @@ export function TaskList({
           onToggleCompletion={onToggleCompletion}
           onDelete={onDelete}
           onRestore={onRestore}
+          onStartFocus={onStartFocus}
+          onSelectTask={onSelectTask}
           disabled={disabled}
           availableTags={availableTags}
         />

@@ -205,4 +205,64 @@ describe('TaskItem', () => {
     expect(html).toContain('href="/focus?taskId=task-focus-xyz"');
     expect(html).toContain('🍅');
   });
+
+  it('renders multi-day span badge when startDate and dueDate span across multiple days', () => {
+    const task = makeTask({
+      startDate: '2026-10-10T00:00:00.000Z',
+      dueDate: '2026-10-18T23:59:59.000Z'
+    });
+    const html = renderToStaticMarkup(<TaskItem task={task} />);
+
+    expect(html).toContain('task-span-badge');
+    expect(html).toContain('data-testid="task-span-test-task-1"');
+    expect(html).toContain('تا');
+  });
+
+  it('renders subtasks progress badge when task has subtasks', () => {
+    const task = makeTask({
+      items: [
+        { id: 's1', title: 'Part 1', isCompleted: true, order: 0 },
+        { id: 's2', title: 'Part 2', isCompleted: false, order: 1 }
+      ]
+    });
+    const html = renderToStaticMarkup(<TaskItem task={task} />);
+
+    expect(html).toContain('task-subtasks-badge');
+    expect(html).toContain('1/2');
+    expect(html).toContain('50%');
+  });
+
+  it('renders delivery performance badge when task has deliveryStatus', () => {
+    const earlyTask = makeTask({
+      completedAt: '2026-10-14T10:00:00.000Z',
+      dueDate: '2026-10-16T10:00:00.000Z',
+      deliveryStatus: 'EARLY',
+      completionVarianceHours: 48
+    });
+    const earlyHtml = renderToStaticMarkup(<TaskItem task={earlyTask} />);
+    expect(earlyHtml).toContain('task-delivery-badge');
+    expect(earlyHtml).toContain('۲ روز زودتر انجام شد');
+
+    const overdueTask = makeTask({
+      completedAt: '2026-10-17T10:00:00.000Z',
+      dueDate: '2026-10-16T10:00:00.000Z',
+      deliveryStatus: 'OVERDUE',
+      completionVarianceHours: -24
+    });
+    const overdueHtml = renderToStaticMarkup(<TaskItem task={overdueTask} />);
+    expect(overdueHtml).toContain('task-delivery-badge');
+    expect(overdueHtml).toContain('۱ روز با تاخیر انجام شد');
+  });
+
+  it('triggers onSelectTask callback when clicking the task title', () => {
+    const onSelect = vi.fn();
+    const task = makeTask({ kind: 'TASK' });
+
+    const element = TaskItem({ task, onSelectTask: onSelect });
+    const liProps = element.props as { onClick: (e: unknown) => void; className: string };
+    expect(liProps.className).toContain('clickable');
+
+    liProps.onClick({ target: { closest: () => null } });
+    expect(onSelect).toHaveBeenCalledWith(task);
+  });
 });

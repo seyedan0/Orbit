@@ -18,6 +18,10 @@ import {
   filterTasksDueToday,
   filterTasksDueTomorrow,
   updateTask,
+  isTaskActiveForDate,
+  updateTaskSubtasks,
+  promoteSubtaskToIndependentTask,
+  updateTaskDetails,
   type CreateTaskInput
 } from './task-service';
 
@@ -1508,3 +1512,272 @@ describe('updateTask (P5-MTX-001)', () => {
     ).rejects.toThrow(TaskValidationError);
   });
 });
+
+describe('Delivery Analytics & Multi-Day Spanning Persistence', () => {
+  it('calculates EARLY delivery status when completed days ahead of due date', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      {
+        title: 'Submit report',
+        dueDate: '2026-10-18T18:00:00.000Z'
+      },
+      { store, userId: 'user-1', now: () => new Date('2026-10-10T10:00:00.000Z'), timeZone: 'Asia/Tehran' }
+    );
+
+    const completed = await completeTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date('2026-10-14T10:00:00.000Z'),
+      timeZone: 'Asia/Tehran'
+    });
+
+    expect(completed.deliveryStatus).toBe('EARLY');
+    expect(completed.completionVarianceHours).toBeGreaterThan(0);
+  });
+
+  it('calculates ON_TIME delivery status when completed on the same calendar day before or at due time', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      {
+        title: 'Pay bills',
+        dueDate: '2026-10-15T18:00:00.000Z'
+      },
+      { store, userId: 'user-1', now: () => new Date('2026-10-10T10:00:00.000Z'), timeZone: 'UTC' }
+    );
+
+    const completed = await completeTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date('2026-10-15T12:00:00.000Z'),
+      timeZone: 'UTC'
+    });
+
+    expect(completed.deliveryStatus).toBe('ON_TIME');
+    expect(completed.completionVarianceHours).toBeGreaterThanOrEqual(0);
+  });
+
+  it('calculates OVERDUE delivery status when completed after due date', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      {
+        title: 'Late assignment',
+        dueDate: '2026-10-12T10:00:00.000Z'
+      },
+      { store, userId: 'user-1', now: () => new Date('2026-10-10T10:00:00.000Z'), timeZone: 'UTC' }
+    );
+
+    const completed = await completeTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date('2026-10-15T10:00:00.000Z'),
+      timeZone: 'UTC'
+    });
+
+    expect(completed.deliveryStatus).toBe('OVERDUE');
+    expect(completed.completionVarianceHours).toBeLessThan(0);
+  });
+
+  it('reopening a completed task clears deliveryStatus and variance', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      {
+        title: 'Project milestone',
+        dueDate: '2026-10-15T18:00:00.000Z'
+      },
+      { store, userId: 'user-1', now: () => new Date('2026-10-10T10:00:00.000Z'), timeZone: 'UTC' }
+    );
+
+    await completeTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date('2026-10-14T10:00:00.000Z'),
+      timeZone: 'UTC'
+    });
+
+    const reopened = await reopenTask(task.id, {
+      store,
+      userId: 'user-1',
+      now: () => new Date('2026-10-14T11:00:00.000Z')
+    });
+
+    expect(reopened.completedAt).toBeNull();
+    expect(reopened.deliveryStatus).toBeNull();
+    expect(reopened.completionVarianceHours).toBeNull();
+  });
+
+  it('isTaskActiveForDate correctly identifies spanning active tasks', async () => {
+    const store = makeStore();
+    const task = await createTask(
+      {
+        title: 'Week conference',
+        startDate: '2026-10-10T00:00:00.000Z',
+        dueDate: '2026-10-16T23:59:59.000Z'
+      },
+      { store, userId: 'user-1', timeZone: 'UTC' }
+    );
+
+    expect(isTaskActiveForDate(task, '2026-10-09', 'UTC')).toBe(false);
+    expect(isTaskActiveForDate(task, '2026-10-10', 'UTC')).toBe(true);
+    expect(isTaskActiveForDate(task, '2026-10-13', 'UTC')).toBe(true);
+    expect(isTaskActiveForDate(task, '2026-10-16', 'UTC')).toBe(true);
+    expect(isTaskActiveForDate(task, '2026-10-17', 'UTC')).toBe(false);
+
+    // Completed task is no longer active
+    task.completedAt = '2026-10-12T10:00:00.000Z';
+    expect(isTaskActiveForDate(task, '2026-10-13', 'UTC')).toBe(false);
+  });
+
+  it('filterTasksDueToday keeps spanning tasks visible every day across their span', async () => {
+    const store = makeStore();
+    const spanningTask = await createTask(
+      {
+        title: 'Multi-day project sprint',
+        startDate: '2026-10-12T00:00:00.000Z',
+        dueDate: '2026-10-18T23:59:59.000Z'
+      },
+      { store, userId: 'user-1', timeZone: 'UTC' }
+    );
+
+    const normalTask = await createTask(
+      {
+        title: 'Single-day task',
+        dueDate: '2026-10-15T12:00:00.000Z'
+      },
+      { store, userId: 'user-1', timeZone: 'UTC' }
+    );
+
+    const futureTask = await createTask(
+      {
+        title: 'Future task',
+        dueDate: '2026-10-25T12:00:00.000Z'
+      },
+      { store, userId: 'user-1', timeZone: 'UTC' }
+    );
+
+    const todayIso = new Date('2026-10-15T10:00:00.000Z');
+    const todayTasks = filterTasksDueToday([spanningTask, normalTask, futureTask], todayIso, 'UTC');
+
+    expect(todayTasks.map((t) => t.id)).toContain(spanningTask.id);
+    expect(todayTasks.map((t) => t.id)).toContain(normalTask.id);
+    expect(todayTasks.map((t) => t.id)).not.toContain(futureTask.id);
+  });
+});
+
+describe('Recursive Subtask Persistence & Promotion', () => {
+  it('updateTaskSubtasks updates tree and emits LWW mutation', async () => {
+    const store = makeStore();
+    const task = await createTask({ title: 'Parent task' }, { store, userId: 'user-1' });
+
+    const tree = [
+      {
+        id: 'sub-1',
+        title: 'Child 1',
+        isCompleted: false,
+        order: 0,
+        children: [
+          {
+            id: 'sub-1-1',
+            title: 'Grandchild 1',
+            isCompleted: true,
+            order: 0
+          }
+        ]
+      }
+    ];
+
+    const nowIso = '2020-01-01T15:00:00.000Z';
+    const updated = await updateTaskSubtasks(store, task.id, tree, {
+      userId: 'user-1',
+      now: () => new Date(nowIso)
+    });
+
+    expect(updated.items).toEqual(tree);
+
+    const inStore = await store.getTask(task.id);
+    expect(inStore?.items).toEqual(tree);
+
+    const mutations = await store.listPendingMutations(10);
+    const updateMut = mutations.find((m) => m.operation === 'UPDATE');
+    expect(updateMut).toBeDefined();
+    expect(updateMut?.payload).toEqual({ items: tree, updatedAt: nowIso });
+    expect(updateMut?.fieldTimestamps).toEqual({ items: nowIso, updatedAt: nowIso });
+  });
+
+  it('promoteSubtaskToIndependentTask extracts subtask and creates new root task', async () => {
+    const store = makeStore();
+    const task = await createTask({ title: 'Main Project' }, { store, userId: 'user-1' });
+
+    const tree = [
+      {
+        id: 'sub-1',
+        title: 'To Be Promoted',
+        isCompleted: false,
+        order: 0,
+        children: [
+          { id: 'sub-1-1', title: 'Sub child', isCompleted: false, order: 0 }
+        ]
+      },
+      {
+        id: 'sub-2',
+        title: 'Sibling',
+        isCompleted: false,
+        order: 1
+      }
+    ];
+
+    await updateTaskSubtasks(store, task.id, tree, { userId: 'user-1' });
+
+    const result = await promoteSubtaskToIndependentTask(store, task.id, 'sub-1', {
+      userId: 'user-1',
+      timeZone: 'UTC'
+    });
+
+    expect(result.parentTask.items?.length).toBe(1);
+    expect(result.parentTask.items?.[0]?.id).toBe('sub-2');
+
+    expect(result.newIndependentTask).toBeDefined();
+    expect(result.newIndependentTask.title).toBe('To Be Promoted');
+    expect(result.newIndependentTask.projectId).toBe(task.projectId);
+    expect(result.newIndependentTask.items?.length).toBe(1);
+    expect(result.newIndependentTask.items?.[0]?.id).toBe('sub-1-1');
+
+    const inStoreNewTask = await store.getTask(result.newIndependentTask.id);
+    expect(inStoreNewTask).toBeDefined();
+  });
+
+  it('updateTaskDetails updates all metadata fields atomically', async () => {
+    const store = makeStore();
+    const task = await createTask({ title: 'Original title' }, { store, userId: 'user-1' });
+
+    const nowIso = '2026-10-15T16:00:00.000Z';
+    const updated = await updateTaskDetails(
+      store,
+      task.id,
+      {
+        title: 'New Title',
+        description: 'New Description',
+        priority: 5,
+        startDate: '2026-10-15T00:00:00.000Z',
+        dueDate: '2026-10-20T00:00:00.000Z',
+        isAllDay: true,
+        tags: ['focus', 'important']
+      },
+      {
+        userId: 'user-1',
+        now: () => new Date(nowIso)
+      }
+    );
+
+    expect(updated.title).toBe('New Title');
+    expect(updated.desc).toBe('New Description');
+    expect(updated.priority).toBe(5);
+    expect(updated.startDate).toBe('2026-10-15T00:00:00.000Z');
+    expect(updated.dueDate).toBe('2026-10-20T00:00:00.000Z');
+    expect(updated.tags).toEqual(['focus', 'important']);
+
+    const inStore = await store.getTask(task.id);
+    expect(inStore?.title).toBe('New Title');
+    expect(inStore?.priority).toBe(5);
+  });
+});
+
