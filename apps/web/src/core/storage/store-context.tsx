@@ -1,19 +1,25 @@
-import type { AtomicTaskStore } from '@orbit/sync-engine';
+import type {
+  AtomicFilterStore,
+  AtomicTagStore,
+  AtomicTaskStore
+} from '@orbit/sync-engine';
 import { createContext, useContext, type ReactNode } from 'react';
 
-const StoreContext = createContext<AtomicTaskStore | undefined>(undefined);
+export type WebStore = AtomicTaskStore & AtomicTagStore & AtomicFilterStore;
+
+const StoreContext = createContext<WebStore | undefined>(undefined);
 
 export function StoreProvider({
   children,
   store
 }: {
   children: ReactNode;
-  store: AtomicTaskStore;
+  store: WebStore;
 }) {
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
 }
 
-export function useStore(): AtomicTaskStore {
+export function useStore(): WebStore {
   const store = useContext(StoreContext);
   if (store === undefined) throw new Error('useStore must be used inside StoreProvider');
   return store;

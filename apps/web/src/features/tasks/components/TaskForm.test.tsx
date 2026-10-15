@@ -103,4 +103,53 @@ describe('TaskForm Component (P4-CAL-001)', () => {
       expect(html).toContain('۱۷:۰۰');
     });
   });
+
+  describe('Tags Selector (P5-TAG-001)', () => {
+    it('renders tag chips with default suggestions', () => {
+      const onSubmit = vi.fn();
+      const html = renderToStaticMarkup(<TaskForm onSubmit={onSubmit} />);
+
+      expect(html).toContain('task-tags-selector');
+      expect(html).toContain('data-testid="task-tags-selector"');
+      expect(html).toContain('data-testid="task-tag-chip-work"');
+      expect(html).toContain('#کار');
+      expect(html).toContain('#شخصی');
+      expect(html).toContain('#فوری');
+    });
+
+    it('renders custom availableTags when provided', () => {
+      const onSubmit = vi.fn();
+      const customTags = [
+        {
+          id: 'custom-tag-1',
+          userId: 'u1',
+          name: 'مارکتینگ',
+          color: '#ec4899',
+          version: 0,
+          localStatus: 'SYNCED' as const,
+          createdAt: '',
+          updatedAt: ''
+        }
+      ];
+
+      const html = renderToStaticMarkup(
+        <TaskForm onSubmit={onSubmit} availableTags={customTags} />
+      );
+
+      expect(html).toContain('data-testid="task-tag-chip-custom-tag-1"');
+      expect(html).toContain('#مارکتینگ');
+      expect(html).toContain('#ec4899');
+    });
+
+    it('marks defaultTags as active chip with pressed state', () => {
+      const onSubmit = vi.fn();
+      const html = renderToStaticMarkup(
+        <TaskForm onSubmit={onSubmit} defaultTags={['work', 'urgent']} />
+      );
+
+      expect(html).toContain('task-tag-chip active');
+      expect(html).toContain('aria-pressed="true"');
+      expect(html).toContain('data-selected="true"');
+    });
+  });
 });

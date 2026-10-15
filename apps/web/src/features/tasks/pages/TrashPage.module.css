@@ -1,0 +1,133 @@
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.titleArea {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.purgeAllBtn {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.purgeAllBtn:hover:not(:disabled) {
+  background: #fecaca;
+}
+
+.purgeAllBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.trashList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.trashItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.taskInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.taskTitle {
+  font-size: 0.95rem;
+  color: #475569;
+  text-decoration: line-through;
+}
+
+.taskMeta {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.itemActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.restoreBtn {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.restoreBtn:hover {
+  background: #dcfce7;
+}
+
+.purgeBtn {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid transparent;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.purgeBtn:hover {
+  background: #fee2e2;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #94a3b8;
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}

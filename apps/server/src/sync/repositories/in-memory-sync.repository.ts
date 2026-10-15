@@ -105,27 +105,29 @@ export class InMemorySyncRepository implements SyncRepository {
     const userTasks = this.getUserTasks(userId);
     const existing = userTasks.get(mutation.entityId);
     const version = existing ? existing.version + 1 : (mutation.baseVersion || 0) + 1;
+    const taskPayload = mutation.payload as Partial<TaskEntity>;
 
     let updated: TaskEntity;
 
     if (mutation.operation === 'CREATE') {
       updated = {
         id: mutation.entityId,
-        projectId: mutation.payload.projectId ?? 'inbox',
+        projectId: taskPayload.projectId ?? 'inbox',
         userId,
-        title: mutation.payload.title ?? '',
-        kind: mutation.payload.kind ?? 'TASK',
-        priority: mutation.payload.priority ?? 0,
-        isAllDay: mutation.payload.isAllDay ?? false,
-        timeZone: mutation.payload.timeZone ?? 'UTC',
-        reminders: mutation.payload.reminders ?? [],
-        items: mutation.payload.items ?? [],
+        title: taskPayload.title ?? '',
+        kind: taskPayload.kind ?? 'TASK',
+        priority: taskPayload.priority ?? 0,
+        isAllDay: taskPayload.isAllDay ?? false,
+        timeZone: taskPayload.timeZone ?? 'UTC',
+        reminders: taskPayload.reminders ?? [],
+        tags: taskPayload.tags ?? [],
+        items: taskPayload.items ?? [],
         version,
         localStatus: 'CREATED',
-        createdAt: mutation.payload.createdAt ?? mutation.createdAt,
-        updatedAt: mutation.payload.updatedAt ?? mutation.createdAt,
-        completedAt: mutation.payload.completedAt ?? null,
-        ...(mutation.payload.deletedAt ? { deletedAt: mutation.payload.deletedAt } : {})
+        createdAt: taskPayload.createdAt ?? mutation.createdAt,
+        updatedAt: taskPayload.updatedAt ?? mutation.createdAt,
+        completedAt: taskPayload.completedAt ?? null,
+        ...(taskPayload.deletedAt ? { deletedAt: taskPayload.deletedAt } : {})
       };
     } else if (mutation.operation === 'UPDATE') {
       const baseTask: TaskEntity = existing ?? {
@@ -148,11 +150,11 @@ export class InMemorySyncRepository implements SyncRepository {
 
       updated = {
         ...baseTask,
-        ...mutation.payload,
+        ...taskPayload,
         id: baseTask.id,
         userId,
         version,
-        updatedAt: mutation.payload.updatedAt ?? mutation.createdAt
+        updatedAt: taskPayload.updatedAt ?? mutation.createdAt
       };
     } else {
       // DELETE
@@ -177,8 +179,8 @@ export class InMemorySyncRepository implements SyncRepository {
       updated = {
         ...baseTask,
         version,
-        deletedAt: mutation.payload.deletedAt ?? mutation.createdAt,
-        updatedAt: mutation.payload.updatedAt ?? mutation.createdAt
+        deletedAt: taskPayload.deletedAt ?? mutation.createdAt,
+        updatedAt: taskPayload.updatedAt ?? mutation.createdAt
       };
     }
 

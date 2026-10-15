@@ -4,23 +4,38 @@
 
 ## وضعیت کلی
 
-- **مرحله:** فاز ۴، مدیریت زمان و تقویم
-- **آخرین به‌روزرسانی:** 2026-10-09
+- **مرحله:** فاز ۵، سازمان‌دهی، فیلترها و نماهای پیشرفته (تکمیل ۱۰۰٪ فاز ۵)
+- **آخرین به‌روزرسانی:** 2026-10-15
 - **آخرین عامل:** Antigravity
-- **درصد تقریبی پیشرفت:** 90% (فاز ۴)
-- **Branch فعال:** `feature/web-natural-date-parsing`
+- **درصد تقریبی پیشرفت:** 100% (فاز ۵)
+- **Branch فعال:** `feature/smart-lists-and-filters`
 - **Branchهای پایه:** `main`، `develop`
 
 ## هدف فعلی
 
-پیاده‌سازی موتور سبک و مستقل پردازش زبان طبیعی تاریخ و زمان به دو زبان فارسی و انگلیسی (Natural Language Date Parsing) برای ایجاد هوشمند تسک‌ها، تشخیص درلحظه هنگام تایپ عنوان، نمایش تراشه برجسته تاریخ (`smart-date-chip`)، اعمال خودکار بر روی `dueDate` و `isAllDay`، و پالایش تمیز عنوان تسک از عبارات زمانی.
+تکمیل کلیه قابلیت‌های باقی‌مانده فاز ۵ (سازمان‌دهی، فیلترها و نماهای پیشرفته) برای Orbit شامل مودال ساخت فیلترهای هوشمند، تایملاین افقی، موتور رنکینگ LexoRank، جستجوی چندفیلدی و عملیات گروهی/سطل زباله/آرشیو/اکسپورت.
 
 ## کارهای در حال انجام
 
-- [ ] بازبینی شاخه `feature/web-natural-date-parsing` توسط کاربر
-- [ ] گام بعدی: نهایی‌سازی دروازه خروج فاز ۴ و آغاز فاز ۵ (سازمان‌دهی، تگ‌ها، فیلترهای هوشمند و نماهای پیشرفته)
+- [x] پیاده‌سازی سیستم لیست‌های هوشمند و ذخیره‌سازی فیلترها (تسک P5-SMT-001)
+- [x] پیاده‌سازی نمای مشتق‌شده ماتریس آیزنهاور (تسک P5-MTX-001)
+- [x] رابط کاربری ساخت و ویرایش تعاملی فیلترهای هوشمند (تسک P5-BLD-001)
+- [x] نمای افقی تایملاین و گانت‌چارت پروژه‌ها (تسک P5-TML-001)
+- [x] موتور رتبه‌بندی مجدد رشته‌ای بدون خطای ممیز شناور LexoRank (تسک P5-RNK-001)
+- [x] جستجوی چندفیلدی، مرتب‌سازی و دسته‌بندی پویا همراه با تاریخچه (تسک P5-SRC-001)
+- [x] عملیات گروهی، صفحات سطل زباله/آرشیو و درون‌ریزی/برون‌بری پشتیبان (تسک P5-BLK-001)
 
 ## کارهای انجام‌شده
+
+- [x] **P5-BLD-001:** رابط کاربری تعاملی ساخت و ویرایش لیست‌های هوشمند (`SmartFilterModal.tsx`) با فیلدهای نام، رنگ (`PRESET_TAG_COLORS`)، آیکون، عملگر منطقی AND/OR، ردیف‌های شرط داینامیک، دکمه `+ New Filter` در سایدبار `AppShell.tsx`، و دکمه‌های ویرایش و حذف لیست‌های سفارشی با تأیید و حذف نرم اتمیک در `SmartListPage.tsx`.
+- [x] **P5-TML-001:** نمای افقی تایملاین و مینی گانت پروژه (`timeline-utils.ts` و `TimelinePage.tsx`) با محاسبه پنجره‌های زمانی (روزانه، هفتگی منطبق بر تقویم شمسی، ماهانه)، محاسبه آفست‌های درصدی میله مدت‌زمان تسک‌ها، کنترل‌های تغییر بازه و زمان‌بندی مجدد، ایجاد سریع تسک در تایملاین، مسیر `/timeline` و ناوبری در `AppShell.tsx`.
+- [x] **P5-RNK-001:** موتور رتبه‌بندی مجدد لکسیکوگرافیک و شاخص‌گذاری کسری (LexoRank Engine) در `lexorank.ts` با تولید مقدار میانی دقیق (مانند بین `a0` و `a1` -> `a0V`)، بدون خطای اعشاری، مقاوم در برابر تداخل، متعادل‌سازی `rebalanceRanks`، افزودن فیلد `position` به `TaskEntity` و تابع `reorderTask` در `task-service.ts` با جهش اتمیک LWW.
+- [x] **P5-SRC-001:** جستجوی چندفیلدی (`search-utils.ts`) روی عنوان، توضیحات، برچسب‌ها و تاریخ سررسید، مرتب‌سازی داینامیک بر اساس ۴ بعد، دسته‌بندی تسک‌ها (اولویت، تاریخ سررسید، برچسب، پروژه)، مدیریت تاریخچه جستجوهای اخیر در `localStorage`، و نوار جستجوی زنده در هدر بالای `AppShell.tsx` همراه با منوی کشویی جستجوهای اخیر و نتایج لحظه‌ای.
+- [x] **P5-BLK-001:** عملیات گروهی تسک‌ها (`bulk-service.ts`) شامل تکمیل گروهی، حذف نرم گروهی، تغییر اولویت گروهی و افزودن برچسب گروهی با جهش‌های اتمیک LWW، نوار شناور `BulkActionBar.tsx`، صفحات مدیریت تسک‌های حذف شده `/trash` (`TrashPage.tsx`) با قابلیت بازیابی و پاکسازی، صفحه آرشیو تسک‌های تکمیل شده `/archive` (`ArchivePage.tsx`) با قابلیت بازگشایی، و موتور جامع پشتیبان‌گیری `import-export.ts` با پشتیبانی از فرمت اختصاصی Orbit و خروجی‌های Todoist و TickTick.
+- [x] **P5-MTX-001:** پیاده‌سازی نمای ماتریس آیزنهاور (توابع خالص `categorizeTaskIntoQuadrant`، `getEisenhowerMatrixGroups` و `getQuadrantTargetUpdates` در `matrix-utils.ts`، گرید ۲×۲ ریسپانسیو و پالت رنگی ۴ ربع در `EisenhowerMatrixPage.tsx`، Drag & Drop بین ربع‌ها با به‌روزرسانی خوش‌بینانه و ثبت اتمیک جهش UPDATE با LWW در `task-service.ts`، ایجاد سریع تسک و تکمیل تسک، مسیر `/matrix` و لینک سایدبار `AppShell.tsx`).
+- [x] **P5-SMT-001:** سیستم لیست‌های هوشمند و ذخیره‌سازی فیلترها (پورت‌های `AtomicFilterStore`، پیاده‌سازی در `MemoryLocalStore` و `IndexedDbLocalStore`، سرویس `filter-service` با ۵ پیش‌تنظیم سیستمی، صفحه `SmartListPage` با مسیر `/filters/:filterId` و نمایش لیست‌های هوشمند با نشانگر شمارنده در سایدبار `AppShell`).
+- [x] **P5-FLT-001:** موتور فیلترهای هوشمند مبتنی بر JSON Rule DSL (`filter-evaluator.ts`، تایپ‌های `FilterRule`، `FieldRule`، `FilterGroupRule`، `SmartFilterEntity`، عملگرهای مقایسه‌ای و بازه‌های زمانی نسبی تقویم شمسی/میلادی).
+- [x] **P5-TAG-001:** سیستم مدیریت برچسب‌ها (Tags و Tag Groups)، مدل‌های دامنه، سرویس LWW، فرم تسک و کامپوننت‌های UI و ادغام در `develop`.
 
 - [x] ایجاد فایل مرکزی پیشرفت پروژه
 - [x] ایجاد پوشه مستندات
@@ -76,8 +91,79 @@
 - [x] **P4-REC-001:** پیاده‌سازی موتور تکرار تسک‌ها (Recurring Tasks Engine بر پایه RRULE) با پشتیبانی دوگانه تقویم شمسی/میلادی، محاسبات سال‌های کبیسه، چرخه حیات تکمیل تسک و نشانگرهای بصری UI
 - [x] **P4-REM-001:** پیاده‌سازی موتور یادآورهای درون‌برنامه‌ای و مرورگر (Reminders Engine) با اسنوز (+10 دقیقه)، کنترل‌های تکمیل تسک، پیش‌تنظیم‌های استاندارد، هشدارهای صوتی و دسکتاپ، و نشانگرهای زنگوله 🔔 در تسک‌ها و تقویم
 - [x] **P4-NLP-001:** پیاده‌سازی موتور پردازش زبان طبیعی تاریخ و زمان دو زبانه (فارسی و انگلیسی)، تشخیص درلحظه عنوان، تراشه هوشمند تاریخ (`smart-date-chip`) و پالایش عنوان تسک
+- [x] ادغام رسمی فاز ۴ در `develop` و انتشار ریلیز فاز ۴ در `main` (کامیت `ee0171f` با پیام `release: merge Phase 4 completion into main`) و شاخه‌بندی فاز ۵ (`feature/tags-management`)
+- [x] **P5-TAG-001:** پیاده‌سازی سیستم مدیریت Tags و Tag Groups در `shared-types`، ایجاد سرویس `tag-service` با جهش‌های اتمیک LWW، انتساب و جداسازی تگ از تسک، انتخاب‌گر برچسب‌ها در `TaskForm`، نمایش برچسب‌های رنگی تگ در `TaskItem`، و آزمون‌های دامنه و کامپوننت
 
 ## فعالیت AIها
+
+### 2026-10-09 | P5-TAG-001 | پیاده‌سازی سیستم مدیریت Tags و Tag Groups و آغاز رسمی فاز ۵
+
+- **عامل:** Antigravity
+- **هدف:** اجرای کامل گام بستن فاز ۴ (ادغام صریح بدون fast-forward در develop، حذف شاخه فیچر، انتشار ریلیز فاز ۴ در main با کامیت `release: merge Phase 4 completion into main` و ایجاد شاخه `feature/tags-management`) و پیاده‌سازی نخستین تسک فاز ۵ یعنی سیستم مدیریت برچسب‌ها (Tags) و گروه‌های برچسب (Tag Groups) همراه با جهش‌های اتمیک LWW، انتساب تگ به تسک، انتخاب‌گر تگ‌ها در TaskForm و نمایش برچسب‌های رنگی تگ در TaskItem.
+- **انجام‌شده:**
+  - عملیات گیت و پایان رسمی فاز ۴:
+    - ادغام `feature/web-natural-date-parsing` در `develop` با `--no-ff` (کامیت `41e77f8`).
+    - حذف محلی و ریموت شاخه `feature/web-natural-date-parsing`.
+    - ادغام `develop` در `main` با `--no-ff` و پیام `release: merge Phase 4 completion into main` (کامیت `ee0171f`).
+    - سوئیچ به `develop` و ایجاد شاخه جدید `feature/tags-management`.
+  - مدل‌های داده در `packages/shared-types`:
+    - ایجاد `TagEntity` و `TagGroupEntity` در `packages/shared-types/src/tag.ts`.
+    - افزودن فیلد اختیاری `tags?: string[]` به `TaskEntity` در `task.ts`.
+    - توسعه `EntityType` به `'TASK' | 'TAG' | 'TAG_GROUP'` و ارتقای `MutationPayload.payload` جهت پشتیبانی از برچسب‌ها و گروه‌ها.
+    - بازصادرات تایپ‌ها در `packages/shared-types/src/index.ts`.
+  - درگاه ذخیره‌سازی محلی در `packages/sync-engine` و `apps/web`:
+    - تعریف `AtomicTagStore` در `ports.ts` و صادرات در `sync-engine/index.ts`.
+    - ارتقای `MemoryLocalStore` با نگاشت‌های حافظه‌ای `tags` و `tagGroups` و توابع اتمیک `saveTagWithMutation` و `saveTagGroupWithMutation`.
+    - ارتقای `IndexedDbLocalStore` به نسخه ۲ دیتابیس محلی با ایجاد مخازن `tags` و `tagGroups` و تراکنش‌های اتمیک.
+    - ارتقای `store-context.tsx` به نوع یکپارچه `WebStore` (`AtomicTaskStore & AtomicTagStore`).
+  - سرویس دامنه در `apps/web/src/features/tags/services/tag-service.ts`:
+    - پیاده‌سازی توابع کامل CRUD برای Tags: `createTag`, `updateTag`, `deleteTag` (حذف نرم), `listTags`, `getTag`.
+    - پیاده‌سازی توابع CRUD برای Tag Groups: `createTagGroup`, `updateTagGroup`, `deleteTagGroup`, `listTagGroups`.
+    - پیاده‌سازی انتساب و جداسازی تگ به تسک با جهش‌های جزئی (PARTIAL UPDATE) و حل تعارض LWW: `attachTagToTask`, `detachTagFromTask`, `setTaskTags`.
+    - اعتبارسنجی ورودی‌ها با خطاهای دامنه `TagValidationError`, `TagNotFoundError`, `TagGroupNotFoundError`.
+    - پشتیبانی از پالت پیش‌فرض رنگ‌ها `PRESET_TAG_COLORS` و رنگ پیش‌فرض `#6366f1`.
+    - ارتقای `createTask` در `task-service.ts` جهت پذیرش `tags` در ورودی و ثبت در جهش اولیه CREATE با `fieldTimestamps.tags`.
+  - یکپارچه‌سازی رابط کاربری:
+    - `TaskForm.tsx`: تعبیه انتخاب‌گر برچسب‌ها با تراشه‌های قابل کلیک (`.task-tag-chip`)، برچسب‌های پیشنهادی پیش‌فرض، مدیریت وضعیت انتخاب، استایل‌های فعال و ارسال آرایه `tags` در `onSubmit`.
+    - `TaskItem.tsx`: نمایش برچسب‌های رنگی تگ (`.task-tag-badge`) با محاسبه داینامیک رنگ بر اساس پالت هارمونیک یا رنگ سفارشی تگ، و پنهان‌سازی خودکار در صورت حذف تسک.
+    - `TaskList.tsx` و `InboxPage.tsx`: بارگذاری تگ‌ها از استور محلی و تزریق به فرم و آیتم‌های تسک.
+    - `globals.css`: طراحی استایل‌های ظریف و مدرن برای تراشه‌ها، دکمه‌های انتخاب و برچسب‌های رنگی تگ با هماهنگی Dark/Light Mode.
+  - آزمون‌ها و اعتبارسنجی:
+    - ۱۲ آزمون واحد جامع در `tag-service.test.ts` برای تمام سناریوهای تگ، گروه‌ها، انتساب به تسک، حذف نرم و Idempotency.
+    - آزمون ایجاد تسک با تگ در `task-service.test.ts`.
+    - ۳ آزمون کامپوننت برای انتخاب‌گر تگ‌ها در `TaskForm.test.tsx`.
+    - ۳ آزمون کامپوننت برای برچسب‌های رنگی در `TaskItem.test.tsx`.
+    - اجرای موفق تمام ۳۵ تست آزمون‌های ماژولار تفکیک‌شده (`npx vitest run tag TaskForm TaskItem`).
+    - اجرای موفق تمام ۳۴۷ تست وب بدون خطا (`npm run test --workspace @orbit/web`).
+    - قبولی کامل بررسی نوع‌ها (`npm run typecheck`) بدون هیچ‌گونه هشدار یا خطای تایپ‌اسکریپت.
+- **فایل‌ها:**
+  - `packages/shared-types/src/tag.ts`
+  - `packages/shared-types/src/task.ts`
+  - `packages/shared-types/src/sync.ts`
+  - `packages/shared-types/src/index.ts`
+  - `packages/sync-engine/src/ports.ts`
+  - `packages/sync-engine/src/index.ts`
+  - `apps/web/src/core/storage/memory-local-store.ts`
+  - `apps/web/src/core/storage/indexeddb-local-store.ts`
+  - `apps/web/src/core/storage/store-context.tsx`
+  - `apps/web/src/features/tags/services/tag-service.ts`
+  - `apps/web/src/features/tags/services/tag-service.test.ts`
+  - `apps/web/src/features/tasks/services/task-service.ts`
+  - `apps/web/src/features/tasks/services/task-service.test.ts`
+  - `apps/web/src/features/tasks/components/TaskForm.tsx`
+  - `apps/web/src/features/tasks/components/TaskForm.test.tsx`
+  - `apps/web/src/features/tasks/components/TaskItem.tsx`
+  - `apps/web/src/features/tasks/components/TaskItem.test.tsx`
+  - `apps/web/src/features/tasks/components/TaskList.tsx`
+  - `apps/web/src/features/tasks/pages/InboxPage.tsx`
+  - `apps/web/src/styles/globals.css`
+  - `apps/server/src/sync/repositories/in-memory-sync.repository.ts`
+  - `docs/roadmap.md`
+  - `docs/project-plan.md`
+  - `PROGRESS.md`
+- **اعتبارسنجی:** اجرای موفق `npm run typecheck`، `npx vitest run tag TaskForm TaskItem` (۳۵ تست)، `npm run test --workspace @orbit/web` (۳۴۷ تست)، `git diff --check`.
+- **گام بعدی:** بازبینی و ادغام `feature/tags-management` در `develop` و آغاز تسک بعدی فاز ۵ (موتور فیلترهای هوشمند JSON Rule DSL - P5-FLT-001).
+
 
 ### 2026-10-09 | P4-NLP-001 | پیاده‌سازی پردازش زبان طبیعی تاریخ و زمان دو زبانه (فارسی و انگلیسی)
 
@@ -1252,15 +1338,154 @@
 - **اعتبارسنجی:**
   - اجرای کامل اعتبارسنجی‌های شش‌گانه الزامی (`npm ci`, `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build`, `git diff --check`).
 - **وضعیت PR:**
-  - آماده ثبت PR از شاخه `feature/calendar-jalali-foundation` به `develop`.
+
+### 2026-10-15 | پیاده‌سازی موتور فیلترهای هوشمند مبتنی بر JSON Rule DSL (P5-FLT-001)
+
+- **عامل:** Antigravity
+- **هدف:** طراحی و پیاده‌سازی موتور فیلترهای هوشمند تسک‌ها مبتنی بر ساختار داده استاندارد و توسعه‌پذیر JSON Rule DSL با پشتیبانی از عملگرهای منطقی AND/OR، عملگرهای فیلد (برابری، تضاد، شامل‌بودن متنی و آرایه‌ای، شمول مجموعه‌ای، مقایسه‌های عددی و تاریخی، و بازه‌های زمانی نسبی شمسی/میلادی).
+- **انجام‌شده:**
+  - **ساختار داده و تایپ‌های دامنه (`packages/shared-types/src/filter.ts`):**
+    - تعریف عملگرهای فیلد (`FilterFieldOperator`): `eq`, `neq`, `contains`, `not_contains`, `gt`, `gte`, `lt`, `lte`, `in`, `not_in`, `within`, `is_null`, `is_not_null`.
+    - تعریف بازه‌های زمانی نسبی (`RelativeDateRange`): `today`, `tomorrow`, `this_week`, `next_week`, `overdue`, `no_date`.
+    - تعریف فیلدهای هدف (`FilterTargetField`): `title`, `content`, `desc`, `kind`, `priority`, `tags`, `projectId`, `dueDate`, `startDate`, `isCompleted`, `completedAt`, `isAllDay`, `repeatFlag`.
+    - تعریف قواعد فیلد (`FieldRule`) و گروه‌های منطقی (`FilterGroupRule` با عملگرهای `AND`/`OR`).
+    - تعریف موجودیت فیلتر هوشمند (`SmartFilterEntity`) برای ذخیره‌سازی، ترتیب‌بندی و همگام‌سازی فیلترهای سفارشی کاربر.
+    - توابع تشخیص نوع (`isFieldRule` و `isFilterGroupRule`).
+    - صادرات کامل از ریشه پکیج `packages/shared-types/src/index.ts`.
+  - **موتور ارزیابی محض تسک‌ها (`apps/web/src/core/filters/filter-evaluator.ts`):**
+    - پیاده‌سازی تابع محض `evaluateTaskFilter(task, rule, context)`.
+    - پیاده‌سازی تابع محض فیلتر آرایه‌ای `filterTasks(tasks, rule, context)`.
+    - ارزیابی دقیق فیلدهای `priority`, `kind`, `title`, `content/desc`, `tags`, `dueDate`, `completedAt`, `isCompleted`.
+    - پشتیبانی از تقویم شمسی (جلالی) و میلادی در ارزیابی بازه‌های زمانی نسبی هفته جاری (`this_week`: شنبه تا جمعه در شمسی، دوشنبه تا یکشنبه در میلادی) و هفته بعد (`next_week`).
+    - محاسبه دقیق تاخیر (`overdue`): تسک‌های تکمیل‌شده هرگز معوق محسوب نمی‌شوند؛ تسک‌های تمام‌روز (`isAllDay`) تنها پس از پایان روز مربوطه معوق تلقی می‌شوند.
+    - صادرات ماژولار از طریق `apps/web/src/core/filters/index.ts`.
+  - **مجموعه آزمون‌های جامع (`apps/web/src/core/filters/filter-evaluator.test.ts`):**
+    - پیاده‌سازی ۲۸ آزمون تفکیک‌شده شامل اعتبارسنجی تساوی متنی و ارقام، بررسی تگ‌ها و شمول زیررشته، شمول مجموعه‌ای، مقایسه‌های عددی و ترتیبی تاریخ‌ها، بررسی مقادیر تهی، بازه‌های نسبی امروز، فردا، هفته جاری و بعد، تاخیر، بدون تاریخ، و درخت‌های شروط تودرتوی عمیق.
+- **فایل‌ها:**
+  - `packages/shared-types/src/filter.ts`
+  - `packages/shared-types/src/index.ts`
+  - `apps/web/src/core/filters/filter-evaluator.ts`
+  - `apps/web/src/core/filters/index.ts`
+  - `apps/web/src/core/filters/filter-evaluator.test.ts`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npx vitest run filter`: ۲۸ تست از ۲۸ تست موفقیت‌آمیز پاس شدند (۱۰۰٪ قبولی).
+  - `npm run typecheck`: بررسی تایپ‌اسکریپت کل مونوریپو با ۰ خطا و خروجی موفقیت‌آمیز.
+- **وضعیت Git:**
+  - ادغام صریح شاخه `feature/tags-management` در `develop` با کامیت مرج `--no-ff`.
+  - حذف شاخه `feature/tags-management` به صورت لوکال و ریموت.
+  - ساخت و استقرار روی شاخه تمیز `feature/json-rule-filter-engine`.
 - **گام بعدی (Handoff):**
-  - ادغام `feature/calendar-jalali-foundation` در `develop`.
-  - اجرای تسک بعدی فاز ۴ (نماهای Upcoming و تقویم کامل هفتگی و ماهانه).
+  - ادغام `feature/json-rule-filter-engine` در `develop` و پیاده‌سازی سیستم لیست‌های هوشمند و ذخیره‌سازی محلی فیلترها (P5-SMT-001).
 
+### 2026-10-15 | پیاده‌سازی سیستم لیست‌های هوشمند و ذخیره‌سازی محلی فیلترها (P5-SMT-001)
 
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی ذخیره‌سازی محلی و ثبت اتمیک جهش‌های همگام‌سازی برای `SmartFilterEntity`، سرویس مدیریت فیلترهای هوشمند با حل تعارض LWW و پیش‌تنظیم‌های سیستمی پرکاربرد، صفحه نمایش تسک‌های فیلترشده (`SmartListPage`) و نمایش لیست‌های هوشمند در نوار ناوبری سایدبار به همراه نشانگر تعداد تسک‌های منطبق.
+- **انجام‌شده:**
+  - **پورت‌ها و قراردادهای لایه همگام‌سازی (`packages/sync-engine/src/ports.ts` و `packages/shared-types`):**
+    - افزودن `'SMART_FILTER'` به تایپ `EntityType` و الحاق `Partial<SmartFilterEntity>` به پی‌لود `MutationPayload`.
+    - تعریف پورت `AtomicFilterStore` با متدهای `getSmartFilter`، `saveSmartFilter`، `listSmartFilters` و `saveSmartFilterWithMutation`.
+    - افزودن متدهای اختیاری فیلترها به `LocalStore` و `AtomicTaskStore`.
+  - **پیاده‌سازی در استورهای محلی (`MemoryLocalStore` و `IndexedDbLocalStore`):**
+    - پیاده‌سازی کامل اینترفیس `AtomicFilterStore` در `MemoryLocalStore` جهت استفاده در تست‌ها.
+    - ارتقای نسخه دیتابیس `IndexedDbLocalStore` به نسخه ۳ و ایجاد object store جدید `smartFilters`.
+    - پیاده‌سازی تراکنش اتمیک همزمان فیلتر و جهش صف در `saveSmartFilterWithMutation` با پشتیبانی از idempotency key.
+    - به‌روزرسانی تایپ `WebStore` در `store-context.tsx`.
+  - **سرویس فیلترهای هوشمند (`apps/web/src/features/filters/services/filter-service.ts`):**
+    - تعریف ۵ پیش‌تنظیم سیستمی پرکاربرد: «سررسید گذشته» (`system-overdue`)، «اولویت بالا» (`system-high-priority`)، «بدون تاریخ» (`system-no-date`)، «امروز» (`system-today`) و «هفته جاری» (`system-this-week`).
+    - متدهای `isSystemFilterId` و `getSystemFilterById` و جلوگیری از حذف یا ویرایش فیلترهای سیستمی با خطای `SystemFilterModificationError`.
+    - پیاده‌سازی CRUD فیلترهای هوشمند کاربر (`createSmartFilter`, `updateSmartFilter`, `deleteSmartFilter`, `getSmartFilter`, `listUserSmartFilters`, `listAllSmartFilters`).
+    - ثبت اتمیک جهش‌های `CREATE`, `UPDATE` (با پی‌لود جزئی PARTIAL) و `DELETE` (حذف نرم با `deletedAt`) همراه با متادیتای LWW `fieldTimestamps` و افزایش نسخه.
+  - **صفحه نمایش تسک‌های فیلترشده (`apps/web/src/features/filters/pages/SmartListPage.tsx`):**
+    - پیاده‌سازی صفحه با استخراج پارامتر `filterId` از URL.
+    - بازیابی فیلتر و فیلتر کردن تسک‌های دیتابیس از طریق موتور خالص `filterTasks`.
+    - هدر اختصاصی شامل آیکون رنگی، عنوان فیلتر، برچسب فیلتر سیستمی و نشانگر شمارنده تعداد تسک‌های منطبق.
+    - پشتیبانی از ایجاد تسک، تغییر وضعیت تکمیل، حذف با بنر بازگردانی (Undo) و حالت‌های بارگذاری/خالی/خطای فیلتر ناموجود.
+    - ثبت مسیر `/filters/:filterId` در [routes.tsx](file:///d:/Programing/Orbit/apps/web/src/app/routes.tsx).
+  - **یکپارچه‌سازی ناوبری سایدبار (`apps/web/src/layout/AppShell.tsx`):**
+    - افزودن بخش «فیلترهای هوشمند» در سایدبار ناوبری.
+    - رندر پیوندهای فعال به هر فیلتر هوشمند با دات رنگی، عنوان و بج تعداد تسک‌های منطبق زنده.
+    - استایل‌دهی واکنش‌گرا و مدرن در `AppShell.module.css`.
+  - **آزمون‌های واحد و یکپارچه‌سازی:**
+    - ایجاد `apps/web/src/features/filters/services/filter-service.test.ts` با ۱۶ آزمون جامع.
+    - ایجاد `apps/web/src/features/filters/pages/SmartListPage.test.tsx` با ۴ آزمون کامپوننت.
+- **فایل‌ها:**
+  - `packages/shared-types/src/sync.ts`
+  - `packages/sync-engine/src/ports.ts`
+  - `packages/sync-engine/src/index.ts`
+  - `apps/web/src/core/storage/memory-local-store.ts`
+  - `apps/web/src/core/storage/indexeddb-local-store.ts`
+  - `apps/web/src/core/storage/store-context.tsx`
+  - `apps/web/src/features/filters/services/filter-service.ts`
+  - `apps/web/src/features/filters/services/filter-service.test.ts`
+  - `apps/web/src/features/filters/pages/SmartListPage.tsx`
+  - `apps/web/src/features/filters/pages/SmartListPage.module.css`
+  - `apps/web/src/features/filters/pages/SmartListPage.test.tsx`
+  - `apps/web/src/features/filters/index.ts`
+  - `apps/web/src/layout/AppShell.tsx`
+  - `apps/web/src/layout/AppShell.module.css`
+  - `apps/web/src/app/routes.tsx`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npx vitest run filter-service SmartListPage`: ۲۰ آزمون از ۲۰ آزمون با موفقیت پاس شدند (۱۰۰٪ قبولی).
+  - `npm run typecheck`: بدون خطا در root، web و server.
+  - `git diff --check`: بدون خطا.
+- **وضعیت Git:**
+  - ایجاد شاخه کاری `feature/smart-lists-and-filters` از آخرین نسخه `develop`.
+- **گام بعدی (Handoff):**
+  - ادغام `feature/smart-lists-and-filters` در `develop`.
+  - پیاده‌سازی رابط کاربری سازنده تعاملی فیلترهای هوشمند (Smart Filter Builder Modal / Component).
 
+### 2026-10-15 | پیاده‌سازی نمای ماتریس آیزنهاور (تسک P5-MTX-001)
+
+- **عامل:** Antigravity
+- **هدف:** پیاده‌سازی تسک P5-MTX-001 (نمای ماتریس آیزنهاور ۴ ربع بر اساس اولویت و سررسید، منطق مشتق‌سازی خالص، درگ‌اند-دراپ بین ربع‌ها با به‌روزرسانی خوش‌بینانه و ثبت اتمیک جهش UPDATE با LWW، ایجاد سریع تسک و یکپارچه‌سازی در مسیر /matrix و ناوبری سایدبار).
+- **انجام‌شده:**
+  - پیاده‌سازی ماژول مشتق‌سازی خالص ماتریس در `apps/web/src/features/matrix/matrix-utils.ts`:
+    * تابع `categorizeTaskIntoQuadrant`: دسته‌بندی قطعی در ۴ ربع (Q1: فوری و مهم با اولویت >= 3 و سررسید گذشته/امروز/فردا، Q2: مهم و غیرفوری با اولویت >= 3 و سررسید آینده دورتر یا بدون تاریخ، Q3: فوری و کم‌اهمیت با اولویت 1 و سررسید گذشته/امروز، Q4: نه فوری و نه مهم با اولویت 0 یا سایر تسک‌های غیراورژانسی).
+    * تابع `getEisenhowerMatrixGroups`: فیلتر تسک‌های فعال، دسته‌بندی در ربع‌ها و مرتب‌سازی استاندارد (تسک‌های تکمیل‌نشده، اولویت بالاتر، سررسید نزدیک‌تر و تاریخ ایجاد).
+    * تابع `getQuadrantTargetUpdates`: تعیین مقادیر خودکار priority، dueDate و isAllDay هنگام رها کردن تسک در ربع جدید یا ساخت سریع تسک در آن ربع.
+    * پیکربندی و پالت رنگی استاندارد `QUADRANT_CONFIGS` برای نمایش بصری ۴ ربع.
+  - پیاده‌سازی رابط کاربری صفحه ماتریس در `apps/web/src/features/matrix/pages/EisenhowerMatrixPage.tsx` و `EisenhowerMatrixPage.module.css`:
+    * گرید ۲×۲ ریسپانسیو با پالت رنگی استاندارد برای ۴ ربع.
+    * قابلیت HTML5 Drag & Drop بین ربع‌ها همراه با به‌روزرسانی خوش‌بینانه و ثبت اتمیک جهش UPDATE با پروتکل LWW در `task-service`.
+    * امکان ایجاد سریع تسک در پاورقی هر ربع با اعمال پیش‌تنظیم‌های همان ربع.
+    * امکان تیک زدن اتمام تسک با به‌روزرسانی خوش‌بینانه و کلید تغییر وضعیت نمایش کارهای تکمیل‌شده.
+  - افزودن متد `updateTask` با ثبت اتمیک جهش PARTIAL UPDATE و تایم‌استمپ‌های سطح فیلد (LWW) در `task-service.ts` و پشتیبانی از اولویت `priority` در `CreateTaskInput` و `createTask`.
+  - یکپارچه‌سازی ناوبری:
+    * افزودن مسیر `/matrix` در `apps/web/src/app/routes.tsx`.
+    * افزودن پیوند «ماتریس آیزنهاور» در نوار کناری `AppShell.tsx`.
+  - آزمون‌های جامع:
+    * فایل `matrix-utils.test.ts` شامل ۱۴ آزمون پوشش‌دهنده دسته‌بندی ۴ ربع، حذف تسک‌های حذف‌شده، مرتب‌سازی و نگاشت تغییرات هدف.
+    * فایل `EisenhowerMatrixPage.test.tsx` شامل آزمون‌های رندرینگ گرید، ربع‌ها، فرم‌های ایجاد سریع و نمایش تسک‌ها.
+    * افزودن آزمون‌های اعتبارسنجی `updateTask` و اولویت اولیه در `task-service.test.ts`.
+- **فایل‌ها:**
+  - `apps/web/src/features/matrix/matrix-utils.ts`
+  - `apps/web/src/features/matrix/index.ts`
+  - `apps/web/src/features/matrix/pages/EisenhowerMatrixPage.tsx`
+  - `apps/web/src/features/matrix/pages/EisenhowerMatrixPage.module.css`
+  - `apps/web/src/features/matrix/matrix-utils.test.ts`
+  - `apps/web/src/features/matrix/pages/EisenhowerMatrixPage.test.tsx`
+  - `apps/web/src/features/tasks/services/task-service.ts`
+  - `apps/web/src/features/tasks/services/task-service.test.ts`
+  - `apps/web/src/app/routes.tsx`
+  - `apps/web/src/layout/AppShell.tsx`
+  - `PROGRESS.md`
+- **اعتبارسنجی:**
+  - `npm run test --workspace @orbit/web -- matrix`: ۱۷ آزمون با ۱۰۰٪ قبولی پاس شدند.
+  - `npm run test --workspace @orbit/web -- task-service`: ۷۷ آزمون با ۱۰۰٪ قبولی پاس شدند.
+  - `npm run typecheck`: کامپایل بدون خطا در سراسر ریشه، کلاینت وب و سرور.
+  - `git diff --check`: بدون خطای فرمت یا کاراکترهای اضافه.
+- **وضعیت Git:**
+  - کامیت مستقیم روی شاخه فعال `feature/smart-lists-and-filters` با عنوان `feat(matrix): implement eisenhower matrix 4-quadrant derived view` بدون ادغام در develop.
+- **گام بعدی (Handoff):**
+  - ادغام `feature/smart-lists-and-filters` در `develop`.
+  - پیاده‌سازی رابط کاربری سازنده تعاملی فیلترهای هوشمند (Smart Filter Builder UI).
 
 ## محدودیت‌های باقی‌مانده
+
+
 
 - **بررسی دستی مرورگر:** InboxPage در مرورگر واقعی تست نشده.
 - **`INBOX_PROJECT_ID = 'inbox'`:** placeholder تا فاز ۳ (حساب کاربری). پس از account system باید به list ID واقعی کاربر تغییر کند.

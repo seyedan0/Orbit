@@ -1,4 +1,4 @@
-import type { TaskEntity } from '@orbit/shared-types';
+import type { TaskEntity, TagEntity } from '@orbit/shared-types';
 import { formatJalaliDate, isoToJalali } from '../../../core/calendar/jalali';
 
 export interface TaskItemProps {
@@ -7,6 +7,28 @@ export interface TaskItemProps {
   onDelete?: ((task: TaskEntity) => void) | undefined;
   onRestore?: ((task: TaskEntity) => void) | undefined;
   disabled?: boolean | undefined;
+  availableTags?: TagEntity[] | undefined;
+  tagsMap?: Record<string, TagEntity> | Map<string, TagEntity> | undefined;
+}
+
+const TAG_COLOR_PALETTE = [
+  '#3b82f6',
+  '#10b981',
+  '#f59e0b',
+  '#ef4444',
+  '#8b5cf6',
+  '#06b6d4',
+  '#ec4899',
+  '#6366f1'
+];
+
+function getTagColor(nameOrId: string, tagObj?: TagEntity): string {
+  if (tagObj?.color) return tagObj.color;
+  let hash = 0;
+  for (let i = 0; i < nameOrId.length; i++) {
+    hash = (hash << 5) - hash + nameOrId.charCodeAt(i);
+  }
+  return TAG_COLOR_PALETTE[Math.abs(hash) % TAG_COLOR_PALETTE.length] ?? '#6366f1';
 }
 
 export function TaskItem({
@@ -14,7 +36,9 @@ export function TaskItem({
   onToggleCompletion,
   onDelete,
   onRestore,
-  disabled
+  disabled,
+  availableTags,
+  tagsMap
 }: TaskItemProps) {
   const isCompleted = task.completedAt != null;
   const isDeleted = task.deletedAt != null;
@@ -73,6 +97,35 @@ export function TaskItem({
         {formattedDueDate && !isDeleted && (
           <span className="task-due-badge" data-testid={`task-due-${task.id}`}>
             📅 {formattedDueDate}
+          </span>
+        )}
+        {task.tags && task.tags.length > 0 && !isDeleted && (
+          <span className="task-tags-badges" data-testid={`task-tags-${task.id}`}>
+            {task.tags.map((tagRef) => {
+              const tagObj =
+                tagsMap instanceof Map
+                  ? tagsMap.get(tagRef)
+                  : tagsMap
+                  ? tagsMap[tagRef]
+                  : availableTags?.find((t) => t.id === tagRef || t.name === tagRef);
+              const tagName = tagObj ? tagObj.name : tagRef;
+              const color = getTagColor(tagRef, tagObj);
+              return (
+                <span
+                  key={tagRef}
+                  className="task-tag-badge"
+                  data-testid={`task-tag-${task.id}-${tagRef}`}
+                  style={{
+                    backgroundColor: `${color}1a`,
+                    borderColor: `${color}55`,
+                    color: color
+                  }}
+                  title={`برچسب: ${tagName}`}
+                >
+                  #{tagName}
+                </span>
+              );
+            })}
           </span>
         )}
       </span>

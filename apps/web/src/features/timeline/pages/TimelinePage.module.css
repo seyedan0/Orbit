@@ -1,0 +1,257 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.titleArea {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #64748b;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.navGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: #f1f5f9;
+  padding: 0.2rem;
+  border-radius: 6px;
+}
+
+.navBtn {
+  background: none;
+  border: none;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #475569;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.navBtn:hover {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.viewModeGroup {
+  display: flex;
+  background: #f1f5f9;
+  padding: 0.2rem;
+  border-radius: 6px;
+}
+
+.viewModeBtn {
+  background: none;
+  border: none;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.viewModeBtn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.timelineCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.timelineScroll {
+  overflow-x: auto;
+  position: relative;
+  min-width: 100%;
+}
+
+.timelineHeader {
+  display: flex;
+  border-bottom: 2px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.dayColumnHeader {
+  flex: 1;
+  min-width: 110px;
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  border-inline-end: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.dayColumnHeader.today {
+  background: #eff6ff;
+}
+
+.dayColumnHeader.weekend {
+  background: #fff1f2;
+}
+
+.weekdayLabel {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.jalaliLabel {
+  font-size: 0.88rem;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.timelineBody {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 350px;
+  background: #ffffff;
+}
+
+.gridLines {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  pointer-events: none;
+}
+
+.gridLineColumn {
+  flex: 1;
+  min-width: 110px;
+  border-inline-end: 1px dashed #f1f5f9;
+}
+
+.gridLineColumn.today {
+  background: rgba(59, 130, 246, 0.03);
+}
+
+.taskRowsContainer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.taskRow {
+  position: relative;
+  height: 52px;
+  border-bottom: 1px solid #f8fafc;
+  display: flex;
+  align-items: center;
+}
+
+.taskRow:hover {
+  background: rgba(248, 250, 252, 0.8);
+}
+
+.taskBar {
+  position: absolute;
+  height: 34px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.6rem;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  cursor: grab;
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: filter 0.15s, box-shadow 0.15s;
+}
+
+.taskBar:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.18);
+}
+
+.taskBar.completed {
+  opacity: 0.6;
+  text-decoration: line-through;
+  filter: grayscale(0.5);
+}
+
+.taskBar.overdue {
+  background: #ef4444 !important;
+}
+
+.resizeHandleLeft,
+.resizeHandleRight {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.resizeHandleLeft {
+  left: 0;
+  border-radius: 6px 0 0 6px;
+}
+
+.resizeHandleRight {
+  right: 0;
+  border-radius: 0 6px 6px 0;
+}
+
+.taskCheckbox {
+  accent-color: #ffffff;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.emptyState {
+  padding: 3rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}

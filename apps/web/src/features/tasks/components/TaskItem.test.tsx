@@ -145,4 +145,55 @@ describe('TaskItem', () => {
     expect(html).toContain('data-testid="task-reminder-test-task-1"');
     expect(html).toContain('🔔');
   });
+
+  describe('Tag Badges (P5-TAG-001)', () => {
+    it('renders colored tag badges when task has tags', () => {
+      const task = makeTask({
+        tags: ['work', 'urgent']
+      });
+      const html = renderToStaticMarkup(<TaskItem task={task} />);
+
+      expect(html).toContain('task-tags-badges');
+      expect(html).toContain('data-testid="task-tags-test-task-1"');
+      expect(html).toContain('data-testid="task-tag-test-task-1-work"');
+      expect(html).toContain('data-testid="task-tag-test-task-1-urgent"');
+      expect(html).toContain('#work');
+      expect(html).toContain('#urgent');
+    });
+
+    it('resolves tag display name and custom color from availableTags', () => {
+      const task = makeTask({
+        tags: ['tag-custom-1']
+      });
+      const availableTags = [
+        {
+          id: 'tag-custom-1',
+          userId: 'u1',
+          name: 'پروژه وب',
+          color: '#10b981',
+          version: 0,
+          localStatus: 'SYNCED' as const,
+          createdAt: '',
+          updatedAt: ''
+        }
+      ];
+      const html = renderToStaticMarkup(
+        <TaskItem task={task} availableTags={availableTags} />
+      );
+
+      expect(html).toContain('#پروژه وب');
+      expect(html).toContain('#10b981');
+    });
+
+    it('does not render tag badges when task is soft-deleted', () => {
+      const task = makeTask({
+        tags: ['work'],
+        deletedAt: '2026-09-30T12:00:00.000Z'
+      });
+      const html = renderToStaticMarkup(<TaskItem task={task} />);
+
+      expect(html).not.toContain('task-tags-badges');
+      expect(html).not.toContain('#work');
+    });
+  });
 });

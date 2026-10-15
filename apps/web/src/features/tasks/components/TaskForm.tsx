@@ -1,4 +1,5 @@
 import { useState, useMemo, type FormEvent } from 'react';
+import type { TagEntity } from '@orbit/shared-types';
 import { DatePicker } from '../../calendar/components/DatePicker';
 import { TaskValidationError } from '../services/task-service';
 import { RECURRENCE_PRESETS } from '../../../core/recurrence/recurrence';
@@ -8,11 +9,19 @@ import {
   formatDetectedDateChip
 } from '../../../core/calendar/natural-date';
 
+export const DEFAULT_SUGGESTED_TAGS: TagEntity[] = [
+  { id: 'work', userId: '', name: 'کار', color: '#3b82f6', version: 0, localStatus: 'SYNCED', createdAt: '', updatedAt: '' },
+  { id: 'personal', userId: '', name: 'شخصی', color: '#10b981', version: 0, localStatus: 'SYNCED', createdAt: '', updatedAt: '' },
+  { id: 'urgent', userId: '', name: 'فوری', color: '#ef4444', version: 0, localStatus: 'SYNCED', createdAt: '', updatedAt: '' },
+  { id: 'study', userId: '', name: 'یادگیری', color: '#8b5cf6', version: 0, localStatus: 'SYNCED', createdAt: '', updatedAt: '' }
+];
+
 export interface TaskFormSubmitOptions {
   dueDate?: string | null | undefined;
   isAllDay?: boolean | undefined;
   repeatFlag?: string | null | undefined;
   reminders?: string[] | undefined;
+  tags?: string[] | undefined;
 }
 
 export interface TaskFormProps {
@@ -22,6 +31,8 @@ export interface TaskFormProps {
   defaultIsAllDay?: boolean;
   defaultRepeatFlag?: string | null;
   defaultReminder?: string;
+  defaultTags?: string[];
+  availableTags?: TagEntity[];
 }
 
 export function TaskForm({
@@ -30,7 +41,9 @@ export function TaskForm({
   defaultDueDate = null,
   defaultIsAllDay = true,
   defaultRepeatFlag = null,
-  defaultReminder = 'NONE'
+  defaultReminder = 'NONE',
+  defaultTags = [],
+  availableTags
 }: TaskFormProps) {
   const [title, setTitle] = useState(defaultTitle);
   const [dueDate, setDueDate] = useState<string | null>(defaultDueDate);
@@ -38,7 +51,23 @@ export function TaskForm({
   const [isManualDueDate, setIsManualDueDate] = useState(false);
   const [repeatFlag, setRepeatFlag] = useState<string>(defaultRepeatFlag ?? '');
   const [reminder, setReminder] = useState<string>(defaultReminder);
+  const [selectedTags, setSelectedTags] = useState<string[]>(defaultTags);
   const [error, setError] = useState<string | undefined>();
+
+  const displayTags = useMemo(() => {
+    if (availableTags && availableTags.length > 0) {
+      return availableTags;
+    }
+    return DEFAULT_SUGGESTED_TAGS;
+  }, [availableTags]);
+
+  const handleToggleTag = (tagIdOrName: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tagIdOrName)
+        ? prev.filter((t) => t !== tagIdOrName)
+        : [...prev, tagIdOrName]
+    );
+  };
 
   // Real-time natural language date and time parsing
   const naturalResult = useMemo(() => {
@@ -74,7 +103,8 @@ export function TaskForm({
         dueDate: submitDueDate,
         isAllDay: submitIsAllDay,
         repeatFlag: repeatFlag.trim() ? repeatFlag : null,
-        reminders: reminder !== 'NONE' && submitDueDate ? [reminder] : []
+        reminders: reminder !== 'NONE' && submitDueDate ? [reminder] : [],
+        tags: selectedTags.length > 0 ? selectedTags : []
       });
 
       setTitle('');
@@ -83,6 +113,7 @@ export function TaskForm({
       setIsManualDueDate(false);
       setRepeatFlag(defaultRepeatFlag ?? '');
       setReminder(defaultReminder);
+      setSelectedTags(defaultTags);
     };
 
     run().catch((err: unknown) => {
@@ -169,6 +200,44 @@ export function TaskForm({
             </option>
           ))}
         </select>
+        <div
+          className="task-tags-selector"
+          data-testid="task-tags-selector"
+          aria-label="انتخاب برچسب‌ها"
+        >
+          <span className="task-tags-icon" title="برچسب‌ها">🏷️</span>
+          <div className="task-tags-chips">
+            {displayTags.map((tag) => {
+              const isSelected = selectedTags.includes(tag.id) || selectedTags.includes(tag.name);
+              return (
+                <button
+                  key={tag.id}
+                  type="button"
+                  className={`task-tag-chip ${isSelected ? 'active' : ''}`}
+                  data-testid={`task-tag-chip-${tag.id}`}
+                  data-selected={isSelected}
+                  onClick={() => handleToggleTag(tag.id)}
+                  style={
+                    isSelected
+                      ? {
+                          backgroundColor: `${tag.color ?? '#6366f1'}22`,
+                          borderColor: tag.color ?? '#6366f1',
+                          color: tag.color ?? '#6366f1'
+                        }
+                      : {
+                          borderColor: tag.color ? `${tag.color}66` : undefined,
+                          color: tag.color ?? undefined
+                        }
+                  }
+                  aria-pressed={isSelected}
+                  title={`برچسب ${tag.name}`}
+                >
+                  #{tag.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <button type="submit" className="btn-primary">
           افزودن
         </button>

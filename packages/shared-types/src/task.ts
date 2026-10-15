@@ -27,7 +27,9 @@ export interface TaskEntity {
   timezone?: string | null | undefined;
   repeatFlag?: string | null | undefined;
   reminders: string[];
+  tags?: string[] | undefined;
   items: SubTaskItem[];
+  position?: string | undefined;
   version: number;
   localStatus: LocalStatus;
   createdAt: string;

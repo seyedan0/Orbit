@@ -1,0 +1,379 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.titleArea {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.toggleLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #475569;
+  cursor: pointer;
+  user-select: none;
+}
+
+.statsBar {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.statBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.errorBanner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+/* 2x2 Grid Layout */
+.matrixGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+@media (max-width: 900px) {
+  .matrixGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Quadrant Card */
+.quadrantCard {
+  display: flex;
+  flex-direction: column;
+  min-height: 440px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
+  overflow: hidden;
+}
+
+.quadrantCard.dragOver {
+  border-color: #3b82f6 !important;
+  background-color: rgba(59, 130, 246, 0.04) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.quadrantHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fafafa;
+}
+
+.quadrantInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.quadrantTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quadrantBadge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+}
+
+.quadrantName {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.quadrantStrategy {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.quadrantCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.4rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #334155;
+}
+
+/* Task List inside Quadrant */
+.taskList {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.9rem;
+  overflow-y: auto;
+  min-height: 200px;
+}
+
+.emptyQuadrant {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 2rem 1rem;
+  border: 1.5px dashed #e2e8f0;
+  border-radius: 8px;
+  margin: 0.5rem 0;
+}
+
+/* Individual Task Card */
+.taskItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.7rem 0.85rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.taskItem:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.06);
+  border-color: #cbd5e1;
+}
+
+.taskItem:active {
+  cursor: grabbing;
+}
+
+.taskItem.dragging {
+  opacity: 0.4;
+  border-style: dashed;
+}
+
+.taskItem.completed {
+  opacity: 0.6;
+  background: #f8fafc;
+}
+
+.taskCheckbox {
+  margin-top: 0.2rem;
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+.taskBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.taskTitle {
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #1e293b;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.taskTitle.completed {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.taskMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+}
+
+.priorityBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.priorityHigh {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.priorityMedium {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.priorityLow {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.dueDateBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.dueDateBadge.overdue {
+  background: #fee2e2;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.dueDateBadge.today {
+  background: #e0f2fe;
+  color: #0284c7;
+  font-weight: 600;
+}
+
+.tagBadge {
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.7rem;
+}
+
+/* Quick Add Form in Quadrant Footer */
+.quickAddArea {
+  padding: 0.75rem 0.9rem;
+  border-top: 1px solid #f1f5f9;
+  background: #fafafa;
+}
+
+.quickAddForm {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.quickAddInput {
+  flex: 1;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.quickAddInput:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.quickAddButton {
+  padding: 0.45rem 0.85rem;
+  background: #1e293b;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.quickAddButton:hover {
+  background: #334155;
+}
+
+.quickAddButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
