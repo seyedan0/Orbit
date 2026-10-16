@@ -1,3 +1,8 @@
+/* ==========================================================================
+   Dark Green Task UI - CalendarPage Toolbar & Modals
+   Orbit Productivity Application
+   ========================================================================== */
+
 .calendarPageContainer {
   display: flex;
   flex-direction: column;
@@ -13,11 +18,11 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1rem;
-  background: #ffffff;
-  padding: 0.85rem 1.25rem;
-  border-radius: 12px;
-  border: 1px solid #e0e0e5;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  background: var(--bg-surface-1);
+  padding: 0.95rem 1.4rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-card);
 }
 
 .leftControls {
@@ -31,8 +36,9 @@
   margin: 0;
   font-size: 1.4rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-primary);
   min-width: 130px;
+  font-variant-numeric: tabular-nums;
 }
 
 .navGroup {
@@ -42,31 +48,33 @@
 }
 
 .navButton {
-  padding: 0.4rem 0.75rem;
+  padding: 0.45rem 0.8rem;
   font-size: 0.85rem;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  color: #334155;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
   user-select: none;
+  font-family: inherit;
 }
 
 .navButton:hover {
-  background: #e2e8f0;
-  border-color: #94a3b8;
+  background: var(--bg-surface-3);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
 }
 
 .navButtonToday {
-  background: #ffffff;
-  border-color: #4f7cff;
-  color: #4f7cff;
+  background: var(--accent-subtle);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary-hover);
   font-weight: 600;
 }
 
 .navButtonToday:hover {
-  background: #f0f7ff;
+  background: rgba(16, 185, 129, 0.2);
 }
 
 .rightControls {
@@ -78,50 +86,52 @@
 
 .toggleGroup {
   display: flex;
-  border: 1px solid #d0d7de;
-  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
   overflow: hidden;
-  background: #f8fafc;
+  background: var(--bg-surface-2);
 }
 
 .toggleBtn {
-  padding: 0.4rem 0.85rem;
+  padding: 0.45rem 0.85rem;
   font-size: 0.85rem;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
   font-weight: 500;
+  font-family: inherit;
 }
 
 .toggleBtn:hover {
-  color: #1e293b;
-  background: #f1f5f9;
+  color: var(--text-primary);
+  background: var(--bg-surface-3);
 }
 
 .toggleBtnActive {
-  background: #4f7cff;
-  color: #ffffff;
+  background: var(--accent-primary);
+  color: var(--text-on-accent);
   font-weight: 600;
+  box-shadow: 0 0 10px var(--accent-glow);
 }
 
 .toggleBtnActive:hover {
-  background: #3b66df;
-  color: #ffffff;
+  background: var(--accent-primary-hover);
+  color: var(--text-on-accent);
 }
 
 .actionError {
-  color: #dc2626;
-  background: #fef2f2;
+  color: var(--priority-high);
+  background: rgba(244, 63, 94, 0.15);
   padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  border: 1px solid #fecaca;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(244, 63, 94, 0.3);
   font-size: 0.85rem;
 }
 
 .loadingMsg {
-  color: #64748b;
+  color: var(--text-muted);
   padding: 2rem;
   text-align: center;
 }
@@ -129,12 +139,9 @@
 /* Modal styles */
 .modalBackdrop {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(2px);
+  inset: 0;
+  background: rgba(7, 13, 10, 0.75);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -143,83 +150,97 @@
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modalContent {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 1.5rem;
+  background: var(--bg-surface-1);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-default);
+  padding: 1.75rem;
   width: 90%;
-  max-width: 440px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  max-width: 460px;
+  box-shadow: var(--shadow-card), 0 20px 48px rgba(0, 0, 0, 0.6);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.15rem;
+  color: var(--text-primary);
 }
 
 .modalTitle {
   margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1e293b;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .modalDateLabel {
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 .modalInput {
   width: 100%;
-  padding: 0.6rem 0.8rem;
+  padding: 0.65rem 0.85rem;
   font-size: 0.95rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
   font-family: inherit;
   box-sizing: border-box;
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.15s ease;
 }
 
 .modalInput:focus {
-  outline: 2px solid #4f7cff;
-  border-color: #4f7cff;
+  outline: 2px solid var(--accent-glow);
+  border-color: var(--border-focus);
 }
 
 .modalActions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: 0.65rem;
 }
 
 .modalCancelBtn {
-  padding: 0.5rem 0.9rem;
-  font-size: 0.85rem;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  color: #475569;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
   cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.modalCancelBtn:hover {
+  background: var(--bg-surface-3);
+  color: var(--text-primary);
 }
 
 .modalSubmitBtn {
-  padding: 0.5rem 1rem;
-  font-size: 0.85rem;
-  background: #4f7cff;
+  padding: 0.5rem 1.15rem;
+  font-size: 0.875rem;
+  background: var(--accent-primary);
   border: none;
-  border-radius: 6px;
-  color: #ffffff;
+  border-radius: var(--radius-sm);
+  color: var(--text-on-accent);
   cursor: pointer;
   font-weight: 600;
+  font-family: inherit;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.25);
 }
 
 .modalSubmitBtn:hover {
-  background: #3b66df;
+  background: var(--accent-primary-hover);
+  box-shadow: var(--shadow-glow);
 }
 
 @media (max-width: 768px) {

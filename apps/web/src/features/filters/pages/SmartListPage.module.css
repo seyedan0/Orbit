@@ -1,8 +1,13 @@
+/* ==========================================================================
+   Dark Green Task UI - SmartListPage
+   Orbit Productivity Application
+   ========================================================================== */
+
 .container {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  max-width: 800px;
+  max-width: 840px;
   margin: 0 auto;
 }
 
@@ -11,8 +16,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border-default);
 }
 
 .headerInfo {
@@ -25,46 +30,49 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
   font-size: 1.25rem;
   color: #ffffff;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .title {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 700;
-  color: #1a1a24;
+  color: var(--text-primary);
 }
 
 .countBadge {
-  background: #f1f3f5;
-  color: #495057;
+  background: var(--bg-surface-2);
+  color: var(--accent-primary-hover);
+  border: 1px solid var(--border-subtle);
   font-size: 0.85rem;
   font-weight: 600;
   padding: 0.25rem 0.65rem;
-  border-radius: 12px;
+  border-radius: var(--radius-full);
+  font-variant-numeric: tabular-nums;
 }
 
 .filterSystemTag {
   font-size: 0.75rem;
-  color: #6c757d;
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
+  color: var(--text-muted);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
   padding: 0.15rem 0.5rem;
-  border-radius: 4px;
+  border-radius: var(--radius-full);
 }
 
 .errorState {
   padding: 2.5rem;
   text-align: center;
-  background: #fff5f5;
-  border: 1px solid #ffc9c9;
-  border-radius: 8px;
-  color: #c92a2a;
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--priority-high);
 }
 
 .errorState h2 {
@@ -72,8 +80,10 @@
 }
 
 .loadingMsg {
-  color: #868e96;
+  color: var(--text-muted);
   font-style: italic;
+  text-align: center;
+  padding: 2rem;
 }
 
 .customFilterActions {
@@ -84,33 +94,38 @@
 }
 
 .editFilterBtn {
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  color: #334155;
-  font-size: 0.78rem;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
   font-weight: 500;
-  padding: 0.2rem 0.55rem;
-  border-radius: 4px;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.15s ease;
+  font-family: inherit;
 }
 
 .editFilterBtn:hover {
-  background: #e2e8f0;
+  background: var(--accent-subtle);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary-hover);
 }
 
 .deleteFilterBtn {
-  background: #fff;
-  border: 1px solid #fecaca;
-  color: #dc2626;
-  font-size: 0.78rem;
+  background: transparent;
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  color: var(--priority-high);
+  font-size: 0.8rem;
   font-weight: 500;
-  padding: 0.2rem 0.55rem;
-  border-radius: 4px;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.15s ease;
+  font-family: inherit;
 }
 
 .deleteFilterBtn:hover {
-  background: #fee2e2;
+  background: rgba(244, 63, 94, 0.15);
+  border-color: var(--priority-high);
 }

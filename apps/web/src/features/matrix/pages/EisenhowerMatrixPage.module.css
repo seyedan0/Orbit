@@ -1,9 +1,14 @@
+/* ==========================================================================
+   Dark Green Task UI - Eisenhower Matrix
+   Orbit Productivity Application
+   ========================================================================== */
+
 .container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
   width: 100%;
-  max-width: 1400px;
+  max-width: 1440px;
   margin: 0 auto;
 }
 
@@ -31,7 +36,7 @@
   margin: 0;
   font-size: 1.6rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -40,7 +45,7 @@
 .subtitle {
   margin: 0;
   font-size: 0.9rem;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .controls {
@@ -55,9 +60,16 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.85rem;
-  color: #475569;
+  color: var(--text-secondary);
   cursor: pointer;
   user-select: none;
+}
+
+.toggleLabel input[type='checkbox'] {
+  accent-color: var(--accent-primary);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 
 .statsBar {
@@ -70,34 +82,44 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.25rem 0.6rem;
-  border-radius: 9999px;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-full);
   font-size: 0.75rem;
   font-weight: 600;
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-surface-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+  font-variant-numeric: tabular-nums;
 }
 
 .errorBanner {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #b91c1c;
+  background: rgba(244, 63, 94, 0.15);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  color: var(--priority-high);
   padding: 0.75rem 1rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-size: 0.9rem;
 }
 
-/* 2x2 Grid Layout */
+.loadingBanner {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 2rem;
+  font-size: 0.95rem;
+}
+
+/* 2x2 Grid Layout (dark-green-task-ui) */
 .matrixGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.25rem;
+  gap: 16px;
+  min-height: calc(100vh - 200px);
 }
 
 @media (max-width: 900px) {
   .matrixGrid {
     grid-template-columns: 1fr;
+    min-height: auto;
   }
 }
 
@@ -105,28 +127,27 @@
 .quadrantCard {
   display: flex;
   flex-direction: column;
-  min-height: 440px;
-  background: #ffffff;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease-in-out;
+  background: var(--bg-surface-1);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
+  position: relative;
 }
 
 .quadrantCard.dragOver {
-  border-color: #3b82f6 !important;
-  background-color: rgba(59, 130, 246, 0.04) !important;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: var(--accent-primary) !important;
+  background-color: var(--bg-surface-2) !important;
+  box-shadow: 0 0 24px -2px var(--accent-glow);
 }
 
 .quadrantHeader {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 1rem 1.15rem;
-  border-bottom: 1px solid #f1f5f9;
-  background: #fafafa;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-default);
 }
 
 .quadrantInfo {
@@ -144,8 +165,8 @@
 .quadrantBadge {
   font-size: 0.7rem;
   font-weight: 700;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
   color: #ffffff;
   letter-spacing: 0.02em;
 }
@@ -154,27 +175,29 @@
   margin: 0;
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-primary);
 }
 
 .quadrantStrategy {
   margin: 0;
-  font-size: 0.78rem;
-  color: #64748b;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
 }
 
 .quadrantCount {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.5rem;
-  height: 1.5rem;
-  padding: 0 0.4rem;
-  border-radius: 9999px;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  padding: 0 0.45rem;
+  border-radius: var(--radius-full);
   font-size: 0.75rem;
   font-weight: 700;
-  background: #e2e8f0;
-  color: #334155;
+  background: var(--bg-surface-3);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Task List inside Quadrant */
@@ -183,9 +206,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 0.9rem;
+  padding: 1rem;
   overflow-y: auto;
   min-height: 200px;
+  list-style: none;
+  margin: 0;
 }
 
 .emptyQuadrant {
@@ -194,12 +219,12 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #94a3b8;
+  color: var(--text-muted);
   font-size: 0.85rem;
   text-align: center;
-  padding: 2rem 1rem;
-  border: 1.5px dashed #e2e8f0;
-  border-radius: 8px;
+  padding: 2.5rem 1rem;
+  border: 1.5px dashed var(--border-default);
+  border-radius: var(--radius-md);
   margin: 0.5rem 0;
 }
 
@@ -207,21 +232,22 @@
 .taskItem {
   display: flex;
   align-items: flex-start;
-  gap: 0.6rem;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 0.7rem 0.85rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  gap: 0.65rem;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.95rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   cursor: grab;
   user-select: none;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
 .taskItem:hover {
   transform: translateY(-1px);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.06);
-  border-color: #cbd5e1;
+  background: var(--bg-surface-3);
+  border-color: var(--border-subtle);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
 .taskItem:active {
@@ -229,21 +255,23 @@
 }
 
 .taskItem.dragging {
-  opacity: 0.4;
+  opacity: 0.35;
   border-style: dashed;
+  border-color: var(--accent-primary);
 }
 
 .taskItem.completed {
-  opacity: 0.6;
-  background: #f8fafc;
+  opacity: 0.55;
+  background: var(--bg-surface-1);
 }
 
 .taskCheckbox {
-  margin-top: 0.2rem;
-  width: 1rem;
-  height: 1rem;
+  margin-top: 0.15rem;
+  width: 17px;
+  height: 17px;
   cursor: pointer;
-  accent-color: #3b82f6;
+  accent-color: var(--accent-primary);
+  border-radius: 4px;
 }
 
 .taskBody {
@@ -256,14 +284,14 @@
 .taskTitle {
   font-size: 0.92rem;
   font-weight: 500;
-  color: #1e293b;
+  color: var(--text-primary);
   word-break: break-word;
   line-height: 1.4;
 }
 
 .taskTitle.completed {
   text-decoration: line-through;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 .taskMeta {
@@ -277,62 +305,72 @@
 .priorityBadge {
   display: inline-flex;
   align-items: center;
-  padding: 0.1rem 0.4rem;
+  padding: 0.15rem 0.45rem;
   border-radius: 4px;
   font-size: 0.7rem;
   font-weight: 600;
 }
 
 .priorityHigh {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--priority-high);
+  border: 1px solid rgba(244, 63, 94, 0.3);
 }
 
 .priorityMedium {
-  background: #fef3c7;
-  color: #b45309;
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--priority-medium);
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .priorityLow {
-  background: #e2e8f0;
-  color: #475569;
+  background: var(--bg-surface-3);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
 }
 
 .dueDateBadge {
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
-  padding: 0.1rem 0.4rem;
+  padding: 0.15rem 0.45rem;
   border-radius: 4px;
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--bg-surface-3);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+  font-variant-numeric: tabular-nums;
 }
 
+.dueDateBadgeOverdue,
 .dueDateBadge.overdue {
-  background: #fee2e2;
-  color: #dc2626;
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--priority-high);
+  border-color: rgba(244, 63, 94, 0.35);
   font-weight: 600;
 }
 
+.dueDateBadgeToday,
 .dueDateBadge.today {
-  background: #e0f2fe;
-  color: #0284c7;
+  background: var(--accent-subtle);
+  color: var(--accent-primary-hover);
+  border-color: var(--border-subtle);
   font-weight: 600;
 }
 
 .tagBadge {
-  padding: 0.1rem 0.4rem;
+  padding: 0.15rem 0.45rem;
   border-radius: 4px;
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--bg-surface-3);
+  color: var(--text-secondary);
   font-size: 0.7rem;
+  border: 1px solid var(--border-default);
 }
 
 /* Quick Add Form in Quadrant Footer */
 .quickAddArea {
-  padding: 0.75rem 0.9rem;
-  border-top: 1px solid #f1f5f9;
-  background: #fafafa;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border-default);
+  background: var(--bg-surface-1);
 }
 
 .quickAddForm {
@@ -342,38 +380,46 @@
 
 .quickAddInput {
   flex: 1;
-  padding: 0.45rem 0.7rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
   font-size: 0.85rem;
   font-family: inherit;
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
   outline: none;
-  transition: border-color 0.15s;
+  transition: all 0.15s ease;
+}
+
+.quickAddInput::placeholder {
+  color: var(--text-muted);
 }
 
 .quickAddInput:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+  border-color: var(--border-focus);
+  background: var(--bg-surface-3);
+  box-shadow: 0 0 0 2px var(--accent-glow);
 }
 
 .quickAddButton {
-  padding: 0.45rem 0.85rem;
-  background: #1e293b;
-  color: #ffffff;
+  padding: 0.45rem 0.95rem;
+  background: var(--accent-primary);
+  color: var(--text-on-accent);
   border: none;
-  border-radius: 6px;
-  font-size: 0.82rem;
-  font-weight: 500;
+  border-radius: var(--radius-sm);
+  font-size: 0.825rem;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s;
+  transition: all 0.15s ease;
 }
 
-.quickAddButton:hover {
-  background: #334155;
+.quickAddButton:hover:not(:disabled) {
+  background: var(--accent-primary-hover);
+  box-shadow: 0 0 10px var(--accent-glow);
 }
 
 .quickAddButton:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }

@@ -125,9 +125,9 @@ export function TaskItem({
 
   const priorityBadge = task.priority && task.priority > 0
     ? (() => {
-        if (task.priority >= 5) return { label: 'فوری', icon: '🔴', color: '#ef4444' };
-        if (task.priority >= 3) return { label: 'مهم', icon: '🟠', color: '#f59e0b' };
-        return { label: 'پایین', icon: '🔵', color: '#3b82f6' };
+        if (task.priority >= 5) return { label: 'فوری', icon: '🔴', color: 'var(--priority-high, #f43f5e)' };
+        if (task.priority >= 3) return { label: 'مهم', icon: '🟠', color: 'var(--priority-medium, #f59e0b)' };
+        return { label: 'پایین', icon: '🔵', color: 'var(--priority-low, #3b82f6)' };
       })()
     : null;
 
@@ -147,6 +147,11 @@ export function TaskItem({
         <input
           type="checkbox"
           className="task-checkbox"
+          style={
+            priorityBadge?.color
+              ? { borderColor: priorityBadge.color }
+              : undefined
+          }
           checked={isCompleted}
           onChange={() => onToggleCompletion?.(task)}
           disabled={disabled}

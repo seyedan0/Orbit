@@ -1,15 +1,20 @@
+/* ==========================================================================
+   Dark Green Task UI - Focus Analytics Card & Weekly Chart
+   Orbit Productivity Application
+   ========================================================================== */
+
 .card {
   width: 100%;
   max-width: 680px;
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1.25rem;
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
   padding: 1.5rem;
   margin-top: 2rem;
-  color: var(--text-primary, #f8fafc);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-card), var(--shadow-glow);
   transition: all 0.3s ease;
   animation: fadeIn 0.3s ease-in-out;
 }
@@ -46,23 +51,23 @@
   margin: 0;
   font-size: 1.15rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .closeBtn {
   background: none;
   border: none;
-  color: var(--text-secondary, #94a3b8);
+  color: var(--text-muted);
   font-size: 1.25rem;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
-  border-radius: 0.5rem;
-  transition: all 0.2s;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s;
 }
 
 .closeBtn:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  background: var(--bg-surface-2);
 }
 
 /* KPI Summary Grid */
@@ -80,61 +85,55 @@
 }
 
 .kpiItem {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 0.875rem;
-  padding: 0.875rem 0.75rem;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 0.75rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .kpiItem:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--border-subtle);
   transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .kpiValue {
-  font-size: 1.35rem;
+  font-size: 1.4rem;
   font-weight: 800;
   line-height: 1.2;
   margin-bottom: 0.25rem;
-  background: linear-gradient(135deg, #38bdf8, #818cf8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-primary-hover);
 }
 
 .kpiValueWork {
-  background: linear-gradient(135deg, #ef4444, #f97316);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--accent-primary);
 }
 
 .kpiValueStreak {
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--priority-medium);
 }
 
 .kpiValueRate {
-  background: linear-gradient(135deg, #10b981, #34d399);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--accent-primary-hover);
 }
 
 .kpiLabel {
   font-size: 0.75rem;
-  color: var(--text-secondary, #94a3b8);
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 /* 7-Day Bar Chart Section */
 .chartSection {
-  background: rgba(15, 23, 42, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 1rem;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
   padding: 1.25rem 1rem 0.85rem;
   margin-bottom: 1.5rem;
 }
@@ -149,7 +148,7 @@
 .sectionTitle {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #cbd5e1;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -174,44 +173,48 @@
 
 .barValue {
   font-size: 0.7rem;
-  color: #94a3b8;
+  color: var(--text-secondary);
   margin-bottom: 0.25rem;
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 .barTrack {
   width: 100%;
   max-width: 32px;
   height: 100px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-surface-3);
   border-radius: 6px;
   display: flex;
   align-items: flex-end;
   overflow: hidden;
+  border: 1px solid var(--border-default);
 }
 
 .barFill {
   width: 100%;
-  background: linear-gradient(to top, #ef4444, #f97316);
-  border-radius: 6px 6px 0 0;
+  background: linear-gradient(to top, var(--accent-secondary), var(--accent-primary));
+  border-radius: 5px 5px 0 0;
   transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   min-height: 0;
+  box-shadow: 0 0 8px var(--accent-glow);
 }
 
 .barFillActive {
-  background: linear-gradient(to top, #3b82f6, #60a5fa);
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(to top, var(--accent-primary), var(--accent-primary-hover));
+  box-shadow: 0 0 14px var(--accent-glow);
 }
 
 .dayLabel {
   margin-top: 0.5rem;
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 .dayLabelToday {
-  color: #38bdf8;
+  color: var(--accent-primary-hover);
   font-weight: 700;
 }
 
@@ -229,9 +232,9 @@
 }
 
 .breakdownCard {
-  background: rgba(15, 23, 42, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 0.875rem;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
   padding: 1rem;
   display: flex;
   flex-direction: column;
@@ -240,7 +243,7 @@
 .breakdownTitle {
   font-size: 0.825rem;
   font-weight: 600;
-  color: #cbd5e1;
+  color: var(--text-primary);
   margin-bottom: 0.75rem;
   display: flex;
   align-items: center;
@@ -260,15 +263,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.4rem 0.5rem;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  background: var(--bg-surface-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
   font-size: 0.8rem;
 }
 
 .taskName {
   font-weight: 500;
-  color: #e2e8f0;
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -280,15 +284,18 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 .pomodoroBadge {
-  background: rgba(239, 68, 68, 0.2);
-  color: #f87171;
-  border-radius: 9999px;
-  padding: 0.1rem 0.4rem;
+  background: var(--accent-subtle);
+  color: var(--accent-primary-hover);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  padding: 0.1rem 0.45rem;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .tagPills {
@@ -298,21 +305,22 @@
 }
 
 .tagPill {
-  background: rgba(99, 102, 241, 0.15);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  color: #a5b4fc;
-  border-radius: 9999px;
-  padding: 0.25rem 0.6rem;
+  background: var(--accent-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--accent-primary-hover);
+  border-radius: var(--radius-full);
+  padding: 0.25rem 0.65rem;
   font-size: 0.75rem;
   font-weight: 500;
   display: flex;
   align-items: center;
   gap: 0.3rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .emptyState {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-muted);
   text-align: center;
   padding: 1rem 0;
   margin: 0;

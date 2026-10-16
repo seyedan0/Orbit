@@ -1,16 +1,24 @@
+/* ==========================================================================
+   Dark Green Task UI - Bulk Action Bar
+   Orbit Productivity Application
+   ========================================================================== */
+
 .floatingBar {
   position: fixed;
-  bottom: 2rem;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.65rem 1.25rem;
-  background: #1e293b;
-  color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  gap: 0.85rem;
+  padding: 0.75rem 1.4rem;
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: var(--text-primary);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-focus);
+  box-shadow: var(--shadow-card), var(--shadow-glow), 0 12px 36px rgba(0, 0, 0, 0.6);
   z-index: 1000;
   animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -28,10 +36,12 @@
 
 .countText {
   font-size: 0.875rem;
-  font-weight: 600;
-  padding-inline-end: 0.75rem;
-  border-inline-end: 1px solid #334155;
+  font-weight: 700;
+  color: var(--accent-primary-hover);
+  padding-inline-end: 0.85rem;
+  border-inline-end: 1px solid var(--border-default);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .actionsGroup {
@@ -41,48 +51,55 @@
 }
 
 .actionBtn {
-  background: #334155;
-  color: #ffffff;
-  border: 1px solid #475569;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-full);
   font-size: 0.825rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
+  font-family: inherit;
 }
 
 .actionBtn:hover {
-  background: #475569;
+  background: var(--accent-subtle);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary-hover);
 }
 
 .actionBtnDanger {
-  background: #7f1d1d;
-  color: #fecaca;
-  border: 1px solid #991b1b;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--priority-high);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-full);
   font-size: 0.825rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
+  font-family: inherit;
 }
 
 .actionBtnDanger:hover {
-  background: #991b1b;
+  background: var(--priority-high);
   color: #ffffff;
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.5);
 }
 
 .clearBtn {
   background: transparent;
-  color: #94a3b8;
+  color: var(--text-muted);
   border: none;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   cursor: pointer;
-  padding: 0.35rem 0.5rem;
-  border-radius: 4px;
+  padding: 0.35rem 0.55rem;
+  border-radius: var(--radius-full);
+  transition: color 0.15s ease;
 }
 
 .clearBtn:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
 }
