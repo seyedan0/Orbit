@@ -221,7 +221,7 @@
 .calendarBody {
   display: flex;
   gap: 0.85rem;
-  align-items: stretch;
+  align-items: flex-start;
   width: 100%;
 }
 

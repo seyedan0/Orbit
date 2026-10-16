@@ -10,9 +10,14 @@
   color: var(--text-primary);
 }
 
-/* Sidebar Navigation */
+/* Sidebar Navigation (Fixed Sticky & Collapsible) */
 .sidebar {
-  width: 240px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 250px;
+  min-width: 250px;
+  max-width: 250px;
   padding: 1.25rem 1rem;
   background-color: var(--bg-surface-1);
   border-inline-end: 1px solid var(--border-subtle);
@@ -21,23 +26,107 @@
   gap: 1.25rem;
   flex-shrink: 0;
   box-shadow: 2px 0 16px rgba(0, 0, 0, 0.4);
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 200;
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              min-width 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              max-width 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              padding 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.2s ease,
+              border-color 0.2s ease;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: var(--radius-full);
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--border-focus);
+}
+
+.sidebarCollapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  border-inline-end: 0 solid transparent !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+  box-shadow: none !important;
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0 0.25rem;
 }
 
 .brand {
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--accent-primary);
   letter-spacing: -0.02em;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.25rem 0.5rem;
 }
 
 .brand::before {
   content: '🪐';
-  font-size: 1.3rem;
+  font-size: 1.25rem;
+}
+
+.sidebarCollapseBtn {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.sidebarCollapseBtn:hover {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+
+.navIcon {
+  font-size: 1.05rem;
+  line-height: 1;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navLabel {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebar nav {
@@ -347,6 +436,42 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
+.topBarStart {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex: 1;
+  max-width: 600px;
+}
+
+.menuToggleBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-1);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.menuToggleBtn:hover {
+  background: var(--bg-surface-2);
+  color: var(--accent-primary);
+  border-color: var(--border-subtle);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.menuToggleIcon {
+  line-height: 1;
+}
+
 .searchContainer {
   position: relative;
   flex: 1;
@@ -634,14 +759,58 @@
   color: var(--text-primary);
 }
 
+/* Mobile Drawer & Backdrop */
+.sidebarBackdrop {
+  display: none;
+}
+
 @media (max-width: 768px) {
-  .shell {
-    flex-direction: column;
+  .sidebarBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 998;
+    animation: fadeInOverlay 0.2s ease-out;
+  }
+
+  @keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   .sidebar {
-    width: 100%;
-    border-inline-end: 0;
-    border-bottom: 1px solid var(--border-subtle);
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    inset-inline-start: 0 !important;
+    height: 100vh !important;
+    width: 270px !important;
+    min-width: 270px !important;
+    max-width: 85vw !important;
+    z-index: 1000 !important;
+    box-shadow: 4px 0 28px rgba(0, 0, 0, 0.8) !important;
+    transform: translateX(0);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.2s ease !important;
+  }
+
+  /* In RTL, off-screen to the right */
+  .sidebarCollapsed {
+    width: 270px !important;
+    min-width: 270px !important;
+    max-width: 85vw !important;
+    padding: 1.25rem 1rem !important;
+    border-inline-end: 1px solid var(--border-subtle) !important;
+    transform: translateX(105%) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    box-shadow: none !important;
+  }
+
+  :global([dir="ltr"]) .sidebarCollapsed {
+    transform: translateX(-105%) !important;
   }
 }

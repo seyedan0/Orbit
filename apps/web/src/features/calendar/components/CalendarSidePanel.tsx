@@ -39,7 +39,7 @@ export const CalendarSidePanel: FC<CalendarSidePanelProps> = ({
   filterState,
   onFilterChange,
   onSelectDate,
-  onClose: _onClose,
+  onClose,
   isOpen = true
 }) => {
   const [miniCalendarMonth, setMiniCalendarMonth] = useState<Date>(
@@ -198,6 +198,18 @@ export const CalendarSidePanel: FC<CalendarSidePanelProps> = ({
             >
               ›
             </button>
+            {onClose && (
+              <button
+                type="button"
+                className={styles.miniCloseBtn}
+                onClick={onClose}
+                title="بستن سایدبار تقویم"
+                aria-label="بستن سایدبار تقویم"
+                data-testid="calendar-side-panel-close-btn"
+              >
+                ✕
+              </button>
+            )}
           </div>
         </div>
 

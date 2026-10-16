@@ -47,5 +47,10 @@ describe('AppShell with sync status integration', () => {
 
     // Verify sign-out button
     expect(html).toContain('خروج');
+
+    // Verify collapsible sidebar elements
+    expect(html).toContain('data-testid="sidebar-toggle-btn"');
+    expect(html).toContain('data-testid="sidebar-collapse-btn"');
+    expect(html).toContain('data-testid="app-sidebar"');
   });
 });

@@ -16,6 +16,23 @@
   box-shadow: var(--shadow-card);
   transition: all 0.2s ease;
   user-select: none;
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
+.sidePanelContainer::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidePanelContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidePanelContainer::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: var(--radius-full);
 }
 
 @media (max-width: 900px) {
@@ -85,6 +102,24 @@
 
 .miniTodayDot:hover {
   transform: scale(1.35);
+}
+
+.miniCloseBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.15rem 0.35rem;
+  border-radius: var(--radius-sm);
+  line-height: 1;
+  transition: all 0.12s ease;
+  margin-inline-start: 0.25rem;
+}
+
+.miniCloseBtn:hover {
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--priority-high);
 }
 
 .miniWeekdayGrid {

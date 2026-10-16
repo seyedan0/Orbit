@@ -21,16 +21,16 @@ import {
 import styles from './AppShell.module.css';
 
 const NAV_ITEMS = [
-  { to: '/today', label: 'امروز' },
-  { to: '/tomorrow', label: 'فردا' },
-  { to: '/calendar', label: 'تقویم' },
-  { to: '/timeline', label: 'تایملاین' },
-  { to: '/matrix', label: 'ماتریس آیزنهاور' },
+  { to: '/today', label: 'امروز', icon: '☀️' },
+  { to: '/tomorrow', label: 'فردا', icon: '🌅' },
+  { to: '/calendar', label: 'تقویم', icon: '🗓️' },
+  { to: '/timeline', label: 'تایملاین', icon: '📊' },
+  { to: '/matrix', label: 'ماتریس آیزنهاور', icon: '⊞' },
   { to: '/focus', label: 'حالت تمرکز (Focus)', icon: '⏱️' },
-  { to: '/inbox', label: 'صندوق ورودی' },
-  { to: '/archive', label: 'آرشیو' },
-  { to: '/trash', label: 'سطل زباله' },
-  { to: '/settings', label: 'تنظیمات' }
+  { to: '/inbox', label: 'صندوق ورودی', icon: '📥' },
+  { to: '/archive', label: 'آرشیو', icon: '📦' },
+  { to: '/trash', label: 'سطل زباله', icon: '🗑️' },
+  { to: '/settings', label: 'تنظیمات', icon: '⚙️' }
 ] as const;
 
 const SYNC_LABELS = {
@@ -46,6 +46,54 @@ export function AppShell() {
   const location = useLocation();
   const { syncState, triggerSync } = useSyncStatus();
   const { activeAlerts, completeAlert, snoozeAlert, dismissAlert } = useReminders();
+
+  // Sidebar collapse/expand state (persisted in localStorage)
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('orbit_sidebar_open');
+      if (saved !== null) {
+        return saved === 'true';
+      }
+    } catch {
+      // ignore
+    }
+    return true;
+  });
+
+  const toggleSidebar = useCallback(() => {
+    setIsSidebarOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('orbit_sidebar_open', String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+
+  // Global keyboard shortcut Ctrl+B or Cmd+B to toggle sidebar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        const target = e.target as HTMLElement | null;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+          return;
+        }
+        e.preventDefault();
+        toggleSidebar();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toggleSidebar]);
+
+  // Auto-close on mobile route navigation
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      setIsSidebarOpen(false);
+    }
+  }, [location.pathname]);
 
   const [filters, setFilters] = useState<SmartFilterEntity[]>(() =>
     SYSTEM_FILTER_PRESETS.map((p) => structuredClone(p))
@@ -152,8 +200,34 @@ export function AppShell() {
         </div>
       )}
 
-      <aside className={styles.sidebar}>
-        <h1 className={styles.brand}>Orbit</h1>
+      {/* Mobile Backdrop Overlay */}
+      {isSidebarOpen && (
+        <div
+          className={styles.sidebarBackdrop}
+          onClick={() => setIsSidebarOpen(false)}
+          aria-hidden="true"
+          data-testid="sidebar-backdrop"
+        />
+      )}
+
+      <aside
+        className={`${styles.sidebar} ${!isSidebarOpen ? styles.sidebarCollapsed : ''}`}
+        aria-label="ناوبری اصلی"
+        data-testid="app-sidebar"
+      >
+        <div className={styles.sidebarHeader}>
+          <h1 className={styles.brand}>Orbit</h1>
+          <button
+            type="button"
+            className={styles.sidebarCollapseBtn}
+            onClick={toggleSidebar}
+            title="بستن منو (Ctrl+B)"
+            aria-label="بستن منوی کناری"
+            data-testid="sidebar-collapse-btn"
+          >
+            ✕
+          </button>
+        </div>
         <nav aria-label="ناوبری اصلی">
           <ul>
             {NAV_ITEMS.map((item) => (
@@ -162,8 +236,14 @@ export function AppShell() {
                   to={item.to}
                   aria-label={item.label}
                   data-testid={`nav-${item.to.replace('/', '')}`}
+                  onClick={() => {
+                    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+                      setIsSidebarOpen(false);
+                    }
+                  }}
                 >
-                  {'icon' in item ? `${item.icon} ` : ''}{item.label}
+                  <span className={styles.navIcon} aria-hidden="true">{item.icon}</span>
+                  <span className={styles.navLabel}>{item.label}</span>
                 </NavLink>
               </li>
             ))}
@@ -196,6 +276,11 @@ export function AppShell() {
                     to={`/filters/${filter.id}`}
                     className={styles.filterLink ?? ''}
                     data-testid={`nav-filter-${filter.id}`}
+                    onClick={() => {
+                      if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+                        setIsSidebarOpen(false);
+                      }
+                    }}
                   >
                     <div className={styles.filterInfo}>
                       <span
@@ -243,7 +328,21 @@ export function AppShell() {
       </aside>
       <div className={styles.mainWrapper}>
         <header className={styles.topBar} data-testid="app-top-header">
-          <div className={styles.searchContainer}>
+          <div className={styles.topBarStart}>
+            <button
+              type="button"
+              className={styles.menuToggleBtn}
+              onClick={toggleSidebar}
+              title={isSidebarOpen ? 'بستن منو (Ctrl+B)' : 'باز کردن منو (Ctrl+B)'}
+              aria-label="تغییر وضعیت منوی کناری"
+              aria-expanded={isSidebarOpen}
+              data-testid="sidebar-toggle-btn"
+            >
+              <span className={styles.menuToggleIcon} aria-hidden="true">
+                {isSidebarOpen ? '◧' : '☰'}
+              </span>
+            </button>
+            <div className={styles.searchContainer}>
             <input
               type="search"
               className={styles.searchInput}
@@ -342,7 +441,8 @@ export function AppShell() {
               </div>
             )}
           </div>
-        </header>
+        </div>
+      </header>
 
         <main className={styles.content}>
           <Outlet />
