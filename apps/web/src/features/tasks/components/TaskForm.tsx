@@ -172,13 +172,11 @@ export function TaskForm({
     const run = async () => {
       setError(undefined);
 
-      let submitTitle = title;
-      let submitDueDate = dueDate;
-      let submitIsAllDay = isAllDay;
-
       // Extract NLP tags & priority
       const parsedShortcuts = parseTaskTitleShortcuts(title);
-      submitTitle = parsedShortcuts.cleanTitle;
+      let submitTitle = parsedShortcuts.cleanTitle;
+      let submitDueDate = dueDate;
+      let submitIsAllDay = isAllDay;
 
       const mergedTags = new Set([...selectedTags, ...parsedShortcuts.detectedTags]);
 

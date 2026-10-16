@@ -7,7 +7,6 @@ import {
 } from '../calendar-utils';
 import {
   dateToJalali,
-  formatJalaliDate,
   toPersianDigits,
   PERSIAN_WEEKDAY_SHORT,
   GREGORIAN_WEEKDAY_SHORT
@@ -40,7 +39,7 @@ export const CalendarSidePanel: FC<CalendarSidePanelProps> = ({
   filterState,
   onFilterChange,
   onSelectDate,
-  onClose,
+  onClose: _onClose,
   isOpen = true
 }) => {
   const [miniCalendarMonth, setMiniCalendarMonth] = useState<Date>(
@@ -280,6 +279,7 @@ export const CalendarSidePanel: FC<CalendarSidePanelProps> = ({
             <span className={styles.filterIcon}>📥</span>
             <span>صندوق ورودی (Inbox)</span>
           </span>
+          <span className={styles.filterItemCount}>{inboxCount}</span>
           <input
             type="checkbox"
             className={styles.filterCheckbox}
