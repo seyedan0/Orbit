@@ -1,52 +1,57 @@
+/* ==========================================================================
+   Dark Green Task UI - WeekView Grid
+   Orbit Productivity Application
+   ========================================================================== */
+
 .weekViewContainer {
   width: 100%;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #e0e0e5;
+  background: var(--bg-surface-1);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-default);
   padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-card);
 }
 
 .weekColumnsGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.5rem;
-  min-height: 400px;
+  gap: 0.65rem;
+  min-height: 440px;
 }
 
 .dayColumn {
   display: flex;
   flex-direction: column;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
   overflow: hidden;
   transition: all 0.15s ease;
 }
 
 .dayColumn:hover {
-  border-color: #cbd5e1;
+  border-color: var(--border-subtle);
 }
 
 .todayColumn {
-  background: #f0f7ff;
-  border-color: #4f7cff;
-  box-shadow: 0 0 0 1px #4f7cff;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 16px -2px var(--accent-glow);
 }
 
 .columnHeader {
   display: flex;
   flex-direction: column;
-  padding: 0.6rem 0.5rem;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 0.65rem 0.6rem;
+  background: var(--bg-surface-3);
+  border-bottom: 1px solid var(--border-default);
   gap: 0.25rem;
 }
 
 .todayColumn .columnHeader {
-  background: #e8f2ff;
+  background: var(--accent-subtle);
+  border-bottom-color: var(--accent-secondary);
 }
 
 .headerTopRow {
@@ -58,28 +63,30 @@
 .weekdayTitle {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #334155;
+  color: var(--text-secondary);
 }
 
 .dateBadge {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-muted);
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 .todayColumn .weekdayTitle {
-  color: #1e3bb3;
+  color: var(--accent-primary);
+  font-weight: 700;
 }
 
 .todayColumn .dateBadge {
-  color: #2563eb;
-  font-weight: 600;
+  color: var(--accent-primary-hover);
+  font-weight: 700;
 }
 
 .addTaskBtn {
   background: transparent;
   border: none;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 1rem;
   line-height: 1;
   padding: 0.15rem 0.35rem;
@@ -89,15 +96,15 @@
 }
 
 .addTaskBtn:hover {
-  background-color: #e2e8f0;
-  color: #0f172a;
+  background-color: var(--bg-surface-2);
+  color: var(--accent-primary);
 }
 
 .columnTasksList {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.5rem;
+  gap: 0.45rem;
+  padding: 0.6rem;
   flex: 1;
   overflow-y: auto;
 }
@@ -106,29 +113,30 @@
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-  padding: 0.45rem 0.55rem;
-  background: #ffffff;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
-  border-left: 3px solid #94a3b8;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  padding: 0.5rem 0.65rem;
+  background: var(--bg-surface-1);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  border-inline-start: 3px solid var(--accent-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
 }
 
 .taskItemCard:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  border-color: var(--accent-primary);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
 }
 
 .taskHeaderRow {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
 
 .taskCheckbox {
   cursor: pointer;
-  accent-color: #4f7cff;
+  accent-color: var(--accent-primary);
   width: 15px;
   height: 15px;
   margin: 0;
@@ -136,19 +144,19 @@
 
 .taskTitle {
   font-size: 0.85rem;
-  color: #1e293b;
+  color: var(--text-primary);
   font-weight: 500;
   line-height: 1.3;
   word-break: break-word;
 }
 
 .taskCompleted {
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 .taskCompleted .taskTitle {
   text-decoration: line-through;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .taskMetaRow {
@@ -161,16 +169,17 @@
 .timeBadge {
   font-size: 0.7rem;
   padding: 0.1rem 0.35rem;
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--bg-surface-2);
+  color: var(--text-secondary);
   border-radius: 4px;
+  font-variant-numeric: tabular-nums;
 }
 
 .allDayBadge {
   font-size: 0.7rem;
   padding: 0.1rem 0.35rem;
-  background: #e0f2fe;
-  color: #0369a1;
+  background: var(--accent-subtle);
+  color: var(--accent-primary-hover);
   border-radius: 4px;
   font-weight: 500;
 }
@@ -183,34 +192,34 @@
 }
 
 .priorityP1 {
-  border-left-color: #ef4444;
+  border-inline-start-color: var(--priority-high);
 }
 
 .priorityP1 .priorityBadge {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--priority-high);
 }
 
 .priorityP2 {
-  border-left-color: #f59e0b;
+  border-inline-start-color: var(--priority-medium);
 }
 
 .priorityP2 .priorityBadge {
-  background: #fef3c7;
-  color: #b45309;
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--priority-medium);
 }
 
 .priorityP3 {
-  border-left-color: #3b82f6;
+  border-inline-start-color: var(--priority-low);
 }
 
 .priorityP3 .priorityBadge {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--priority-low);
 }
 
 .emptyColumnMsg {
-  color: #94a3b8;
+  color: var(--text-muted);
   font-size: 0.75rem;
   text-align: center;
   margin-top: 1rem;

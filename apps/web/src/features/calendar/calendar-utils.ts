@@ -24,6 +24,8 @@ export interface CalendarDayItem {
   dayNum: number;
   monthName: string;
   isToday: boolean;
+  isCurrentMonth?: boolean;
+  weekNumberLabel?: string;
 }
 
 export interface WeekDayItem extends CalendarDayItem {
@@ -233,7 +235,27 @@ export function getDayHourSlots(type: CalendarType): HourSlot[] {
 }
 
 /**
- * Computes all day cells and headers for Month view.
+ * Computes standard ISO week number for a Gregorian date (1..53).
+ */
+export function getIsoWeekNumber(date: Date): number {
+  const target = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = target.getUTCDay() || 7;
+  target.setUTCDate(target.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1));
+  return Math.ceil(((target.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
+/**
+ * Computes Jalali week of the year (1..53).
+ */
+export function getJalaliWeekNumber(date: Date): number {
+  const j = dateToJalali(date);
+  const dayOfYear = (j.month <= 6 ? (j.month - 1) * 31 : 186 + (j.month - 7) * 30) + j.day;
+  return Math.ceil(dayOfYear / 7);
+}
+
+/**
+ * Computes all day cells and headers for Month view, including leading and trailing days and week numbers.
  */
 export function getMonthViewDays(
   currentDate: Date,
@@ -241,7 +263,7 @@ export function getMonthViewDays(
   today: Date = new Date()
 ): {
   weekdayHeaders: readonly string[];
-  days: (CalendarDayItem | null)[];
+  days: CalendarDayItem[];
 } {
   const todayJalali = dateToJalali(today);
 
@@ -251,11 +273,38 @@ export function getMonthViewDays(
     const firstDay = jalaliToDate(j.year, j.month, 1, 12, 0, 0);
     const startWeekday = getPersianWeekday(firstDay); // 0 (Sat) to 6 (Fri)
 
-    const days: (CalendarDayItem | null)[] = [];
-    for (let i = 0; i < startWeekday; i++) {
-      days.push(null);
+    const days: CalendarDayItem[] = [];
+
+    // Leading days from previous Jalali month
+    if (startWeekday > 0) {
+      let prevYear = j.year;
+      let prevMonth = j.month - 1;
+      if (prevMonth < 1) {
+        prevMonth = 12;
+        prevYear -= 1;
+      }
+      const prevMonthLength = getJalaliMonthLength(prevYear, prevMonth);
+      const startDay = prevMonthLength - startWeekday + 1;
+      for (let d = startDay; d <= prevMonthLength; d++) {
+        const date = jalaliToDate(prevYear, prevMonth, d, 12, 0, 0);
+        const isoDate = jalaliToIso(prevYear, prevMonth, d, 0, 0, true);
+        const isToday =
+          todayJalali.year === prevYear &&
+          todayJalali.month === prevMonth &&
+          todayJalali.day === d;
+        days.push({
+          date,
+          isoDate,
+          dayNumber: toPersianDigits(d),
+          dayNum: d,
+          monthName: PERSIAN_MONTH_NAMES[prevMonth - 1] ?? '',
+          isToday,
+          isCurrentMonth: false
+        });
+      }
     }
 
+    // Current month days
     for (let d = 1; d <= daysInMonth; d++) {
       const date = jalaliToDate(j.year, j.month, d, 12, 0, 0);
       const isoDate = jalaliToIso(j.year, j.month, d, 0, 0, true);
@@ -270,8 +319,48 @@ export function getMonthViewDays(
         dayNumber: toPersianDigits(d),
         dayNum: d,
         monthName: PERSIAN_MONTH_NAMES[j.month - 1] ?? '',
-        isToday
+        isToday,
+        isCurrentMonth: true
       });
+    }
+
+    // Trailing days from next month to complete full grid (35 or 42 cells)
+    const targetLength = days.length <= 35 ? 35 : 42;
+    const trailingCount = targetLength - days.length;
+    if (trailingCount > 0) {
+      let nextYear = j.year;
+      let nextMonth = j.month + 1;
+      if (nextMonth > 12) {
+        nextMonth = 1;
+        nextYear += 1;
+      }
+      for (let d = 1; d <= trailingCount; d++) {
+        const date = jalaliToDate(nextYear, nextMonth, d, 12, 0, 0);
+        const isoDate = jalaliToIso(nextYear, nextMonth, d, 0, 0, true);
+        const isToday =
+          todayJalali.year === nextYear &&
+          todayJalali.month === nextMonth &&
+          todayJalali.day === d;
+
+        days.push({
+          date,
+          isoDate,
+          dayNumber: toPersianDigits(d),
+          dayNum: d,
+          monthName: PERSIAN_MONTH_NAMES[nextMonth - 1] ?? '',
+          isToday,
+          isCurrentMonth: false
+        });
+      }
+    }
+
+    // Add week number label to first day of each week row (index 0, 7, 14, 21, 28, 35)
+    for (let i = 0; i < days.length; i += 7) {
+      const item = days[i];
+      if (item) {
+        const wn = getJalaliWeekNumber(item.date);
+        item.weekNumberLabel = `W${toPersianDigits(wn)}`;
+      }
     }
 
     return {
@@ -287,11 +376,35 @@ export function getMonthViewDays(
   const firstDay = new Date(gYear, gMonth - 1, 1, 12, 0, 0);
   const startWeekday = firstDay.getDay(); // 0 (Sun) to 6 (Sat)
 
-  const days: (CalendarDayItem | null)[] = [];
-  for (let i = 0; i < startWeekday; i++) {
-    days.push(null);
+  const days: CalendarDayItem[] = [];
+
+  // Leading days from previous Gregorian month
+  if (startWeekday > 0) {
+    const prevMonthLastDate = new Date(gYear, gMonth - 1, 0);
+    const prevMonthLength = prevMonthLastDate.getDate();
+    const prevYear = prevMonthLastDate.getFullYear();
+    const prevMonth = prevMonthLastDate.getMonth() + 1;
+    const startDay = prevMonthLength - startWeekday + 1;
+    for (let d = startDay; d <= prevMonthLength; d++) {
+      const date = new Date(prevYear, prevMonth - 1, d, 12, 0, 0);
+      const isoDate = new Date(Date.UTC(prevYear, prevMonth - 1, d, 0, 0, 0)).toISOString();
+      const isToday =
+        today.getFullYear() === prevYear &&
+        today.getMonth() + 1 === prevMonth &&
+        today.getDate() === d;
+      days.push({
+        date,
+        isoDate,
+        dayNumber: String(d),
+        dayNum: d,
+        monthName: GREGORIAN_MONTH_NAMES[prevMonth - 1] ?? '',
+        isToday,
+        isCurrentMonth: false
+      });
+    }
   }
 
+  // Current month days
   for (let d = 1; d <= daysInMonth; d++) {
     const date = new Date(gYear, gMonth - 1, d, 12, 0, 0);
     const isoDate = new Date(
@@ -308,8 +421,44 @@ export function getMonthViewDays(
       dayNumber: String(d),
       dayNum: d,
       monthName: GREGORIAN_MONTH_NAMES[gMonth - 1] ?? '',
-      isToday
+      isToday,
+      isCurrentMonth: true
     });
+  }
+
+  // Trailing days from next Gregorian month
+  const targetLength = days.length <= 35 ? 35 : 42;
+  const trailingCount = targetLength - days.length;
+  if (trailingCount > 0) {
+    const nextDate = new Date(gYear, gMonth, 1);
+    const nextYear = nextDate.getFullYear();
+    const nextMonth = nextDate.getMonth() + 1;
+    for (let d = 1; d <= trailingCount; d++) {
+      const date = new Date(nextYear, nextMonth - 1, d, 12, 0, 0);
+      const isoDate = new Date(Date.UTC(nextYear, nextMonth - 1, d, 0, 0, 0)).toISOString();
+      const isToday =
+        today.getFullYear() === nextYear &&
+        today.getMonth() + 1 === nextMonth &&
+        today.getDate() === d;
+      days.push({
+        date,
+        isoDate,
+        dayNumber: String(d),
+        dayNum: d,
+        monthName: GREGORIAN_MONTH_NAMES[nextMonth - 1] ?? '',
+        isToday,
+        isCurrentMonth: false
+      });
+    }
+  }
+
+  // Add week number label to first day of each week row (index 0, 7, 14, 21, 28, 35)
+  for (let i = 0; i < days.length; i += 7) {
+    const item = days[i];
+    if (item) {
+      const wn = getIsoWeekNumber(item.date);
+      item.weekNumberLabel = `W${wn}`;
+    }
   }
 
   return {
