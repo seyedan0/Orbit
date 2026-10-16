@@ -611,4 +611,27 @@ describe('Time Blocking and Drag-and-Drop Task Scheduling (P4-CAL-004)', () => {
     expect(html).toContain('data-testid="day-task-task-allday-drag"');
     expect(html).toContain('draggable="true"');
   });
+
+  it('renders CalendarSidePanel with mini-calendar, quick-add button, and week numbers in Month view', () => {
+    const store = new MemoryLocalStore();
+    const html = renderToStaticMarkup(
+      <SessionProvider>
+        <StoreProvider store={store}>
+          <CalendarPage
+            initialDate={baseDate}
+            initialCalendarType="gregorian"
+            initialViewMode="month"
+            initialTasks={[]}
+          />
+        </StoreProvider>
+      </SessionProvider>
+    );
+
+    expect(html).toContain('data-testid="calendar-side-panel"');
+    expect(html).toContain('data-testid="calendar-quick-add-btn"');
+    expect(html).toContain('W40'); // October 5, 2026 is in Week 40
+    expect(html).toContain('همه تسک‌ها (All)');
+    expect(html).toContain('صندوق ورودی (Inbox)');
+  });
 });
+

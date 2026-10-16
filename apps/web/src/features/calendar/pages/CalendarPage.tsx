@@ -1,5 +1,5 @@
 import type { TaskEntity } from '@orbit/shared-types';
-import { useCallback, useEffect, useState, type FC, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FC, type FormEvent } from 'react';
 import { useSession } from '../../../core/auth/session-context';
 import { useStore } from '../../../core/storage/store-context';
 import {
@@ -24,11 +24,16 @@ import { WeekView } from '../components/WeekView';
 import { DayView } from '../components/DayView';
 import { AgendaView } from '../components/AgendaView';
 import {
+  CalendarSidePanel,
+  type CalendarFilterState
+} from '../components/CalendarSidePanel';
+import {
   createTask,
   completeTask,
   reopenTask,
   rescheduleTask
 } from '../../tasks/services/task-service';
+import { TaskDetailDrawer } from '../../tasks/components/TaskDetailDrawer';
 import styles from './CalendarPage.module.css';
 
 export interface CalendarPageProps {
@@ -50,12 +55,22 @@ export const CalendarPage: FC<CalendarPageProps> = ({
   const [currentDate, setCurrentDate] = useState<Date>(
     () => initialDate ?? new Date()
   );
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    () => initialDate ?? new Date()
+  );
   const [calendarType, setCalendarType] =
     useState<CalendarType>(initialCalendarType);
   const [viewMode, setViewMode] = useState<CalendarViewMode>(initialViewMode);
   const [tasks, setTasks] = useState<TaskEntity[]>(() => initialTasks ?? []);
   const [loading, setLoading] = useState<boolean>(initialTasks === undefined);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<TaskEntity | null>(null);
+  const [isSidePanelOpen, setIsSidePanelOpen] = useState(true);
+  const [filterState, setFilterState] = useState<CalendarFilterState>({
+    showAll: true,
+    selectedProjects: [],
+    selectedTags: []
+  });
 
   // Quick Task Creation Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -112,8 +127,28 @@ export const CalendarPage: FC<CalendarPageProps> = ({
     }
   };
 
+  const displayedTasks = useMemo(() => {
+    if (filterState.showAll) return tasks;
+    return tasks.filter((t) => {
+      if (t.deletedAt != null) return false;
+      const matchProject =
+        filterState.selectedProjects.length === 0 ||
+        (t.projectId
+          ? filterState.selectedProjects.includes(t.projectId)
+          : filterState.selectedProjects.includes('inbox'));
+
+      const matchTag =
+        filterState.selectedTags.length === 0 ||
+        (t.tags && t.tags.some((tag) => filterState.selectedTags.includes(tag)));
+
+      return matchProject && matchTag;
+    });
+  }, [tasks, filterState]);
+
   const handleToday = () => {
-    setCurrentDate(new Date());
+    const now = new Date();
+    setCurrentDate(now);
+    setSelectedDate(now);
   };
 
   const handleToggleCompletion = async (task: TaskEntity) => {
@@ -395,22 +430,40 @@ export const CalendarPage: FC<CalendarPageProps> = ({
       {/* Top Toolbar */}
       <header className={styles.calendarToolbar}>
         <div className={styles.leftControls}>
-          <h2
-            className={styles.monthYearHeading}
-            data-testid="calendar-month-year-label"
+          <div
+            className={styles.headingWrapper}
+            onClick={handleToday}
+            title="رفتن به امروز"
           >
-            {headerTitle}
-          </h2>
+            <h2
+              className={styles.monthYearHeading}
+              data-testid="calendar-month-year-label"
+            >
+              {headerTitle}
+              <span className={styles.chevronIcon}>▾</span>
+            </h2>
+          </div>
 
           <div className={styles.navGroup} role="group" aria-label="پیمایش تقویم">
             <button
               type="button"
-              className={styles.navButton}
+              className={styles.navArrowBtn}
               onClick={handlePrev}
               aria-label="قبلی"
               data-testid="calendar-prev-btn"
+              title="قبلی"
             >
-              قبلی
+              ‹
+            </button>
+            <button
+              type="button"
+              className={styles.navArrowBtn}
+              onClick={handleNext}
+              aria-label="بعدی"
+              data-testid="calendar-next-btn"
+              title="بعدی"
+            >
+              ›
             </button>
             <button
               type="button"
@@ -423,12 +476,15 @@ export const CalendarPage: FC<CalendarPageProps> = ({
             </button>
             <button
               type="button"
-              className={styles.navButton}
-              onClick={handleNext}
-              aria-label="بعدی"
-              data-testid="calendar-next-btn"
+              className={styles.quickAddBtn}
+              onClick={() =>
+                handleOpenAddTaskModal(selectedDate, selectedDate.toISOString())
+              }
+              aria-label="افزودن تسک سریع"
+              title="افزودن تسک"
+              data-testid="calendar-quick-add-btn"
             >
-              بعدی
+              +
             </button>
           </div>
         </div>
@@ -443,13 +499,13 @@ export const CalendarPage: FC<CalendarPageProps> = ({
             <button
               type="button"
               className={`${styles.toggleBtn} ${
-                viewMode === 'month' ? styles.toggleBtnActive : ''
+                viewMode === 'day' ? styles.toggleBtnActive : ''
               }`}
-              onClick={() => setViewMode('month')}
-              aria-pressed={viewMode === 'month'}
-              data-testid="view-month-btn"
+              onClick={() => setViewMode('day')}
+              aria-pressed={viewMode === 'day'}
+              data-testid="view-day-btn"
             >
-              ماه
+              روز
             </button>
             <button
               type="button"
@@ -465,13 +521,13 @@ export const CalendarPage: FC<CalendarPageProps> = ({
             <button
               type="button"
               className={`${styles.toggleBtn} ${
-                viewMode === 'day' ? styles.toggleBtnActive : ''
+                viewMode === 'month' ? styles.toggleBtnActive : ''
               }`}
-              onClick={() => setViewMode('day')}
-              aria-pressed={viewMode === 'day'}
-              data-testid="view-day-btn"
+              onClick={() => setViewMode('month')}
+              aria-pressed={viewMode === 'month'}
+              data-testid="view-month-btn"
             >
-              روز
+              ماه
             </button>
             <button
               type="button"
@@ -515,6 +571,19 @@ export const CalendarPage: FC<CalendarPageProps> = ({
               میلادی
             </button>
           </div>
+
+          {/* Toggle Side Panel Button */}
+          <button
+            type="button"
+            className={`${styles.panelToggleBtn} ${
+              isSidePanelOpen ? styles.panelToggleBtnActive : ''
+            }`}
+            onClick={() => setIsSidePanelOpen((prev) => !prev)}
+            title={isSidePanelOpen ? 'بستن سایدبار تقویم' : 'نمایش سایدبار تقویم'}
+            aria-label="تاگل سایدبار تقویم"
+          >
+            📅
+          </button>
         </div>
       </header>
 
@@ -536,51 +605,77 @@ export const CalendarPage: FC<CalendarPageProps> = ({
         </div>
       )}
 
-      {/* Main View Area */}
-      {viewMode === 'month' && (
-        <MonthView
-          currentDate={currentDate}
-          calendarType={calendarType}
-          tasks={tasks}
-          onToggleCompletion={handleToggleCompletion}
-          onAddTask={(date, isoDate) => handleOpenAddTaskModal(date, isoDate)}
-          onRescheduleTask={handleRescheduleMonth}
-        />
-      )}
+      {/* Calendar Main Layout with Side Panel */}
+      <div className={styles.calendarBody}>
+        <div className={styles.calendarMain}>
+          {viewMode === 'month' && (
+            <MonthView
+              currentDate={currentDate}
+              calendarType={calendarType}
+              tasks={displayedTasks}
+              selectedDate={selectedDate}
+              onSelectDate={(d) => {
+                setSelectedDate(d);
+                setCurrentDate(d);
+              }}
+              onToggleCompletion={handleToggleCompletion}
+              onAddTask={(date, isoDate) => handleOpenAddTaskModal(date, isoDate)}
+              onRescheduleTask={handleRescheduleMonth}
+              onSelectTask={(task) => setSelectedTask(task)}
+            />
+          )}
 
-      {viewMode === 'week' && (
-        <WeekView
-          currentDate={currentDate}
-          calendarType={calendarType}
-          tasks={tasks}
-          onToggleCompletion={handleToggleCompletion}
-          onAddTask={(date, isoDate) => handleOpenAddTaskModal(date, isoDate)}
-        />
-      )}
+          {viewMode === 'week' && (
+            <WeekView
+              currentDate={currentDate}
+              calendarType={calendarType}
+              tasks={displayedTasks}
+              onToggleCompletion={handleToggleCompletion}
+              onAddTask={(date, isoDate) => handleOpenAddTaskModal(date, isoDate)}
+            />
+          )}
 
-      {viewMode === 'day' && (
-        <DayView
-          currentDate={currentDate}
-          calendarType={calendarType}
-          tasks={tasks}
-          onToggleCompletion={handleToggleCompletion}
-          onAddTask={(date, isoDate, hour) =>
-            handleOpenAddTaskModal(date, isoDate, hour)
-          }
-          onRescheduleTaskHour={handleRescheduleDayHour}
-          onResizeTaskDuration={handleResizeDayDuration}
-        />
-      )}
+          {viewMode === 'day' && (
+            <DayView
+              currentDate={currentDate}
+              calendarType={calendarType}
+              tasks={displayedTasks}
+              onToggleCompletion={handleToggleCompletion}
+              onAddTask={(date, isoDate, hour) =>
+                handleOpenAddTaskModal(date, isoDate, hour)
+              }
+              onRescheduleTaskHour={handleRescheduleDayHour}
+              onResizeTaskDuration={handleResizeDayDuration}
+            />
+          )}
 
-      {viewMode === 'agenda' && (
-        <AgendaView
+          {viewMode === 'agenda' && (
+            <AgendaView
+              currentDate={currentDate}
+              calendarType={calendarType}
+              tasks={displayedTasks}
+              onToggleCompletion={handleToggleCompletion}
+              onAddTask={(date, isoDate) => handleOpenAddTaskModal(date, isoDate)}
+            />
+          )}
+        </div>
+
+        {/* Right Sidebar Panel: Mini Calendar + Filters */}
+        <CalendarSidePanel
           currentDate={currentDate}
+          selectedDate={selectedDate}
           calendarType={calendarType}
           tasks={tasks}
-          onToggleCompletion={handleToggleCompletion}
-          onAddTask={(date, isoDate) => handleOpenAddTaskModal(date, isoDate)}
+          filterState={filterState}
+          onFilterChange={setFilterState}
+          onSelectDate={(d) => {
+            setSelectedDate(d);
+            setCurrentDate(d);
+          }}
+          isOpen={isSidePanelOpen}
+          onClose={() => setIsSidePanelOpen(false)}
         />
-      )}
+      </div>
 
       {/* Quick Task Creation Modal */}
       {isModalOpen && selectedDay && (
@@ -637,6 +732,20 @@ export const CalendarPage: FC<CalendarPageProps> = ({
           </div>
         </div>
       )}
+
+      <TaskDetailDrawer
+        task={selectedTask}
+        isOpen={selectedTask != null}
+        onClose={() => setSelectedTask(null)}
+        onTaskUpdated={async (updated) => {
+          await reload();
+          setSelectedTask(updated);
+        }}
+        onTaskDeleted={async () => {
+          setSelectedTask(null);
+          await reload();
+        }}
+      />
     </div>
   );
 };

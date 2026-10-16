@@ -7,7 +7,12 @@ export interface SubTaskItem {
   title: string;
   isCompleted: boolean;
   order: number;
+  parentId?: string | null | undefined;
+  children?: SubTaskItem[] | undefined;
+  completedAt?: string | null | undefined;
 }
+
+export type TaskDeliveryStatus = 'EARLY' | 'ON_TIME' | 'OVERDUE';
 
 export interface TaskEntity {
   id: string;
@@ -30,6 +35,8 @@ export interface TaskEntity {
   tags?: string[] | undefined;
   items: SubTaskItem[];
   position?: string | undefined;
+  deliveryStatus?: TaskDeliveryStatus | null | undefined;
+  completionVarianceHours?: number | null | undefined; // Positive = finished early, Negative = finished late
   version: number;
   localStatus: LocalStatus;
   createdAt: string;
@@ -41,3 +48,4 @@ export interface TaskEntity {
 export function isTaskCompleted(task: Pick<TaskEntity, 'completedAt'>): boolean {
   return task.completedAt != null;
 }
+

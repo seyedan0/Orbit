@@ -1,7 +1,14 @@
-import type { SyncQueueEntry, TaskEntity, TaskPriority } from '@orbit/shared-types';
+import type {
+  SubTaskItem,
+  SyncQueueEntry,
+  TaskDeliveryStatus,
+  TaskEntity,
+  TaskPriority
+} from '@orbit/shared-types';
 import type { AtomicTaskStore } from '@orbit/sync-engine';
 import { getNextOccurrenceDate, parseRRule } from '../../../core/recurrence/recurrence';
 import { generateLexoRank } from '../../../core/ranking/lexorank';
+import { promoteSubtaskToTask } from '../../../core/tasks/subtask-tree';
 
 /**
  * Well-known projectId for the user's default Inbox.
@@ -11,6 +18,8 @@ export const INBOX_PROJECT_ID = 'inbox';
 
 export interface CreateTaskInput {
   title: string;
+  desc?: string | null | undefined;
+  content?: string | null | undefined;
   priority?: TaskPriority | undefined;
   dueDate?: string | null | undefined;
   startDate?: string | null | undefined;
@@ -22,6 +31,7 @@ export interface CreateTaskInput {
   repeatFlag?: string | null | undefined;
   reminders?: string[] | undefined;
   tags?: string[] | undefined;
+  items?: SubTaskItem[] | undefined;
 }
 
 export interface TaskServiceDeps {
@@ -109,6 +119,8 @@ export async function createTask(
     projectId: INBOX_PROJECT_ID,
     userId: deps.userId,
     title,
+    desc: (input.desc ?? input.content) ?? undefined,
+    content: (input.content ?? input.desc) ?? undefined,
     kind: 'TASK',
     priority: input.priority ?? 0,
     isAllDay,
@@ -121,7 +133,7 @@ export async function createTask(
     repeatFlag,
     reminders: input.reminders ? [...input.reminders] : [],
     tags: input.tags ? [...input.tags] : [],
-    items: [],
+    items: input.items ? [...input.items] : [],
     version: 0,
     localStatus: 'CREATED',
     createdAt: timestamp,
@@ -147,6 +159,7 @@ export async function createTask(
       timeZone: timestamp,
       reminders: timestamp,
       items: timestamp,
+      ...(input.desc || input.content ? { desc: timestamp } : {}),
       ...(input.tags && input.tags.length > 0 ? { tags: timestamp } : {}),
       ...(startDate !== null ? { startDate: timestamp } : {}),
       ...(dueDate !== null ? { dueDate: timestamp } : {}),
@@ -273,12 +286,50 @@ export async function completeTask(
     }
   }
 
+  // Delivery performance calculation for tasks with dueDate
+  let deliveryStatus: TaskDeliveryStatus | null = null;
+  let completionVarianceHours: number | null = null;
+
+  if (task.dueDate) {
+    const due = new Date(task.dueDate);
+    const nowDate = now();
+    const diffMs = due.getTime() - nowDate.getTime();
+    completionVarianceHours = Math.round(diffMs / (1000 * 60 * 60));
+
+    const isSameCalendarDay =
+      nowDate.getFullYear() === due.getFullYear() &&
+      nowDate.getMonth() === due.getMonth() &&
+      nowDate.getDate() === due.getDate();
+
+    if (nowDate.getTime() > due.getTime()) {
+      deliveryStatus = 'OVERDUE';
+    } else if (isSameCalendarDay) {
+      deliveryStatus = 'ON_TIME';
+    } else {
+      deliveryStatus = 'EARLY';
+    }
+  }
+
   // Regular non-recurring task completion:
   const updatedTask: TaskEntity = {
     ...task,
     completedAt: timestamp,
+    deliveryStatus,
+    completionVarianceHours,
     updatedAt: timestamp,
     localStatus: nextLocalStatus
+  };
+
+  const payload: Partial<TaskEntity> = {
+    completedAt: timestamp,
+    ...(deliveryStatus != null ? { deliveryStatus } : {}),
+    ...(completionVarianceHours != null ? { completionVarianceHours } : {})
+  };
+
+  const fieldTimestamps: Record<string, string> = {
+    completedAt: timestamp,
+    ...(deliveryStatus != null ? { deliveryStatus: timestamp } : {}),
+    ...(completionVarianceHours != null ? { completionVarianceHours: timestamp } : {})
   };
 
   const mutation: SyncQueueEntry = {
@@ -289,12 +340,8 @@ export async function completeTask(
     operation: 'UPDATE',
     baseVersion: task.version,
     payloadType: 'PARTIAL',
-    payload: {
-      completedAt: timestamp
-    },
-    fieldTimestamps: {
-      completedAt: timestamp
-    },
+    payload,
+    fieldTimestamps,
     createdAt: timestamp,
     status: 'PENDING',
     attemptCount: 0,
@@ -342,8 +389,28 @@ export async function reopenTask(
   const updatedTask: TaskEntity = {
     ...task,
     completedAt: null,
+    ...(task.deliveryStatus ? { deliveryStatus: null } : {}),
+    ...(task.completionVarianceHours !== undefined && task.completionVarianceHours !== null
+      ? { completionVarianceHours: null }
+      : {}),
     updatedAt: timestamp,
     localStatus: nextLocalStatus
+  };
+
+  const payload: Partial<TaskEntity> = {
+    completedAt: null,
+    ...(task.deliveryStatus ? { deliveryStatus: null } : {}),
+    ...(task.completionVarianceHours !== undefined && task.completionVarianceHours !== null
+      ? { completionVarianceHours: null }
+      : {})
+  };
+
+  const fieldTimestamps: Record<string, string> = {
+    completedAt: timestamp,
+    ...(task.deliveryStatus ? { deliveryStatus: timestamp } : {}),
+    ...(task.completionVarianceHours !== undefined && task.completionVarianceHours !== null
+      ? { completionVarianceHours: timestamp }
+      : {})
   };
 
   const mutation: SyncQueueEntry = {
@@ -354,12 +421,8 @@ export async function reopenTask(
     operation: 'UPDATE',
     baseVersion: task.version,
     payloadType: 'PARTIAL',
-    payload: {
-      completedAt: null
-    },
-    fieldTimestamps: {
-      completedAt: timestamp
-    },
+    payload,
+    fieldTimestamps,
     createdAt: timestamp,
     status: 'PENDING',
     attemptCount: 0,
@@ -995,14 +1058,55 @@ export function getLocalDateKey(date: Date, timeZone?: string): string {
 }
 
 /**
- * Returns true if an active task has a dueDate matching referenceDate's calendar day.
+ * Returns true if an active task spans across the target calendar day
+ * (completedAt == null AND startDate <= targetDate && targetDate <= dueDate).
+ */
+export function isTaskActiveForDate(
+  task: TaskEntity,
+  targetDate: Date | string = new Date(),
+  timeZone?: string
+): boolean {
+  if (task.completedAt != null || task.deletedAt != null) {
+    return false;
+  }
+  if (!task.startDate || !task.dueDate) {
+    return false;
+  }
+
+  const targetDateObj = typeof targetDate === 'string' ? new Date(targetDate) : targetDate;
+  const startDateObj = new Date(task.startDate);
+  const dueDateObj = new Date(task.dueDate);
+
+  if (
+    isNaN(targetDateObj.getTime()) ||
+    isNaN(startDateObj.getTime()) ||
+    isNaN(dueDateObj.getTime())
+  ) {
+    return false;
+  }
+
+  const tz = timeZone ?? task.timeZone;
+  const targetKey = getLocalDateKey(targetDateObj, tz);
+  const startKey = getLocalDateKey(startDateObj, tz);
+  const dueKey = getLocalDateKey(dueDateObj, tz);
+
+  return startKey <= targetKey && targetKey <= dueKey;
+}
+
+/**
+ * Returns true if an active task has a dueDate matching referenceDate's calendar day,
+ * or spans across referenceDate.
  */
 export function isDueToday(
   task: TaskEntity,
   referenceDate: Date = new Date(),
   timeZone?: string
 ): boolean {
-  if (!task.dueDate || task.deletedAt != null) return false;
+  if (task.deletedAt != null) return false;
+  if (isTaskActiveForDate(task, referenceDate, timeZone)) {
+    return true;
+  }
+  if (!task.dueDate) return false;
   const taskDate = new Date(task.dueDate);
   if (isNaN(taskDate.getTime())) return false;
   const targetTz = timeZone ?? task.timeZone;
@@ -1010,26 +1114,30 @@ export function isDueToday(
 }
 
 /**
- * Returns true if an active task has a dueDate matching the day after referenceDate.
+ * Returns true if an active task has a dueDate matching the day after referenceDate,
+ * or spans across that day.
  */
 export function isDueTomorrow(
   task: TaskEntity,
   referenceDate: Date = new Date(),
   timeZone?: string
 ): boolean {
-  if (!task.dueDate || task.deletedAt != null) return false;
+  if (task.deletedAt != null) return false;
+  const tomorrow = new Date(referenceDate);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  if (isTaskActiveForDate(task, tomorrow, timeZone)) {
+    return true;
+  }
+  if (!task.dueDate) return false;
   const taskDate = new Date(task.dueDate);
   if (isNaN(taskDate.getTime())) return false;
   const targetTz = timeZone ?? task.timeZone;
-
-  const tomorrow = new Date(referenceDate);
-  tomorrow.setDate(tomorrow.getDate() + 1);
 
   return getLocalDateKey(taskDate, targetTz) === getLocalDateKey(tomorrow, targetTz);
 }
 
 /**
- * Filters and returns active tasks due Today, sorted by completion status, priority, and due time.
+ * Filters and returns active tasks due Today (or spanning across today), sorted by completion status, priority, and due time.
  */
 export function filterTasksDueToday(
   tasks: TaskEntity[],
@@ -1050,6 +1158,250 @@ export function filterTasksDueToday(
       }
       return b.createdAt.localeCompare(a.createdAt);
     });
+}
+
+/**
+ * Updates the subtask items tree of a task with atomic LWW sync mutation.
+ */
+export async function updateTaskSubtasks(
+  store: AtomicTaskStore,
+  taskId: string,
+  itemsTree: SubTaskItem[],
+  deps?: Partial<TaskServiceDeps>
+): Promise<TaskEntity> {
+  const task = await store.getTask(taskId);
+  if (!task) {
+    throw new TaskNotFoundError(taskId);
+  }
+
+  const now = deps?.now ?? (() => new Date());
+  const timestamp = now().toISOString();
+  const newId = deps?.newId ?? (() => crypto.randomUUID());
+  const mutationId = newId();
+
+  const nextLocalStatus = task.localStatus === 'CREATED' ? 'CREATED' : 'UPDATED';
+  const updatedTask: TaskEntity = {
+    ...task,
+    items: itemsTree,
+    version: task.version + 1,
+    updatedAt: timestamp,
+    localStatus: nextLocalStatus
+  };
+
+  const mutation: SyncQueueEntry = {
+    id: mutationId,
+    idempotencyKey: mutationId,
+    entityType: 'TASK',
+    entityId: task.id,
+    operation: 'UPDATE',
+    baseVersion: task.version,
+    payloadType: 'PARTIAL',
+    payload: {
+      items: itemsTree,
+      updatedAt: timestamp
+    },
+    fieldTimestamps: {
+      items: timestamp,
+      updatedAt: timestamp
+    },
+    createdAt: timestamp,
+    status: 'PENDING',
+    attemptCount: 0,
+    nextAttemptAt: timestamp
+  };
+
+  await store.saveTaskWithMutation(updatedTask, mutation);
+  return updatedTask;
+}
+
+/**
+ * Promotes a subtask to an independent root task in the same list.
+ */
+export async function promoteSubtaskToIndependentTask(
+  store: AtomicTaskStore,
+  parentTaskId: string,
+  subtaskId: string,
+  deps: Omit<TaskServiceDeps, 'store'> & { store?: AtomicTaskStore }
+): Promise<{
+  updatedParent: TaskEntity;
+  createdTask: TaskEntity;
+  parentTask: TaskEntity;
+  newIndependentTask: TaskEntity;
+}> {
+  const parentTask = await store.getTask(parentTaskId);
+  if (!parentTask) {
+    throw new TaskNotFoundError(parentTaskId);
+  }
+
+  const { updatedTree, extractedSubtask } = promoteSubtaskToTask(
+    parentTask.items ?? [],
+    subtaskId
+  );
+  if (!extractedSubtask) {
+    throw new TaskValidationError(`زیرتسک با شناسه ${subtaskId} یافت نشد`);
+  }
+
+  const updatedParent = await updateTaskSubtasks(store, parentTaskId, updatedTree, deps);
+
+  const fullDeps: TaskServiceDeps = {
+    ...deps,
+    store
+  };
+
+  const createdTask = await createTask(
+    {
+      title: extractedSubtask.title,
+      priority: parentTask.priority,
+      tags: parentTask.tags ? [...parentTask.tags] : [],
+      timeZone: parentTask.timeZone,
+      items: extractedSubtask.children ?? []
+    },
+    fullDeps
+  );
+
+  return {
+    updatedParent,
+    createdTask,
+    parentTask: updatedParent,
+    newIndependentTask: createdTask
+  };
+}
+
+export interface UpdateTaskDetailsInput {
+  title?: string | undefined;
+  desc?: string | null | undefined;
+  description?: string | null | undefined;
+  content?: string | null | undefined;
+  priority?: TaskPriority | undefined;
+  startDate?: string | null | undefined;
+  dueDate?: string | null | undefined;
+  duration?: number | null | undefined;
+  isAllDay?: boolean | undefined;
+  repeatFlag?: string | null | undefined;
+  reminders?: string[] | undefined;
+  tags?: string[] | undefined;
+  items?: SubTaskItem[] | undefined;
+}
+
+/**
+ * Atomically updates task details (title, description, priority, dates, tags, etc.)
+ * with field-level LWW conflict resolution.
+ */
+export async function updateTaskDetails(
+  store: AtomicTaskStore,
+  taskId: string,
+  updates: UpdateTaskDetailsInput,
+  deps?: Partial<TaskServiceDeps>
+): Promise<TaskEntity> {
+  const task = await store.getTask(taskId);
+  if (!task) {
+    throw new TaskNotFoundError(taskId);
+  }
+
+  if (updates.title !== undefined && updates.title.trim().length === 0) {
+    throw new TaskValidationError('عنوان task نمی‌تواند خالی باشد');
+  }
+
+  const effectiveStartDate =
+    updates.startDate !== undefined ? updates.startDate : task.startDate;
+  const effectiveDueDate =
+    updates.dueDate !== undefined ? updates.dueDate : task.dueDate;
+
+  if (
+    effectiveStartDate &&
+    effectiveDueDate &&
+    new Date(effectiveStartDate).getTime() > new Date(effectiveDueDate).getTime()
+  ) {
+    throw new TaskValidationError('تاریخ سررسید نمی‌تواند قبل از تاریخ شروع باشد');
+  }
+
+  const now = deps?.now ?? (() => new Date());
+  const timestamp = now().toISOString();
+  const newId = deps?.newId ?? (() => crypto.randomUUID());
+  const mutationId = newId();
+
+  const nextLocalStatus = task.localStatus === 'CREATED' ? 'CREATED' : 'UPDATED';
+
+  const descVal = updates.desc !== undefined ? updates.desc : updates.description;
+
+  const updatedTask: TaskEntity = {
+    ...task,
+    ...(updates.title !== undefined ? { title: updates.title.trim() } : {}),
+    ...(descVal !== undefined ? { desc: descVal ?? undefined, content: descVal ?? undefined } : {}),
+    ...(updates.content !== undefined ? { content: updates.content ?? undefined, desc: updates.content ?? undefined } : {}),
+    ...(updates.priority !== undefined ? { priority: updates.priority } : {}),
+    ...(updates.startDate !== undefined ? { startDate: updates.startDate } : {}),
+    ...(updates.dueDate !== undefined ? { dueDate: updates.dueDate } : {}),
+    ...(updates.duration !== undefined ? { duration: updates.duration } : {}),
+    ...(updates.isAllDay !== undefined
+      ? { isAllDay: updates.isAllDay, allDay: updates.isAllDay }
+      : {}),
+    ...(updates.repeatFlag !== undefined ? { repeatFlag: updates.repeatFlag } : {}),
+    ...(updates.reminders !== undefined ? { reminders: updates.reminders } : {}),
+    ...(updates.tags !== undefined ? { tags: updates.tags } : {}),
+    ...(updates.items !== undefined ? { items: updates.items } : {}),
+    version: task.version + 1,
+    updatedAt: timestamp,
+    localStatus: nextLocalStatus
+  };
+
+  const payload: Partial<TaskEntity> = {
+    updatedAt: timestamp
+  };
+  const fieldTimestamps: Record<string, string> = {
+    updatedAt: timestamp
+  };
+
+  const keys: (keyof UpdateTaskDetailsInput)[] = [
+    'title',
+    'desc',
+    'description',
+    'content',
+    'priority',
+    'startDate',
+    'dueDate',
+    'duration',
+    'isAllDay',
+    'repeatFlag',
+    'reminders',
+    'tags',
+    'items'
+  ];
+
+  for (const k of keys) {
+    if (updates[k] !== undefined) {
+      if (k === 'description') {
+        payload.desc = descVal ?? undefined;
+        payload.content = descVal ?? undefined;
+        fieldTimestamps.desc = timestamp;
+        fieldTimestamps.content = timestamp;
+      } else {
+        (payload as Record<string, unknown>)[k] = (
+          updatedTask as unknown as Record<string, unknown>
+        )[k];
+        fieldTimestamps[k] = timestamp;
+      }
+    }
+  }
+
+  const mutation: SyncQueueEntry = {
+    id: mutationId,
+    idempotencyKey: mutationId,
+    entityType: 'TASK',
+    entityId: task.id,
+    operation: 'UPDATE',
+    baseVersion: task.version,
+    payloadType: 'PARTIAL',
+    payload,
+    fieldTimestamps,
+    createdAt: timestamp,
+    status: 'PENDING',
+    attemptCount: 0,
+    nextAttemptAt: timestamp
+  };
+
+  await store.saveTaskWithMutation(updatedTask, mutation);
+  return updatedTask;
 }
 
 /**

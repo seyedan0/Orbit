@@ -1,5 +1,6 @@
 import type { TaskEntity, TagEntity } from '@orbit/shared-types';
 import { formatJalaliDate, isoToJalali } from '../../../core/calendar/jalali';
+import { calculateSubtaskProgress } from '../../../core/tasks/subtask-tree';
 
 export interface TaskItemProps {
   task: TaskEntity;
@@ -7,6 +8,7 @@ export interface TaskItemProps {
   onDelete?: ((task: TaskEntity) => void) | undefined;
   onRestore?: ((task: TaskEntity) => void) | undefined;
   onStartFocus?: ((task: TaskEntity) => void) | undefined;
+  onSelectTask?: ((task: TaskEntity) => void) | undefined;
   disabled?: boolean | undefined;
   availableTags?: TagEntity[] | undefined;
   tagsMap?: Record<string, TagEntity> | Map<string, TagEntity> | undefined;
@@ -32,12 +34,16 @@ function getTagColor(nameOrId: string, tagObj?: TagEntity): string {
   return TAG_COLOR_PALETTE[Math.abs(hash) % TAG_COLOR_PALETTE.length] ?? '#6366f1';
 }
 
+const toPersianDigits = (val: number | string): string =>
+  String(val).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)] ?? d);
+
 export function TaskItem({
   task,
   onToggleCompletion,
   onDelete,
   onRestore,
   onStartFocus,
+  onSelectTask,
   disabled,
   availableTags,
   tagsMap
@@ -46,7 +52,40 @@ export function TaskItem({
   const isDeleted = task.deletedAt != null;
   const isTask = task.kind === 'TASK';
 
-  const formattedDueDate = task.dueDate
+  const isMultiDay = Boolean(
+    task.startDate &&
+    task.dueDate &&
+    task.startDate.slice(0, 10) !== task.dueDate.slice(0, 10)
+  );
+
+  const formattedSpan = isMultiDay && task.startDate && task.dueDate
+    ? (() => {
+        try {
+          const startStr = formatJalaliDate(isoToJalali(task.startDate), {
+            format: 'short',
+            includeTime: false
+          });
+          const dueStr = formatJalaliDate(isoToJalali(task.dueDate), {
+            format: 'short',
+            includeTime: false
+          });
+          const dueMs = new Date(task.dueDate).getTime();
+          const nowMs = Date.now();
+          const diffDays = Math.ceil((dueMs - nowMs) / (1000 * 60 * 60 * 24));
+          const remainingText =
+            diffDays > 0
+              ? `${diffDays} روز مانده`
+              : diffDays === 0
+              ? 'امروز سررسید'
+              : `${Math.abs(diffDays)} روز گذشته`;
+          return `🗓️ ${startStr} تا ${dueStr} (${remainingText})`;
+        } catch {
+          return null;
+        }
+      })()
+    : null;
+
+  const formattedDueDate = !isMultiDay && task.dueDate
     ? (() => {
         try {
           return formatJalaliDate(isoToJalali(task.dueDate), {
@@ -59,16 +98,60 @@ export function TaskItem({
       })()
     : null;
 
+  const subtaskStats = task.items && task.items.length > 0
+    ? calculateSubtaskProgress(task.items)
+    : null;
+
+  const deliveryBadgeText = isCompleted && task.deliveryStatus
+    ? (() => {
+        if (task.deliveryStatus === 'EARLY') {
+          const hours = task.completionVarianceHours ?? 0;
+          const days = Math.round(hours / 24);
+          const timeText = days >= 1 ? `${toPersianDigits(days)} روز` : `${toPersianDigits(Math.max(1, Math.round(hours)))} ساعت`;
+          return `🟢 ${timeText} زودتر انجام شد`;
+        }
+        if (task.deliveryStatus === 'ON_TIME') {
+          return '🟢 به موقع انجام شد';
+        }
+        if (task.deliveryStatus === 'OVERDUE') {
+          const hours = Math.abs(task.completionVarianceHours ?? 0);
+          const days = Math.round(hours / 24);
+          const timeText = days >= 1 ? `${toPersianDigits(days)} روز` : `${toPersianDigits(Math.max(1, Math.round(hours)))} ساعت`;
+          return `🔴 ${timeText} با تاخیر انجام شد`;
+        }
+        return null;
+      })()
+    : null;
+
+  const priorityBadge = task.priority && task.priority > 0
+    ? (() => {
+        if (task.priority >= 5) return { label: 'فوری', icon: '🔴', color: 'var(--priority-high, #f43f5e)' };
+        if (task.priority >= 3) return { label: 'مهم', icon: '🟠', color: 'var(--priority-medium, #f59e0b)' };
+        return { label: 'پایین', icon: '🔵', color: 'var(--priority-low, #3b82f6)' };
+      })()
+    : null;
+
   return (
     <li
       className={`task-item ${isCompleted ? 'completed' : ''} ${
         isDeleted ? 'deleted' : ''
-      }`}
+      } ${onSelectTask ? 'clickable' : ''}`}
+      onClick={(e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('input, button, a')) return;
+        onSelectTask?.(task);
+      }}
+      data-testid={`task-item-${task.id}`}
     >
       {isTask && !isDeleted && (
         <input
           type="checkbox"
           className="task-checkbox"
+          style={
+            priorityBadge?.color
+              ? { borderColor: priorityBadge.color }
+              : undefined
+          }
           checked={isCompleted}
           onChange={() => onToggleCompletion?.(task)}
           disabled={disabled}
@@ -77,7 +160,23 @@ export function TaskItem({
         />
       )}
       <span className={`task-title ${isCompleted ? 'completed' : ''}`}>
-        {task.title}
+        {priorityBadge && !isDeleted && (
+          <span
+            className="task-priority-badge"
+            data-testid={`task-priority-${task.id}`}
+            title={`اولویت: ${priorityBadge.label}`}
+            style={{ color: priorityBadge.color, marginInlineEnd: '0.35rem' }}
+          >
+            {priorityBadge.icon}
+          </span>
+        )}
+        <span
+          className="task-title-text"
+          onClick={() => onSelectTask?.(task)}
+          style={{ cursor: onSelectTask ? 'pointer' : 'inherit' }}
+        >
+          {task.title}
+        </span>
         {task.repeatFlag && !isDeleted && (
           <span
             className="task-repeat-badge"
@@ -96,9 +195,43 @@ export function TaskItem({
             🔔
           </span>
         )}
+        {formattedSpan && !isDeleted && (
+          <span
+            className="task-span-badge"
+            data-testid={`task-span-${task.id}`}
+            title="بازه چندروزه"
+          >
+            {formattedSpan}
+          </span>
+        )}
         {formattedDueDate && !isDeleted && (
           <span className="task-due-badge" data-testid={`task-due-${task.id}`}>
             📅 {formattedDueDate}
+          </span>
+        )}
+        {subtaskStats && !isDeleted && (
+          <span
+            className="task-subtasks-badge"
+            data-testid={`task-subtasks-progress-${task.id}`}
+            title={`پیشرفت زیرتسک‌ها: ${subtaskStats.percentage}%`}
+          >
+            <span className="task-subtasks-text">
+              ☑ {subtaskStats.completed}/{subtaskStats.total} ({subtaskStats.percentage}%)
+            </span>
+            <span className="task-subtasks-bar-track">
+              <span
+                className="task-subtasks-bar-fill"
+                style={{ width: `${subtaskStats.percentage}%` }}
+              />
+            </span>
+          </span>
+        )}
+        {deliveryBadgeText && (
+          <span
+            className={`task-delivery-badge ${task.deliveryStatus?.toLowerCase()}`}
+            data-testid={`task-delivery-${task.id}`}
+          >
+            {deliveryBadgeText}
           </span>
         )}
         {task.tags && task.tags.length > 0 && !isDeleted && (

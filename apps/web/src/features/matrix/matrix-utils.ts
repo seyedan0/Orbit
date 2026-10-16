@@ -24,9 +24,9 @@ export const QUADRANT_CONFIGS: Record<EisenhowerQuadrant, QuadrantConfig> = {
     description: 'کارهای بحرانی با ضرب‌الاجل نزدیک که باید بی‌درنگ انجام شوند',
     actionText: 'انجام در اولویت',
     badge: 'بحرانی',
-    color: '#ef4444',
-    bgColor: 'rgba(239, 68, 68, 0.08)',
-    borderColor: 'rgba(239, 68, 68, 0.3)',
+    color: '#f43f5e',
+    bgColor: 'rgba(244, 63, 94, 0.12)',
+    borderColor: 'rgba(244, 63, 94, 0.35)',
     defaultPriority: 3
   },
   Q2: {
@@ -36,9 +36,9 @@ export const QUADRANT_CONFIGS: Record<EisenhowerQuadrant, QuadrantConfig> = {
     description: 'کارهای استراتژیک، رشد و هدفمند که نیاز به زمان‌بندی دقیق دارند',
     actionText: 'برنامه‌ریزی دقیق',
     badge: 'هدفمند',
-    color: '#3b82f6',
-    bgColor: 'rgba(59, 130, 246, 0.08)',
-    borderColor: 'rgba(59, 130, 246, 0.3)',
+    color: '#10b981',
+    bgColor: 'rgba(16, 185, 129, 0.12)',
+    borderColor: 'rgba(16, 185, 129, 0.35)',
     defaultPriority: 3
   },
   Q3: {
@@ -48,9 +48,9 @@ export const QUADRANT_CONFIGS: Record<EisenhowerQuadrant, QuadrantConfig> = {
     description: 'امور ناگهانی و روتین که ارزش بالایی ندارند و بهتر است واگذار شوند',
     actionText: 'واگذاری یا خودکارسازی',
     badge: 'فوریت سطحی',
-    color: '#f59e0b',
-    bgColor: 'rgba(245, 158, 11, 0.08)',
-    borderColor: 'rgba(245, 158, 11, 0.3)',
+    color: '#3b82f6',
+    bgColor: 'rgba(59, 130, 246, 0.12)',
+    borderColor: 'rgba(59, 130, 246, 0.35)',
     defaultPriority: 1
   },
   Q4: {
@@ -61,8 +61,8 @@ export const QUADRANT_CONFIGS: Record<EisenhowerQuadrant, QuadrantConfig> = {
     actionText: 'حذف یا بایگانی',
     badge: 'کم‌ارزش',
     color: '#64748b',
-    bgColor: 'rgba(100, 116, 139, 0.08)',
-    borderColor: 'rgba(100, 116, 139, 0.3)',
+    bgColor: 'rgba(100, 116, 139, 0.12)',
+    borderColor: 'rgba(100, 116, 139, 0.35)',
     defaultPriority: 0
   }
 };
