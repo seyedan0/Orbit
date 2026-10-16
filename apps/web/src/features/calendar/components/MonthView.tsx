@@ -14,6 +14,7 @@ export interface MonthViewProps {
   onToggleCompletion?: (task: TaskEntity) => void;
   onAddTask?: (date: Date, isoDate: string) => void;
   onRescheduleTask?: (taskId: string, targetDate: Date, targetIsoDate: string) => void;
+  onSelectTask?: (task: TaskEntity) => void;
   today?: Date;
 }
 
@@ -24,6 +25,7 @@ export const MonthView: FC<MonthViewProps> = ({
   onToggleCompletion,
   onAddTask,
   onRescheduleTask,
+  onSelectTask,
   today = new Date()
 }) => {
   const [dragOverIsoDate, setDragOverIsoDate] = useState<string | null>(null);
@@ -144,6 +146,11 @@ export const MonthView: FC<MonthViewProps> = ({
                           isCompleted ? styles.taskCompleted : ''
                         } ${priorityClass}`}
                         draggable={true}
+                        onClick={(e) => {
+                          const target = e.target as HTMLElement;
+                          if (target.closest('input')) return;
+                          onSelectTask?.(task);
+                        }}
                         onDragStart={(e) => {
                           e.dataTransfer.setData('text/plain', task.id);
                           e.dataTransfer.setData(

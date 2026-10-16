@@ -14,6 +14,8 @@ import {
   restoreTask
 } from '../services/task-service';
 
+import { TaskDetailDrawer } from '../components/TaskDetailDrawer';
+
 export function InboxPage() {
   const { session } = useSession();
   const store = useStore();
@@ -22,6 +24,7 @@ export function InboxPage() {
   const [loading, setLoading] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);
   const [lastDeletedTask, setLastDeletedTask] = useState<TaskEntity | null>(null);
+  const [selectedTask, setSelectedTask] = useState<TaskEntity | null>(null);
 
   const reload = useCallback(async () => {
     const [list, tagList] = await Promise.all([
@@ -46,11 +49,14 @@ export function InboxPage() {
     await createTask(
       {
         title,
+        startDate: options?.startDate,
         dueDate: options?.dueDate,
         isAllDay: options?.isAllDay,
         repeatFlag: options?.repeatFlag,
         reminders: options?.reminders,
-        tags: options?.tags
+        priority: options?.priority,
+        tags: options?.tags,
+        desc: options?.description ?? options?.desc
       },
       { store, userId: session.userId }
     );
@@ -166,9 +172,25 @@ export function InboxPage() {
           onToggleCompletion={handleToggleCompletion}
           onDelete={handleDelete}
           onRestore={handleRestore}
+          onSelectTask={(task) => setSelectedTask(task)}
           availableTags={tags}
         />
       )}
+
+      <TaskDetailDrawer
+        task={selectedTask}
+        isOpen={selectedTask != null}
+        onClose={() => setSelectedTask(null)}
+        onTaskUpdated={async (updated) => {
+          await reload();
+          setSelectedTask(updated);
+        }}
+        onTaskDeleted={async () => {
+          setSelectedTask(null);
+          await reload();
+        }}
+        availableTags={tags}
+      />
     </section>
   );
 }

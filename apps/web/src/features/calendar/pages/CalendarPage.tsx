@@ -29,6 +29,7 @@ import {
   reopenTask,
   rescheduleTask
 } from '../../tasks/services/task-service';
+import { TaskDetailDrawer } from '../../tasks/components/TaskDetailDrawer';
 import styles from './CalendarPage.module.css';
 
 export interface CalendarPageProps {
@@ -56,6 +57,7 @@ export const CalendarPage: FC<CalendarPageProps> = ({
   const [tasks, setTasks] = useState<TaskEntity[]>(() => initialTasks ?? []);
   const [loading, setLoading] = useState<boolean>(initialTasks === undefined);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<TaskEntity | null>(null);
 
   // Quick Task Creation Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -545,6 +547,7 @@ export const CalendarPage: FC<CalendarPageProps> = ({
           onToggleCompletion={handleToggleCompletion}
           onAddTask={(date, isoDate) => handleOpenAddTaskModal(date, isoDate)}
           onRescheduleTask={handleRescheduleMonth}
+          onSelectTask={(task) => setSelectedTask(task)}
         />
       )}
 
@@ -637,6 +640,20 @@ export const CalendarPage: FC<CalendarPageProps> = ({
           </div>
         </div>
       )}
+
+      <TaskDetailDrawer
+        task={selectedTask}
+        isOpen={selectedTask != null}
+        onClose={() => setSelectedTask(null)}
+        onTaskUpdated={async (updated) => {
+          await reload();
+          setSelectedTask(updated);
+        }}
+        onTaskDeleted={async () => {
+          setSelectedTask(null);
+          await reload();
+        }}
+      />
     </div>
   );
 };

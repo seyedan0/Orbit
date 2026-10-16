@@ -19,6 +19,8 @@ import {
   filterTasksDueToday
 } from '../services/task-service';
 
+import { TaskDetailDrawer } from '../components/TaskDetailDrawer';
+
 export function TodayPage() {
   const { session } = useSession();
   const store = useStore();
@@ -26,6 +28,7 @@ export function TodayPage() {
   const [loading, setLoading] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);
   const [lastDeletedTask, setLastDeletedTask] = useState<TaskEntity | null>(null);
+  const [selectedTask, setSelectedTask] = useState<TaskEntity | null>(null);
 
   const now = new Date();
   const todayJalali = dateToJalali(now);
@@ -51,10 +54,14 @@ export function TodayPage() {
     await createTask(
       {
         title,
+        startDate: options?.startDate,
         dueDate,
         isAllDay,
         repeatFlag: options?.repeatFlag,
-        reminders: options?.reminders
+        reminders: options?.reminders,
+        priority: options?.priority,
+        tags: options?.tags,
+        desc: options?.description ?? options?.desc
       },
       { store, userId: session.userId }
     );
@@ -169,8 +176,23 @@ export function TodayPage() {
           onToggleCompletion={handleToggleCompletion}
           onDelete={handleDelete}
           onRestore={handleRestore}
+          onSelectTask={(task) => setSelectedTask(task)}
         />
       )}
+
+      <TaskDetailDrawer
+        task={selectedTask}
+        isOpen={selectedTask != null}
+        onClose={() => setSelectedTask(null)}
+        onTaskUpdated={async (updated) => {
+          await reload();
+          setSelectedTask(updated);
+        }}
+        onTaskDeleted={async () => {
+          setSelectedTask(null);
+          await reload();
+        }}
+      />
     </section>
   );
 }
