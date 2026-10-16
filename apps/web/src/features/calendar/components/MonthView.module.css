@@ -1,18 +1,19 @@
 /* ==========================================================================
-   Dark Green Task UI - MonthView Grid
+   Dark Green Task UI - MonthView Grid (TickTick Style)
    Orbit Productivity Application
    ========================================================================== */
 
 .monthViewContainer {
   width: 100%;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
   background: var(--bg-surface-1);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-default);
-  padding: 1rem;
+  padding: 0.85rem;
   box-shadow: var(--shadow-card);
+  overflow: hidden;
 }
 
 .weekdayHeaderGrid {
@@ -21,6 +22,7 @@
   gap: 0.35rem;
   border-bottom: 1px solid var(--border-default);
   padding-bottom: 0.6rem;
+  margin-bottom: 0.4rem;
 }
 
 .weekdayHeader {
@@ -28,12 +30,15 @@
   font-size: 0.825rem;
   font-weight: 600;
   color: var(--text-secondary);
+  letter-spacing: 0.02em;
 }
 
 .daysGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: minmax(105px, 1fr);
   gap: 0.35rem;
+  flex: 1;
 }
 
 .emptyCell {
@@ -41,12 +46,12 @@
   background: var(--bg-surface-1);
   border-radius: var(--radius-sm);
   border: 1px dashed var(--border-default);
-  opacity: 0.4;
+  opacity: 0.3;
 }
 
 .dayCell {
   min-height: 105px;
-  background: var(--bg-surface-2);
+  background: var(--bg-surface-1);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
   padding: 0.45rem;
@@ -55,17 +60,43 @@
   gap: 0.35rem;
   transition: all 0.15s ease;
   position: relative;
+  cursor: pointer;
 }
 
 .dayCell:hover {
   border-color: var(--border-subtle);
-  background-color: var(--bg-surface-3);
+  background-color: var(--bg-surface-2);
+}
+
+.otherMonthCell {
+  background: rgba(13, 23, 18, 0.35);
+  opacity: 0.5;
+}
+
+.otherMonthCell:hover {
+  opacity: 0.8;
+}
+
+.otherMonthNumber {
+  color: var(--text-muted) !important;
+  font-weight: 400 !important;
+}
+
+.selectedCell {
+  background: rgba(16, 185, 129, 0.08) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  box-shadow: inset 0 0 0 1px var(--accent-subtle);
 }
 
 .todayCell {
-  background-color: var(--bg-surface-2);
   border-color: var(--accent-primary);
-  box-shadow: 0 0 16px -2px var(--accent-glow);
+  box-shadow: 0 0 12px -3px var(--accent-glow);
+}
+
+.dayCellDragOver {
+  background: var(--accent-subtle) !important;
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 16px var(--accent-glow);
 }
 
 .dayCellHeader {
@@ -74,23 +105,44 @@
   justify-content: space-between;
 }
 
+.dayNumberGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .dayNumber {
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.5rem;
-  height: 1.5rem;
+  width: 1.65rem;
+  height: 1.65rem;
   border-radius: 50%;
   font-variant-numeric: tabular-nums;
+  transition: all 0.15s ease;
+}
+
+.selectedNumber {
+  background-color: var(--accent-primary) !important;
+  color: var(--text-on-accent) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 10px var(--accent-glow);
 }
 
 .todayNumber {
-  background-color: var(--accent-primary);
-  color: var(--text-on-accent);
-  box-shadow: 0 0 8px var(--accent-glow);
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-primary-hover);
+}
+
+.weekNumberBadge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
 }
 
 .addTaskBtn {
@@ -100,78 +152,83 @@
   font-size: 1rem;
   line-height: 1;
   padding: 0.15rem 0.35rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  opacity: 0.7;
-  transition: all 0.12s ease;
+  opacity: 0;
+  transition: all 0.15s ease;
+}
+
+.dayCell:hover .addTaskBtn {
+  opacity: 1;
 }
 
 .addTaskBtn:hover {
-  opacity: 1;
   color: var(--accent-primary);
   background-color: var(--bg-surface-3);
 }
 
-.tasksList {
+.dayTasksList {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
   overflow-y: auto;
-  max-height: 95px;
+  max-height: 110px;
 }
 
-.taskItemPill {
+.taskItemCard {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.2rem 0.4rem;
-  background: var(--bg-surface-3);
+  padding: 0.25rem 0.45rem;
+  background: var(--bg-surface-2);
   border: 1px solid var(--border-default);
-  border-inline-start: 3px solid var(--accent-primary);
-  border-radius: 4px;
-  font-size: 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
   transition: all 0.12s ease;
+  user-select: none;
 }
 
-.taskItemPill:hover {
+.taskItemCard:hover {
   border-color: var(--accent-primary);
-  background: var(--bg-surface-1);
-  box-shadow: 0 0 6px var(--accent-glow);
+  background: var(--bg-surface-3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .taskCompleted {
-  opacity: 0.5;
+  opacity: 0.45;
   text-decoration: line-through;
+  color: var(--text-muted);
 }
 
 .taskCheckbox {
   cursor: pointer;
   accent-color: var(--accent-primary);
-  width: 13px;
-  height: 13px;
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
   margin: 0;
 }
 
-.taskPillTitle {
+.taskTitle {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
 }
 
-.moreTasksBadge {
-  font-size: 0.7rem;
-  color: var(--accent-primary-hover);
-  text-align: center;
-  background: var(--accent-subtle);
-  border-radius: 4px;
-  padding: 0.1rem 0;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
+.priorityP1 {
+  border-inline-start: 3px solid var(--priority-high);
+}
+
+.priorityP2 {
+  border-inline-start: 3px solid var(--priority-medium);
+}
+
+.priorityP3 {
+  border-inline-start: 3px solid var(--priority-low);
 }

@@ -15,6 +15,8 @@ export interface MonthViewProps {
   onAddTask?: (date: Date, isoDate: string) => void;
   onRescheduleTask?: (taskId: string, targetDate: Date, targetIsoDate: string) => void;
   onSelectTask?: (task: TaskEntity) => void;
+  selectedDate?: Date | null;
+  onSelectDate?: (date: Date) => void;
   today?: Date;
 }
 
@@ -26,6 +28,8 @@ export const MonthView: FC<MonthViewProps> = ({
   onAddTask,
   onRescheduleTask,
   onSelectTask,
+  selectedDate,
+  onSelectDate,
   today = new Date()
 }) => {
   const [dragOverIsoDate, setDragOverIsoDate] = useState<string | null>(null);
@@ -71,17 +75,23 @@ export const MonthView: FC<MonthViewProps> = ({
 
           const dayTasks = tasks.filter((t) => isTaskOnDate(t, item.date));
           const isDragOver = dragOverIsoDate === item.isoDate;
+          const isSelected =
+            selectedDate != null &&
+            selectedDate.toISOString().slice(0, 10) === item.isoDate.slice(0, 10);
 
           return (
             <div
-              key={item.isoDate}
+              key={item.isoDate + index}
               className={`${styles.dayCell} ${item.isToday ? styles.todayCell : ''} ${
+                !item.isCurrentMonth ? styles.otherMonthCell : ''
+              } ${isSelected ? styles.selectedCell : ''} ${
                 isDragOver ? styles.dayCellDragOver : ''
               }`}
               role="gridcell"
               aria-label={`${item.dayNumber} ${item.monthName}`}
               aria-current={item.isToday ? 'date' : undefined}
               data-testid={`month-day-cell-${item.dayNum}`}
+              onClick={() => onSelectDate?.(item.date)}
               onDragOver={(e) => {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
@@ -103,17 +113,32 @@ export const MonthView: FC<MonthViewProps> = ({
               }}
             >
               <div className={styles.dayCellHeader}>
-                <span
-                  className={`${styles.dayNumber} ${item.isToday ? styles.todayNumber : ''}`}
-                  data-testid={`month-day-number-${item.dayNum}`}
-                >
-                  {item.dayNumber}
-                </span>
+                <div className={styles.dayNumberGroup}>
+                  <span
+                    className={`${styles.dayNumber} ${
+                      item.isToday ? styles.todayNumber : ''
+                    } ${!item.isCurrentMonth ? styles.otherMonthNumber : ''} ${
+                      isSelected ? styles.selectedNumber : ''
+                    }`}
+                    data-testid={`month-day-number-${item.dayNum}`}
+                  >
+                    {item.dayNumber}
+                  </span>
+
+                  {item.weekNumberLabel && (
+                    <span className={styles.weekNumberBadge}>
+                      {item.weekNumberLabel}
+                    </span>
+                  )}
+                </div>
 
                 <button
                   type="button"
                   className={styles.addTaskBtn}
-                  onClick={() => onAddTask?.(item.date, item.isoDate)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddTask?.(item.date, item.isoDate);
+                  }}
                   aria-label={`افزودن تسک در ${item.dayNumber} ${item.monthName}`}
                   data-testid={`add-task-btn-${item.dayNum}`}
                   title="افزودن تسک"
@@ -147,6 +172,7 @@ export const MonthView: FC<MonthViewProps> = ({
                         } ${priorityClass}`}
                         draggable={true}
                         onClick={(e) => {
+                          e.stopPropagation();
                           const target = e.target as HTMLElement;
                           if (target.closest('input')) return;
                           onSelectTask?.(task);

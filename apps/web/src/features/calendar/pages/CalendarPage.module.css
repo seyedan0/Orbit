@@ -1,14 +1,14 @@
 /* ==========================================================================
-   Dark Green Task UI - CalendarPage Toolbar & Modals
+   Dark Green Task UI - CalendarPage Toolbar & Layout (TickTick Style)
    Orbit Productivity Application
    ========================================================================== */
 
 .calendarPageContainer {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.85rem;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1440px;
   margin: 0 auto;
 }
 
@@ -17,9 +17,9 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.85rem;
   background: var(--bg-surface-1);
-  padding: 0.95rem 1.4rem;
+  padding: 0.85rem 1.25rem;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-default);
   box-shadow: var(--shadow-card);
@@ -28,17 +28,37 @@
 .leftControls {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 0.85rem;
   flex-wrap: wrap;
+}
+
+.headingWrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  user-select: none;
 }
 
 .monthYearHeading {
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--text-primary);
-  min-width: 130px;
   font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.chevronIcon {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  transition: transform 0.15s ease;
+}
+
+.headingWrapper:hover .chevronIcon {
+  color: var(--accent-primary);
 }
 
 .navGroup {
@@ -47,12 +67,35 @@
   gap: 0.35rem;
 }
 
-.navButton {
-  padding: 0.45rem 0.8rem;
-  font-size: 0.85rem;
+.navArrowBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: var(--bg-surface-2);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.navArrowBtn:hover {
+  background: var(--bg-surface-3);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.navButton {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.825rem;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -71,31 +114,58 @@
   border-color: var(--accent-primary);
   color: var(--accent-primary-hover);
   font-weight: 600;
+  padding: 0.4rem 0.85rem;
 }
 
 .navButtonToday:hover {
-  background: rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.22);
+}
+
+.quickAddBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-primary);
+  border: none;
+  color: var(--text-on-accent);
+  cursor: pointer;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: all 0.15s ease;
+  box-shadow: 0 0 10px var(--accent-glow);
+  margin-inline-start: 0.25rem;
+}
+
+.quickAddBtn:hover {
+  background: var(--accent-primary-hover);
+  transform: scale(1.08);
 }
 
 .rightControls {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 0.65rem;
   flex-wrap: wrap;
 }
 
 .toggleGroup {
   display: flex;
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-full);
   overflow: hidden;
   background: var(--bg-surface-2);
+  padding: 2px;
 }
 
 .toggleBtn {
-  padding: 0.45rem 0.85rem;
-  font-size: 0.85rem;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.825rem;
   border: none;
+  border-radius: var(--radius-full);
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
@@ -119,6 +189,47 @@
 .toggleBtnActive:hover {
   background: var(--accent-primary-hover);
   color: var(--text-on-accent);
+}
+
+.panelToggleBtn {
+  padding: 0.4rem 0.65rem;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.panelToggleBtn:hover {
+  background: var(--bg-surface-3);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+
+.panelToggleBtnActive {
+  background: var(--accent-subtle);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* Layout Body (Calendar + Side Panel) */
+.calendarBody {
+  display: flex;
+  gap: 0.85rem;
+  align-items: stretch;
+  width: 100%;
+}
+
+.calendarMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .actionError {
