@@ -55,6 +55,8 @@ describe('DualCalendarPopover Component', () => {
     expect(html).toContain('Aban');
 
     // Expandable scheduling rows
+    expect(html).toContain('All-Day');
+    expect(html).toContain('Toggle All-Day');
     expect(html).toContain('Time');
     expect(html).toContain('Reminder');
     expect(html).toContain('Repeat');
@@ -64,5 +66,22 @@ describe('DualCalendarPopover Component', () => {
     expect(html).toContain('OK');
     expect(html).toContain('data-testid="cal-clear-btn"');
     expect(html).toContain('Clear');
+  });
+
+  it('renders duration mode when startDate and endDate are provided', () => {
+    const html = renderToStaticMarkup(
+      <DualCalendarPopover
+        isOpen={true}
+        onClose={vi.fn()}
+        selectedDate="2026-10-18T12:00:00.000Z"
+        startDate="2026-10-18T09:00:00.000Z"
+        endDate="2026-10-20T17:00:00.000Z"
+        isAllDay={false}
+        onSave={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('Duration');
+    expect(html).toContain('09:00 - 11:30');
   });
 });

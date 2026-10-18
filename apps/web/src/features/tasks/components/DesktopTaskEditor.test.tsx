@@ -73,9 +73,43 @@ describe('DesktopTaskEditor Component', () => {
     expect(html).toContain("Press &#x27;Enter&#x27; to add list item");
     expect(html).toContain('مرحله اول');
 
+    // Subtasks section
+    expect(html).toContain('Subtasks');
+    expect(html).toContain('Add subtask and press Enter');
+
     // Bottom footer
     expect(html).toContain('data-testid="editor-folder-btn"');
     expect(html).toContain('Inbox');
     expect(html).toContain('data-testid="editor-more-options-btn"');
   });
+
+  it('renders parent task link when parentTaskId is present', async () => {
+    const store = new MemoryLocalStore();
+    const parentTask: TaskEntity = {
+      ...mockTask,
+      id: 'parent-123',
+      title: 'پروژه والد'
+    };
+    await store.saveTask(parentTask);
+
+    const childTask: TaskEntity = {
+      ...mockTask,
+      id: 'child-456',
+      parentTaskId: 'parent-123',
+      title: 'زیر تسک'
+    };
+    await store.saveTask(childTask);
+
+    const html = renderToStaticMarkup(
+      <SessionProvider>
+        <StoreProvider store={store}>
+          <DesktopTaskEditor task={childTask} parentTask={parentTask} />
+        </StoreProvider>
+      </SessionProvider>
+    );
+
+    expect(html).toContain('Parent task:');
+    expect(html).toContain('پروژه والد');
+  });
 });
+

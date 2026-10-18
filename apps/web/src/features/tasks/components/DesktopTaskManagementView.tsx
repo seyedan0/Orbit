@@ -8,6 +8,7 @@ import {
   completeTask,
   reopenTask
 } from '../services/task-service';
+import { parseQuickAddInput } from '../../../core/nlp/quick-add-parser';
 import { DesktopMiddlePane, isTaskWontDo } from './DesktopMiddlePane';
 import { DesktopTaskEditor } from './DesktopTaskEditor';
 import styles from './DesktopTaskManagementView.module.css';
@@ -200,13 +201,27 @@ export function DesktopTaskManagementView({
     void reload();
   }, [reload]);
 
-  // Create new task via Quick Add
-  const handleQuickAddTask = async (title: string) => {
+  // Create new task via Quick Add with NLP
+  const handleQuickAddTask = async (rawInput: string) => {
     if (!session) return;
+    const resolvedDefaultProjectId =
+      currentListName && currentListName !== 'Inbox'
+        ? currentListName.toLowerCase().replace(/\s+/g, '-')
+        : INBOX_PROJECT_ID;
+
+    const parsed = parseQuickAddInput(rawInput, {
+      defaultTags: selectedTagFilter ? [selectedTagFilter] : [],
+      defaultProjectId: resolvedDefaultProjectId
+    });
+
     const newTask = await createTask(
       {
-        title,
-        tags: selectedTagFilter ? [selectedTagFilter] : []
+        title: parsed.title,
+        projectId: parsed.projectId,
+        priority: parsed.priority,
+        dueDate: parsed.dueDate,
+        isAllDay: parsed.isAllDay,
+        tags: parsed.tags
       },
       { store, userId: session.userId }
     );
@@ -289,6 +304,7 @@ export function DesktopTaskManagementView({
         onTaskDeleted={handleTaskDeleted}
         availableTags={tags}
         currentListName={currentListName}
+        onSelectTask={(task) => setSelectedTaskId(task.id)}
       />
     </div>
   );
