@@ -1,0 +1,304 @@
+/* ==========================================================================
+   Dark Green Task UI - MultiWeekView (2 or 3 Consecutive Weeks Grid)
+   Orbit Productivity Application
+   ========================================================================== */
+
+.multiWeekContainer {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface-1);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-default);
+  padding: 0.85rem;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.multiWeekHeaderBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.multiWeekBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--radius-full);
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--border-subtle);
+}
+
+.weekdayHeaderGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+  border-bottom: 1px solid var(--border-default);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.weekdayHeader {
+  text-align: center;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.weeksRowsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.weekRow {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border-radius: var(--radius-sm);
+  min-height: 140px;
+  flex: 1;
+}
+
+.ribbonsTrack {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.2rem 0.35rem;
+  margin-bottom: 0.25rem;
+  padding: 0 0.15rem;
+  position: relative;
+  z-index: 2;
+}
+
+.ribbonItem {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #ffffff;
+  height: 22px;
+  position: relative;
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.ribbonItem:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 6px var(--accent-glow);
+}
+
+.ribbonRoundedStart {
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.ribbonFlatStart {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 2px dashed rgba(255, 255, 255, 0.6);
+  padding-left: 0.3rem;
+}
+
+.ribbonRoundedEnd {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.ribbonFlatEnd {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: 2px dashed rgba(255, 255, 255, 0.6);
+  padding-right: 0.3rem;
+}
+
+.ribbonPast {
+  opacity: 0.45;
+  filter: saturate(0.65);
+}
+
+.ribbonTodayOrFuture {
+  opacity: 1;
+}
+
+.ribbonTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ribbonContinuationLeft,
+.ribbonContinuationRight {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.weekDaysRowGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+  flex: 1;
+}
+
+.dayCell {
+  min-height: 120px;
+  background: var(--bg-surface-1);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+  position: relative;
+  cursor: pointer;
+}
+
+.dayCell:hover {
+  border-color: var(--border-subtle);
+  background-color: var(--bg-surface-2);
+}
+
+.selectedCell {
+  background: rgba(16, 185, 129, 0.08) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+
+.todayCell {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 12px -3px var(--accent-glow);
+}
+
+.dayCellPast {
+  opacity: 0.5;
+}
+
+.dayCellHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dayNumberGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dayNumber {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 50%;
+  font-variant-numeric: tabular-nums;
+}
+
+.selectedNumber {
+  background-color: var(--accent-primary) !important;
+  color: var(--text-on-accent) !important;
+}
+
+.todayNumber {
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-primary-hover);
+}
+
+.weekNumberBadge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.secondaryDateBadge {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.addTaskBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.15rem 0.35rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.15s ease;
+}
+
+.dayCell:hover .addTaskBtn {
+  opacity: 1;
+}
+
+.dayTasksList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow-y: auto;
+  max-height: 120px;
+}
+
+.taskItemCard {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.45rem;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.taskItemCard:hover {
+  border-color: var(--accent-primary);
+  background: var(--bg-surface-3);
+}
+
+.taskCompleted {
+  opacity: 0.45;
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.taskCheckbox {
+  cursor: pointer;
+  accent-color: var(--accent-primary);
+  width: 14px;
+  height: 14px;
+  margin: 0;
+}
+
+.taskTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}

@@ -1,0 +1,205 @@
+/* ==========================================================================
+   Dark Green Task UI - YearView & Activity Heatmap
+   Orbit Productivity Application
+   ========================================================================== */
+
+.yearViewContainer {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface-1);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-default);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-card);
+  gap: 1.25rem;
+  overflow-y: auto;
+}
+
+/* Header summary bar */
+.yearHeaderBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.yearTitle {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.heatmapLegend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.legendLevels {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.legendBox {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+/* 4x3 Grid of 12 Months */
+.yearMonthsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 1200px) {
+  .yearMonthsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .yearMonthsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .yearMonthsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.monthCard {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.monthCard:hover {
+  border-color: var(--border-subtle);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.monthCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.monthName {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.monthTaskCountBadge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-full);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Month Weekday Header */
+.monthTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 2px;
+}
+
+.monthTableHeaderCol {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+  padding-bottom: 0.25rem;
+}
+
+.weekNumberCol {
+  font-size: 0.62rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.65;
+  width: 20px;
+}
+
+/* Day Cell & Heatmap Shading */
+.dayCell {
+  width: 24px;
+  height: 24px;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+  user-select: none;
+}
+
+.dayCell:hover {
+  transform: scale(1.2);
+  z-index: 10;
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.dayCellOtherMonth {
+  opacity: 0.2;
+  cursor: default;
+}
+
+.dayCellOtherMonth:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Heatmap Levels (0..3) */
+.heatmapLevel0 {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary);
+}
+
+.heatmapLevel1 {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--text-primary);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.heatmapLevel2 {
+  background: rgba(16, 185, 129, 0.5);
+  color: #ffffff;
+  border: 1px solid rgba(16, 185, 129, 0.7);
+  font-weight: 600;
+}
+
+.heatmapLevel3 {
+  background: var(--accent-primary);
+  color: var(--text-on-accent);
+  font-weight: 700;
+  box-shadow: 0 0 6px var(--accent-glow);
+}
+
+.todayCell {
+  outline: 2px solid var(--accent-primary-hover);
+  outline-offset: 1px;
+  font-weight: 800;
+}

@@ -1,0 +1,254 @@
+/* ==========================================================================
+   Dark Green Task UI - MultiDayView (Configurable 3-Day or 4-Day Time Grid)
+   Orbit Productivity Application
+   ========================================================================== */
+
+.multiDayContainer {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface-1);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-default);
+  padding: 0.85rem;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.multiDayHeaderBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.multiDayBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--radius-full);
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--border-subtle);
+}
+
+.multiDayColumnsGrid {
+  display: grid;
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 480px;
+}
+
+.dayColumn {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.dayColumn:hover {
+  border-color: var(--border-subtle);
+}
+
+.todayColumn {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 16px -2px var(--accent-glow);
+}
+
+.dayColumnPast {
+  opacity: 0.52;
+}
+
+.columnHeader {
+  display: flex;
+  flex-direction: column;
+  padding: 0.65rem 0.75rem;
+  background: var(--bg-surface-3);
+  border-bottom: 1px solid var(--border-default);
+  gap: 0.25rem;
+}
+
+.todayColumn .columnHeader {
+  background: var(--accent-subtle);
+  border-bottom-color: var(--accent-secondary);
+}
+
+.headerTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.weekdayTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.todayColumn .weekdayTitle {
+  color: var(--accent-primary);
+}
+
+.dateBadge {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.todayColumn .dateBadge {
+  color: var(--accent-primary-hover);
+}
+
+.addTaskBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.addTaskBtn:hover {
+  background-color: var(--bg-surface-2);
+  color: var(--accent-primary);
+}
+
+.columnTasksList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.75rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.taskItemCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.5rem 0.65rem;
+  background: var(--bg-surface-1);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  border-inline-start: 3px solid var(--accent-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+.taskItemCard:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-primary);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+.taskHeaderRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.taskCheckbox {
+  cursor: pointer;
+  accent-color: var(--accent-primary);
+  width: 15px;
+  height: 15px;
+  margin: 0;
+}
+
+.taskTitle {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.taskCompleted {
+  opacity: 0.55;
+}
+
+.taskCompleted .taskTitle {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.taskMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.timeBadge {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.35rem;
+  background: var(--bg-surface-2);
+  color: var(--text-secondary);
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.allDayBadge {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.35rem;
+  background: var(--accent-subtle);
+  color: var(--accent-primary-hover);
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.priorityBadge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+}
+
+.priorityP1 {
+  border-inline-start-color: var(--priority-high);
+}
+
+.priorityP1 .priorityBadge {
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--priority-high);
+}
+
+.priorityP2 {
+  border-inline-start-color: var(--priority-medium);
+}
+
+.priorityP2 .priorityBadge {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--priority-medium);
+}
+
+.priorityP3 {
+  border-inline-start-color: var(--priority-low);
+}
+
+.priorityP3 .priorityBadge {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--priority-low);
+}
+
+.emptyColumnMsg {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-align: center;
+  margin-top: 1.5rem;
+}
