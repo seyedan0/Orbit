@@ -1,40 +1,42 @@
 /* ==========================================================================
-   Dual Calendar & Reminder Popover Styles
+   Dark Green Task UI - Dual Calendar & Reminder Popover Styles
+   Orbit Productivity Application
    ========================================================================== */
 
-.overlay {
+/* Non-blocking transparent click-away backdrop (Prevents screen darkening / blackout) */
+.backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1000;
-  background-color: rgba(0, 0, 0, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: fadeIn 0.15s ease-out;
+  z-index: 990;
+  background-color: transparent;
+  cursor: default;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
+/* Anchored Popover Card in Dark Green Obsidian Theme */
 .popoverCard {
-  width: 320px;
-  background-color: #ffffff;
-  color: #1f2937;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.08);
-  padding: 16px;
+  position: absolute;
+  top: calc(100% + 8px);
+  inset-inline-start: 0;
+  z-index: 1000;
+  width: 324px;
+  max-width: 90vw;
+  background: var(--bg-surface-1, #0d1712);
+  color: var(--text-primary, #ecfdf5);
+  border: 1px solid var(--border-subtle, rgba(16, 185, 129, 0.2));
+  border-radius: var(--radius-lg, 14px);
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(16, 185, 129, 0.15);
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  font-family: system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
-  animation: popIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  gap: 12px;
+  font-family: inherit;
+  animation: popIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(16px);
 }
 
 @keyframes popIn {
   from {
-    transform: scale(0.96) translateY(-6px);
+    transform: scale(0.96) translateY(-4px);
     opacity: 0;
   }
   to {
@@ -46,7 +48,8 @@
 /* Segmented Tabs (Date / Duration) */
 .segmentedTabs {
   display: flex;
-  background-color: #f3f4f6;
+  background-color: var(--bg-surface-2, #13221a);
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.08));
   border-radius: 9999px;
   padding: 3px;
   gap: 2px;
@@ -54,11 +57,11 @@
 
 .tabBtn {
   flex: 1;
-  padding: 6px 12px;
+  padding: 5px 12px;
   border: none;
   background: transparent;
-  color: #6b7280;
-  font-size: 0.85rem;
+  color: var(--text-secondary, #9ca3af);
+  font-size: 0.82rem;
   font-weight: 500;
   border-radius: 9999px;
   cursor: pointer;
@@ -66,45 +69,45 @@
 }
 
 .tabBtnActive {
-  background-color: #ffffff;
-  color: #111827;
+  background-color: var(--accent-primary, #10b981);
+  color: var(--text-on-accent, #041f14);
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Quick Date Shortcuts Row */
 .shortcutsRow {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  gap: 6px;
 }
 
 .shortcutBtn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px 4px;
-  border: 1px solid #e5e7eb;
-  background-color: #f9fafb;
+  gap: 3px;
+  padding: 6px 4px;
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.08));
+  background-color: var(--bg-surface-2, #13221a);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .shortcutBtn:hover {
-  background-color: #f3f4f6;
-  border-color: #d1d5db;
+  background-color: var(--bg-surface-3, #1a2e24);
+  border-color: var(--accent-primary, #10b981);
 }
 
 .shortcutIcon {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
 }
 
 .shortcutLabel {
   font-size: 0.72rem;
   font-weight: 500;
-  color: #4b5563;
+  color: var(--text-secondary, #9ca3af);
 }
 
 /* Month and Year Header */
@@ -116,35 +119,37 @@
 }
 
 .monthYearTitle {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-primary, #ecfdf5);
+  font-variant-numeric: tabular-nums;
 }
 
 .navControls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .navBtn {
   background: transparent;
-  border: none;
-  color: #4b5563;
-  width: 28px;
-  height: 28px;
+  border: 1px solid transparent;
+  color: var(--text-secondary, #9ca3af);
+  width: 26px;
+  height: 26px;
   border-radius: 6px;
   font-size: 1.1rem;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: all 0.15s ease;
 }
 
 .navBtn:hover {
-  background-color: #f3f4f6;
-  color: #111827;
+  background-color: var(--bg-surface-2, #13221a);
+  color: var(--text-primary, #ecfdf5);
+  border-color: var(--border-default, rgba(255, 255, 255, 0.08));
 }
 
 /* Weekday Row (S, S, M, T, W, T, F) */
@@ -153,13 +158,13 @@
   grid-template-columns: repeat(7, 1fr);
   text-align: center;
   padding-bottom: 4px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--border-default, rgba(255, 255, 255, 0.08));
 }
 
 .weekdayCell {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  color: #9ca3af;
+  color: var(--text-muted, #6b7280);
   text-transform: uppercase;
 }
 
@@ -167,7 +172,7 @@
 .daysGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
+  gap: 2px;
 }
 
 .dayCell {
@@ -177,74 +182,140 @@
   align-items: center;
   justify-content: center;
   gap: 1px;
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
-  border-radius: 50%;
+  border-radius: 6px;
   cursor: pointer;
   padding: 2px;
   font-variant-numeric: tabular-nums;
-  transition: all 0.15s ease;
+  transition: all 0.12s ease;
 }
 
 .dayCell:hover {
-  background-color: #f3f4f6;
+  background-color: var(--bg-surface-2, #13221a);
+  border-color: var(--border-subtle, rgba(16, 185, 129, 0.2));
 }
 
 .gregorianDay {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--text-primary, #ecfdf5);
   line-height: 1;
 }
 
 .jalaliDay {
   font-size: 0.65rem;
   font-weight: 400;
-  color: #9ca3af;
+  color: var(--text-muted, #6b7280);
   line-height: 1;
 }
 
 .jalaliMonthStartBadge {
   font-size: 0.58rem;
   font-weight: 700;
-  color: #ea580c; /* Distinct orange for start of Jalali month */
+  color: #f59e0b;
   line-height: 1;
 }
 
 /* Other month days */
 .otherMonthCell .gregorianDay,
 .otherMonthCell .jalaliDay {
-  color: #d1d5db;
+  color: rgba(156, 163, 175, 0.35);
 }
 
-/* Today cell indicator */
+/* Today cell indicator: emerald ring */
 .todayCell {
-  border: 1px solid #0d3b45;
+  border: 1px solid var(--accent-primary, #10b981) !important;
+  color: var(--accent-primary-hover, #34d399) !important;
 }
 
 /* Selected cell */
 .selectedCell {
-  background-color: #0d3b45 !important;
-  color: #ffffff !important;
-  box-shadow: 0 2px 6px rgba(13, 59, 69, 0.4);
+  background-color: var(--accent-primary, #10b981) !important;
+  color: var(--text-on-accent, #041f14) !important;
+  box-shadow: 0 0 12px var(--accent-glow, rgba(16, 185, 129, 0.35));
 }
 
 .selectedCell .gregorianDay,
 .selectedCell .jalaliDay {
-  color: #ffffff !important;
+  color: var(--text-on-accent, #041f14) !important;
 }
 
 .selectedCell .jalaliMonthStartBadge {
   color: #fed7aa !important;
 }
 
+/* Multi-day duration range highlight */
+.inRangeCell {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  border-radius: 4px !important;
+}
+
+.inRangeCell .gregorianDay {
+  color: var(--text-primary, #ecfdf5) !important;
+}
+
+.rangeEndpointCell {
+  background-color: var(--accent-primary, #10b981) !important;
+  color: var(--text-on-accent, #041f14) !important;
+  border-radius: 6px !important;
+}
+
+.rangeEndpointCell .gregorianDay,
+.rangeEndpointCell .jalaliDay {
+  color: var(--text-on-accent, #041f14) !important;
+}
+
+/* All-Day Row & Switch */
+.allDayRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px;
+  font-size: 0.82rem;
+  color: var(--text-secondary, #9ca3af);
+}
+
+.toggleSwitch {
+  width: 36px;
+  height: 20px;
+  background-color: var(--bg-surface-3, #1a2e24);
+  border-radius: 9999px;
+  position: relative;
+  cursor: pointer;
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.08));
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  padding: 0;
+}
+
+.toggleActive {
+  background-color: var(--accent-primary, #10b981);
+  border-color: var(--accent-primary, #10b981);
+}
+
+.toggleThumb {
+  width: 14px;
+  height: 14px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s ease;
+}
+
+.toggleActive .toggleThumb {
+  transform: translateX(16px);
+  background-color: var(--text-on-accent, #041f14);
+}
+
 /* Expandable Scheduling Rows */
 .schedulingSection {
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid var(--border-default, rgba(255, 255, 255, 0.08));
   padding-top: 8px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .scheduleRowWrapper {
@@ -257,24 +328,25 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 8px 6px;
-  border: none;
+  padding: 6px 8px;
+  border: 1px solid transparent;
   background: transparent;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: all 0.15s ease;
 }
 
 .scheduleRow:hover {
-  background-color: #f9fafb;
+  background-color: var(--bg-surface-2, #13221a);
+  border-color: var(--border-subtle, rgba(16, 185, 129, 0.15));
 }
 
 .scheduleRowLeft {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.85rem;
-  color: #374151;
+  font-size: 0.82rem;
+  color: var(--text-primary, #ecfdf5);
   font-weight: 500;
 }
 
@@ -287,11 +359,12 @@
   align-items: center;
   gap: 4px;
   font-size: 0.8rem;
-  color: #6b7280;
+  color: var(--text-secondary, #9ca3af);
+  font-variant-numeric: tabular-nums;
 }
 
 .chevron {
-  font-size: 1rem;
+  font-size: 0.95rem;
   line-height: 1;
 }
 
@@ -299,32 +372,36 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding: 6px 8px 10px 8px;
-  background-color: #f9fafb;
-  border-radius: 6px;
+  padding: 6px 8px;
+  background-color: var(--bg-surface-2, #13221a);
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
   margin-bottom: 4px;
 }
 
 .timeChoice {
-  font-size: 0.75rem;
+  font-size: 0.76rem;
   padding: 4px 8px;
   border-radius: 4px;
-  border: 1px solid #e5e7eb;
-  background-color: #ffffff;
-  color: #374151;
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.08));
+  background-color: var(--bg-surface-3, #1a2e24);
+  color: var(--text-primary, #ecfdf5);
   cursor: pointer;
   transition: all 0.12s ease;
+  font-variant-numeric: tabular-nums;
 }
 
 .timeChoice:hover {
-  background-color: #f3f4f6;
-  border-color: #d1d5db;
+  background-color: var(--accent-subtle, rgba(16, 185, 129, 0.15));
+  border-color: var(--accent-primary, #10b981);
+  color: var(--accent-primary-hover, #34d399);
 }
 
 .choiceActive {
-  background-color: #0d3b45;
-  color: #ffffff;
-  border-color: #0d3b45;
+  background-color: var(--accent-primary, #10b981) !important;
+  color: var(--text-on-accent, #041f14) !important;
+  border-color: var(--accent-primary, #10b981) !important;
+  font-weight: 600;
 }
 
 /* Footer Buttons */
@@ -333,38 +410,40 @@
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   padding-top: 6px;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid var(--border-default, rgba(255, 255, 255, 0.08));
 }
 
 .btnOk {
-  padding: 8px 14px;
-  background-color: #0d3b45;
-  color: #ffffff;
+  padding: 7px 14px;
+  background-color: var(--accent-primary, #10b981);
+  color: var(--text-on-accent, #041f14);
   border: none;
   border-radius: 6px;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: all 0.15s ease;
 }
 
 .btnOk:hover {
-  background-color: #08272e;
+  background-color: var(--accent-primary-hover, #34d399);
+  box-shadow: var(--shadow-glow, 0 0 16px rgba(16, 185, 129, 0.35));
 }
 
 .btnClear {
-  padding: 8px 14px;
-  background-color: #ffffff;
-  color: #4b5563;
-  border: 1px solid #d1d5db;
+  padding: 7px 14px;
+  background-color: var(--bg-surface-2, #13221a);
+  color: var(--text-secondary, #9ca3af);
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.08));
   border-radius: 6px;
   font-weight: 500;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btnClear:hover {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
+  background-color: rgba(244, 63, 94, 0.15);
+  border-color: #f43f5e;
+  color: #f43f5e;
 }

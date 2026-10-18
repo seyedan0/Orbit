@@ -14,12 +14,24 @@ export interface DesktopMiddlePaneProps {
 }
 
 export function isTaskWontDo(task: TaskEntity): boolean {
-  return task.tags?.includes('wont-do') || task.tags?.includes("Won't Do") || false;
+  return (
+    task.isWontDo === true ||
+    task.tags?.includes('wont-do') ||
+    task.tags?.includes("Won't Do") ||
+    false
+  );
 }
 
 export function isTaskPinned(task: TaskEntity): boolean {
-  return task.tags?.includes('pinned') || false;
+  return task.isPinned === true || task.tags?.includes('pinned') || false;
 }
+
+const PRIORITY_CHECKBOX_COLORS: Record<number, string> = {
+  0: '#6b7280',
+  1: '#3b82f6',
+  3: '#f59e0b',
+  5: '#ef4444'
+};
 
 export function DesktopMiddlePane({
   currentTitle = 'Inbox',
@@ -167,6 +179,11 @@ export function DesktopMiddlePane({
           {sortedActiveTasks.map((task) => {
             const isSelected = selectedTask?.id === task.id;
             const isPinned = isTaskPinned(task);
+            const checklistCount = task.items ? task.items.length : 0;
+            const completedChecklistCount = task.items
+              ? task.items.filter((it) => it.isCompleted).length
+              : 0;
+
             return (
               <div
                 key={task.id}
@@ -187,7 +204,14 @@ export function DesktopMiddlePane({
                   {task.kind === 'NOTE' ? (
                     <span className={styles.noteIcon}>📄</span>
                   ) : (
-                    <span className={styles.checkboxIcon}>☐</span>
+                    <span
+                      className={styles.checkboxIcon}
+                      style={{
+                        color: PRIORITY_CHECKBOX_COLORS[task.priority] ?? '#6b7280'
+                      }}
+                    >
+                      ☐
+                    </span>
                   )}
                 </button>
 
@@ -196,7 +220,14 @@ export function DesktopMiddlePane({
                     <span className={styles.taskTitle} dir="auto">
                       {task.title}
                     </span>
-                    {isPinned && <span className={styles.pinnedBadge}>📌</span>}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {checklistCount > 0 && (
+                        <span className={styles.checklistBadge}>
+                          {completedChecklistCount}/{checklistCount}
+                        </span>
+                      )}
+                      {isPinned && <span className={styles.pinnedBadge}>📌</span>}
+                    </div>
                   </div>
                   <span className={styles.taskSubtitle}>
                     {task.desc ? task.desc.substring(0, 30) : '-'}

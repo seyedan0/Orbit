@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { TaskEntity, SubTaskItem, TagEntity, TaskPriority } from '@orbit/shared-types';
+import type {
+  TaskEntity,
+  SubTaskItem,
+  TagEntity,
+  TaskPriority,
+  TaskComment
+} from '@orbit/shared-types';
 import { useStore } from '../../../core/storage/store-context';
 import { useSession } from '../../../core/auth/session-context';
 import {
@@ -7,10 +13,14 @@ import {
   updateTaskSubtasks,
   completeTask,
   reopenTask,
-  deleteTask
+  deleteTask,
+  duplicateTask,
+  createSubtask,
+  listSubtasks
 } from '../services/task-service';
 import { DualCalendarPopover } from './DualCalendarPopover';
 import { TaskContextMenu } from './TaskContextMenu';
+import { LinkParentTaskModal } from './LinkParentTaskModal';
 import styles from './DesktopTaskEditor.module.css';
 
 export interface DesktopTaskEditorProps {
@@ -21,6 +31,8 @@ export interface DesktopTaskEditorProps {
   availableTags?: TagEntity[];
   currentListName?: string;
   onMoveToList?: (task: TaskEntity, listId: string) => void;
+  onSelectTask?: (task: TaskEntity) => void;
+  parentTask?: TaskEntity | null | undefined;
 }
 
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
@@ -32,12 +44,14 @@ const PRIORITY_COLORS: Record<TaskPriority, string> = {
 
 export function DesktopTaskEditor({
   task,
+  parentTask: initialParentTask = null,
   onTaskUpdated,
   onTaskDeleted,
   onStartFocus,
   availableTags = [],
   currentListName = 'Inbox',
-  onMoveToList
+  onMoveToList,
+  onSelectTask
 }: DesktopTaskEditorProps) {
   const store = useStore();
   const { session } = useSession();
@@ -50,16 +64,22 @@ export function DesktopTaskEditor({
   const [newChecklistTitle, setNewChecklistTitle] = useState('');
   const [isChecklistMode, setIsChecklistMode] = useState(true);
 
+  // Hierarchical subtasks & parent
+  const [subtasks, setSubtasks] = useState<TaskEntity[]>([]);
+  const [parentTask, setParentTask] = useState<TaskEntity | null>(initialParentTask ?? null);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+  const [isLinkParentModalOpen, setIsLinkParentModalOpen] = useState(false);
+
   // Popovers & menus
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [isFolderMenuOpen, setIsFolderMenuOpen] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [commentText, setCommentText] = useState('');
-  const [comments, setComments] = useState<Array<{ id: string; text: string; date: string }>>([
-    { id: '1', text: 'بررسی نیازمندی‌های اولیه انجام شد.', date: '10:15' }
-  ]);
 
+  // Checklist input refs for keyboard navigation
+  const checklistInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const pendingFocusIdRef = useRef<string | null>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   // Synchronize when selected task changes
@@ -69,16 +89,41 @@ export function DesktopTaskEditor({
     setDescription(task?.desc ?? task?.content ?? '');
     setChecklistItems(task?.items ?? []);
     setNewChecklistTitle('');
+    setNewSubtaskTitle('');
     setIsCalendarOpen(false);
     setIsContextMenuOpen(false);
     setIsFolderMenuOpen(false);
-  }, [task]);
+    setIsLinkParentModalOpen(false);
+
+    if (task) {
+      void listSubtasks(store, task.id).then(setSubtasks);
+      if (task.parentTaskId) {
+        void store.getTask(task.parentTaskId).then((p) => setParentTask(p ?? null));
+      } else {
+        setParentTask(null);
+      }
+    } else {
+      setSubtasks([]);
+      setParentTask(null);
+    }
+  }, [task, store]);
+
+  // Handle focus transition for checklist items
+  useEffect(() => {
+    if (pendingFocusIdRef.current) {
+      const el = checklistInputRefs.current[pendingFocusIdRef.current];
+      if (el) {
+        el.focus();
+        el.setSelectionRange(el.value.length, el.value.length);
+      }
+      pendingFocusIdRef.current = null;
+    }
+  }, [checklistItems]);
 
   if (!currentTask) {
-    // Empty state: empty pane showing the global winter background
     return (
       <div className={styles.emptyEditorPane} data-testid="empty-task-editor">
-        {/* Subtle empty state placeholder or completely clean backdrop */}
+        {/* Clean empty backdrop */}
       </div>
     );
   }
@@ -157,17 +202,79 @@ export function DesktopTaskEditor({
     }
   };
 
-  // Date selection from DualCalendarPopover
-  const handleDateSave = (dateIso: string | null) => {
-    void persistChanges({ dueDate: dateIso });
+  // Date & Duration selection from DualCalendarPopover
+  const handleDateSave = (
+    dateIso: string | null,
+    options?: {
+      startDate?: string | null | undefined;
+      endDate?: string | null | undefined;
+      time?: string | undefined;
+      reminder?: string | undefined;
+      repeat?: string | undefined;
+      isAllDay?: boolean | undefined;
+      mode?: 'DATE' | 'DURATION' | undefined;
+    }
+  ) => {
+    if (!options) {
+      void persistChanges({ dueDate: dateIso });
+      return;
+    }
+    void persistChanges({
+      dueDate: dateIso,
+      startDate: options.startDate ?? null,
+      endDate: options.endDate ?? null,
+      isAllDay: options.isAllDay ?? false,
+      scheduleMode: options.mode ?? 'DATE',
+      repeatFlag: options.repeat && options.repeat !== 'None' ? options.repeat : undefined
+    });
+  };
+
+  // Toggle checklist mode / Description converter
+  const handleToggleChecklistMode = () => {
+    if (!isChecklistMode) {
+      if (description.trim() && checklistItems.length === 0) {
+        const lines = description.split('\n').filter((l) => l.trim() !== '');
+        const newItems: SubTaskItem[] = lines.map((line, idx) => {
+          const isDone = /^-\s*\[[xX]\]/.test(line);
+          const cleaned = line.replace(/^-\s*\[([ xX])\]\s*/, '').trim();
+          return {
+            id: `item-${Date.now()}-${idx}`,
+            title: cleaned,
+            isCompleted: isDone,
+            order: idx
+          };
+        });
+        setChecklistItems(newItems);
+        if (session) {
+          void updateTaskSubtasks(store, currentTask.id, newItems, {
+            userId: session.userId,
+            timeZone: currentTask.timeZone
+          }).then((up) => {
+            setCurrentTask(up);
+            onTaskUpdated?.(up);
+          });
+        }
+      }
+      setIsChecklistMode(true);
+    } else {
+      if (checklistItems.length > 0 && !description.trim()) {
+        const md = checklistItems
+          .map((it) => `- [${it.isCompleted ? 'x' : ' '}] ${it.title}`)
+          .join('\n');
+        setDescription(md);
+        void persistChanges({ desc: md });
+      }
+      setIsChecklistMode(false);
+    }
   };
 
   // Checklist items handling
   const handleAddChecklistItem = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && newChecklistTitle.trim()) {
       e.preventDefault();
+      const newId = `item-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
       const newItem: SubTaskItem = {
-        id: `item-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        id: newId,
         title: newChecklistTitle.trim(),
         isCompleted: false,
         order: checklistItems.length
@@ -175,6 +282,59 @@ export function DesktopTaskEditor({
       const updatedList = [...checklistItems, newItem];
       setChecklistItems(updatedList);
       setNewChecklistTitle('');
+
+      if (session) {
+        const updated = await updateTaskSubtasks(store, currentTask.id, updatedList, {
+          userId: session.userId,
+          timeZone: currentTask.timeZone
+        });
+        setCurrentTask(updated);
+        onTaskUpdated?.(updated);
+      }
+    }
+  };
+
+  const handleChecklistItemKeyDown = async (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    itemId: string,
+    index: number
+  ) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const newId = `item-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      const newItem: SubTaskItem = {
+        id: newId,
+        title: '',
+        isCompleted: false,
+        order: index + 1
+      };
+      const updatedList = [
+        ...checklistItems.slice(0, index + 1),
+        newItem,
+        ...checklistItems.slice(index + 1).map((it, idx) => ({ ...it, order: index + 2 + idx }))
+      ];
+      setChecklistItems(updatedList);
+      pendingFocusIdRef.current = newId;
+
+      if (session) {
+        const updated = await updateTaskSubtasks(store, currentTask.id, updatedList, {
+          userId: session.userId,
+          timeZone: currentTask.timeZone
+        });
+        setCurrentTask(updated);
+        onTaskUpdated?.(updated);
+      }
+    } else if (e.key === 'Backspace' && checklistItems[index]?.title === '') {
+      e.preventDefault();
+      const prevItem = checklistItems[index - 1];
+      const updatedList = checklistItems.filter((it) => it.id !== itemId);
+      setChecklistItems(updatedList);
+
+      if (prevItem) {
+        pendingFocusIdRef.current = prevItem.id;
+      } else {
+        titleInputRef.current?.focus();
+      }
 
       if (session) {
         const updated = await updateTaskSubtasks(store, currentTask.id, updatedList, {
@@ -233,6 +393,47 @@ export function DesktopTaskEditor({
     }
   };
 
+  // Hierarchical Subtasks handling
+  const handleAddSubtaskKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && newSubtaskTitle.trim() && session) {
+      e.preventDefault();
+      try {
+        const created = await createSubtask(
+          store,
+          currentTask.id,
+          {
+            title: newSubtaskTitle.trim(),
+            projectId: currentTask.projectId
+          },
+          { store, userId: session.userId, timeZone: currentTask.timeZone }
+        );
+        setSubtasks((prev) => [...prev, created]);
+        setNewSubtaskTitle('');
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  const handleToggleSubtask = async (sub: TaskEntity) => {
+    if (!session) return;
+    const isSubCompleted = sub.completedAt != null;
+    const updated = isSubCompleted
+      ? await reopenTask(sub.id, { store, userId: session.userId })
+      : await completeTask(sub.id, { store, userId: session.userId });
+    setSubtasks((prev) => prev.map((s) => (s.id === sub.id ? updated : s)));
+  };
+
+  const handleSelectParent = async (parentId: string | null) => {
+    await persistChanges({ parentTaskId: parentId });
+    if (parentId) {
+      const p = await store.getTask(parentId);
+      setParentTask(p ?? null);
+    } else {
+      setParentTask(null);
+    }
+  };
+
   // Format date label for top toolbar
   const dateLabel = currentTask.dueDate
     ? new Date(currentTask.dueDate).toLocaleDateString('en-US', {
@@ -264,15 +465,31 @@ export function DesktopTaskEditor({
 
           <div className={styles.verticalDivider} />
 
-          <button
-            type="button"
-            className={styles.datePickerBtn}
-            onClick={() => setIsCalendarOpen(true)}
-            data-testid="date-and-reminder-btn"
-          >
-            <span className={styles.calendarIcon}>📅</span>
-            <span className={styles.dateLabel}>{dateLabel}</span>
-          </button>
+          <div className={styles.datePickerContainer}>
+            <button
+              type="button"
+              className={styles.datePickerBtn}
+              onClick={() => setIsCalendarOpen((prev) => !prev)}
+              data-testid="date-and-reminder-btn"
+              aria-haspopup="dialog"
+              aria-expanded={isCalendarOpen}
+            >
+              <span className={styles.calendarIcon}>📅</span>
+              <span className={styles.dateLabel}>{dateLabel}</span>
+            </button>
+
+            {isCalendarOpen && (
+              <DualCalendarPopover
+                isOpen={isCalendarOpen}
+                onClose={() => setIsCalendarOpen(false)}
+                selectedDate={currentTask.dueDate ?? null}
+                startDate={currentTask.startDate ?? null}
+                endDate={currentTask.endDate ?? null}
+                isAllDay={currentTask.isAllDay ?? false}
+                onSave={handleDateSave}
+              />
+            )}
+          </div>
         </div>
 
         <div className={styles.toolbarRight}>
@@ -291,6 +508,20 @@ export function DesktopTaskEditor({
 
       {/* Body & Subtask Checklist */}
       <div className={styles.editorBody}>
+        {/* Parent Task Link Badge */}
+        {parentTask && (
+          <div className={styles.parentBadgeRow}>
+            <span>Parent task:</span>
+            <button
+              type="button"
+              className={styles.parentBadgeLink}
+              onClick={() => onSelectTask?.(parentTask)}
+            >
+              🔗 {parentTask.title}
+            </button>
+          </div>
+        )}
+
         {/* Title row */}
         <div className={styles.titleRow}>
           <input
@@ -308,7 +539,7 @@ export function DesktopTaskEditor({
           <button
             type="button"
             className={`${styles.checklistModeBtn} ${isChecklistMode ? styles.checklistActive : ''}`}
-            onClick={() => setIsChecklistMode((prev) => !prev)}
+            onClick={handleToggleChecklistMode}
             title="Toggle checklist view"
             aria-label="Toggle checklist view"
           >
@@ -350,7 +581,7 @@ export function DesktopTaskEditor({
 
             {/* Checklist items list */}
             <div className={styles.checklistItemsList}>
-              {checklistItems.map((item) => (
+              {checklistItems.map((item, index) => (
                 <div
                   key={item.id}
                   className={`${styles.checklistItemRow} ${item.isCompleted ? styles.itemCompleted : ''}`}
@@ -363,6 +594,9 @@ export function DesktopTaskEditor({
                     {item.isCompleted ? '☑' : '☐'}
                   </button>
                   <input
+                    ref={(el) => {
+                      checklistInputRefs.current[item.id] = el;
+                    }}
                     type="text"
                     className={styles.itemTitleInput}
                     value={item.title}
@@ -373,6 +607,7 @@ export function DesktopTaskEditor({
                       );
                     }}
                     onBlur={(e) => void handleUpdateChecklistTitle(item.id, e.target.value)}
+                    onKeyDown={(e) => void handleChecklistItemKeyDown(e, item.id, index)}
                     dir="auto"
                   />
                   <button
@@ -389,11 +624,56 @@ export function DesktopTaskEditor({
           </div>
         )}
 
+        {/* Hierarchical Subtasks Section */}
+        <div className={styles.subtasksSection}>
+          <div className={styles.subtasksHeader}>
+            <span>Subtasks {subtasks.length > 0 && `(${subtasks.length})`}</span>
+          </div>
+
+          <div className={styles.subtasksList}>
+            {subtasks.map((sub) => {
+              const isSubDone = sub.completedAt != null;
+              return (
+                <div key={sub.id} className={styles.subtaskRow}>
+                  <div className={styles.subtaskRowLeft}>
+                    <button
+                      type="button"
+                      className={styles.itemCheckboxBtn}
+                      onClick={() => void handleToggleSubtask(sub)}
+                    >
+                      {isSubDone ? '☑' : '☐'}
+                    </button>
+                    <span
+                      className={`${styles.subtaskRowTitle} ${isSubDone ? styles.subtaskCompleted : ''}`}
+                      onClick={() => onSelectTask?.(sub)}
+                    >
+                      {sub.title}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+
+            <div className={styles.addSubtaskRow}>
+              <span className={styles.emptyCheckbox}>+</span>
+              <input
+                type="text"
+                className={styles.addSubtaskInput}
+                placeholder="Add subtask and press Enter"
+                value={newSubtaskTitle}
+                onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                onKeyDown={handleAddSubtaskKeyDown}
+                dir="auto"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Inline Comments Section */}
         {isCommentsOpen && (
           <div className={styles.commentsSection}>
             <div className={styles.commentsHeader}>
-              <span>Comments ({comments.length})</span>
+              <span>Comments ({(currentTask.comments ?? []).length})</span>
               <button
                 type="button"
                 className={styles.closeCommentsBtn}
@@ -403,10 +683,15 @@ export function DesktopTaskEditor({
               </button>
             </div>
             <div className={styles.commentsList}>
-              {comments.map((c) => (
+              {(currentTask.comments ?? []).map((c) => (
                 <div key={c.id} className={styles.commentItem}>
                   <p className={styles.commentText}>{c.text}</p>
-                  <span className={styles.commentDate}>{c.date}</span>
+                  <span className={styles.commentDate}>
+                    {new Date(c.createdAt).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </span>
                 </div>
               ))}
             </div>
@@ -419,14 +704,14 @@ export function DesktopTaskEditor({
                 onChange={(e) => setCommentText(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && commentText.trim()) {
-                    setComments((prev) => [
-                      ...prev,
-                      {
-                        id: String(Date.now()),
-                        text: commentText.trim(),
-                        date: 'Just now'
-                      }
-                    ]);
+                    const newComment: TaskComment = {
+                      id: `comment-${Date.now()}`,
+                      authorName: session?.userId ?? 'User',
+                      text: commentText.trim(),
+                      createdAt: new Date().toISOString()
+                    };
+                    const updatedComments = [...(currentTask.comments ?? []), newComment];
+                    void persistChanges({ comments: updatedComments });
                     setCommentText('');
                   }
                 }}
@@ -473,8 +758,7 @@ export function DesktopTaskEditor({
             className={styles.footerActionBtn}
             title="Formatting"
             onClick={() => {
-              // Quick markdown formatting helper
-              setDescription((prev) => prev ? `**${prev}**` : '');
+              setDescription((prev) => (prev ? `**${prev}**` : ''));
             }}
           >
             <u>A</u>
@@ -501,14 +785,6 @@ export function DesktopTaskEditor({
         </div>
       </footer>
 
-      {/* Dual Calendar Popover */}
-      <DualCalendarPopover
-        isOpen={isCalendarOpen}
-        onClose={() => setIsCalendarOpen(false)}
-        selectedDate={currentTask.dueDate ?? null}
-        onSave={handleDateSave}
-      />
-
       {/* Task Context Menu */}
       <TaskContextMenu
         task={currentTask}
@@ -521,19 +797,34 @@ export function DesktopTaskEditor({
           );
           input?.focus();
         }}
+        onLinkParentTask={() => {
+          setIsLinkParentModalOpen(true);
+        }}
         onTogglePin={() => {
+          const nextPinned = !currentTask.isPinned;
           const currentTags = currentTask.tags ?? [];
-          const nextTags = currentTags.includes('pinned')
-            ? currentTags.filter((t) => t !== 'pinned')
-            : [...currentTags, 'pinned'];
-          void persistChanges({ tags: nextTags });
+          const nextTags = nextPinned
+            ? currentTags.includes('pinned')
+              ? currentTags
+              : [...currentTags, 'pinned']
+            : currentTags.filter((t) => t !== 'pinned');
+          void persistChanges({ isPinned: nextPinned, tags: nextTags });
         }}
         onMarkWontDo={() => {
+          const nextWontDo = !currentTask.isWontDo;
           const currentTags = currentTask.tags ?? [];
-          const nextTags = currentTags.includes('wont-do')
-            ? currentTags.filter((t) => t !== 'wont-do')
-            : [...currentTags, 'wont-do'];
-          void persistChanges({ tags: nextTags });
+          const nextTags = nextWontDo
+            ? currentTags.includes('wont-do')
+              ? currentTags
+              : [...currentTags, 'wont-do']
+            : currentTags.filter((t) => t !== 'wont-do');
+          void persistChanges({ isWontDo: nextWontDo, tags: nextTags });
+        }}
+        onDuplicate={async () => {
+          if (session) {
+            const dup = await duplicateTask(store, currentTask.id, { store, userId: session.userId });
+            onTaskUpdated?.(dup);
+          }
         }}
         onToggleTag={(tagName) => {
           const currentTags = currentTask.tags ?? [];
@@ -563,6 +854,15 @@ export function DesktopTaskEditor({
           }
         }}
         availableTags={availableTags}
+      />
+
+      {/* Link Parent Task Modal */}
+      <LinkParentTaskModal
+        isOpen={isLinkParentModalOpen}
+        onClose={() => setIsLinkParentModalOpen(false)}
+        currentTask={currentTask}
+        store={store}
+        onSelectParent={handleSelectParent}
       />
     </div>
   );

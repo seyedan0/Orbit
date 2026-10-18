@@ -1,6 +1,10 @@
 import type {
+  ScheduleMode,
   SubTaskItem,
   SyncQueueEntry,
+  TaskActivity,
+  TaskAttachment,
+  TaskComment,
   TaskDeliveryStatus,
   TaskEntity,
   TaskPriority
@@ -18,12 +22,15 @@ export const INBOX_PROJECT_ID = 'inbox';
 
 export interface CreateTaskInput {
   title: string;
+  projectId?: string | undefined;
   desc?: string | null | undefined;
   content?: string | null | undefined;
   priority?: TaskPriority | undefined;
   dueDate?: string | null | undefined;
   startDate?: string | null | undefined;
+  endDate?: string | null | undefined;
   duration?: number | null | undefined;
+  scheduleMode?: ScheduleMode | undefined;
   isAllDay?: boolean | undefined;
   allDay?: boolean | undefined;
   timeZone?: string | undefined;
@@ -32,6 +39,13 @@ export interface CreateTaskInput {
   reminders?: string[] | undefined;
   tags?: string[] | undefined;
   items?: SubTaskItem[] | undefined;
+  parentTaskId?: string | null | undefined;
+  isPinned?: boolean | undefined;
+  isWontDo?: boolean | undefined;
+  attachments?: TaskAttachment[] | undefined;
+  comments?: TaskComment[] | undefined;
+  activities?: TaskActivity[] | undefined;
+  focusStats?: { totalPomodoros: number; totalFocusSeconds: number } | undefined;
 }
 
 export interface TaskServiceDeps {
@@ -116,7 +130,7 @@ export async function createTask(
 
   const task: TaskEntity = {
     id: taskId,
-    projectId: INBOX_PROJECT_ID,
+    projectId: input.projectId ?? INBOX_PROJECT_ID,
     userId: deps.userId,
     title,
     desc: (input.desc ?? input.content) ?? undefined,
@@ -127,13 +141,22 @@ export async function createTask(
     allDay: isAllDay,
     startDate,
     dueDate,
+    endDate: input.endDate ?? null,
     duration,
+    scheduleMode: input.scheduleMode,
     timeZone,
     timezone: timeZone,
     repeatFlag,
     reminders: input.reminders ? [...input.reminders] : [],
     tags: input.tags ? [...input.tags] : [],
     items: input.items ? [...input.items] : [],
+    parentTaskId: input.parentTaskId ?? null,
+    isPinned: Boolean(input.isPinned ?? false),
+    isWontDo: Boolean(input.isWontDo ?? false),
+    attachments: input.attachments ? [...input.attachments] : [],
+    comments: input.comments ? [...input.comments] : [],
+    activities: input.activities ? [...input.activities] : [],
+    focusStats: input.focusStats ?? { totalPomodoros: 0, totalFocusSeconds: 0 },
     version: 0,
     localStatus: 'CREATED',
     createdAt: timestamp,
@@ -163,8 +186,10 @@ export async function createTask(
       ...(input.tags && input.tags.length > 0 ? { tags: timestamp } : {}),
       ...(startDate !== null ? { startDate: timestamp } : {}),
       ...(dueDate !== null ? { dueDate: timestamp } : {}),
+      ...(input.endDate ? { endDate: timestamp } : {}),
       ...(duration !== null ? { duration: timestamp } : {}),
-      ...(repeatFlag !== null ? { repeatFlag: timestamp } : {})
+      ...(repeatFlag !== null ? { repeatFlag: timestamp } : {}),
+      ...(input.parentTaskId ? { parentTaskId: timestamp } : {})
     },
     createdAt: timestamp,
     status: 'PENDING',
@@ -240,10 +265,20 @@ export async function completeTask(
         ).toISOString();
       }
 
+      const hasItems = Boolean(task.items && task.items.length > 0);
+      const resetItems = hasItems
+        ? task.items!.map((it) => ({
+            ...it,
+            isCompleted: false,
+            completedAt: null
+          }))
+        : task.items;
+
       const updatedTask: TaskEntity = {
         ...task,
         dueDate: nextDueIso,
         startDate: nextStartIso,
+        ...(hasItems && resetItems ? { items: resetItems } : {}),
         completedAt: null, // Reset completion for next occurrence cycle
         updatedAt: timestamp,
         localStatus: nextLocalStatus
@@ -252,11 +287,13 @@ export async function completeTask(
       const payload: Partial<TaskEntity> = {
         dueDate: nextDueIso,
         completedAt: null,
+        ...(hasItems && resetItems ? { items: resetItems } : {}),
         updatedAt: timestamp
       };
       const fieldTimestamps: Record<string, string> = {
         dueDate: timestamp,
         completedAt: timestamp,
+        ...(hasItems ? { items: timestamp } : {}),
         updatedAt: timestamp
       };
 
@@ -1269,18 +1306,28 @@ export async function promoteSubtaskToIndependentTask(
 
 export interface UpdateTaskDetailsInput {
   title?: string | undefined;
+  projectId?: string | undefined;
   desc?: string | null | undefined;
   description?: string | null | undefined;
   content?: string | null | undefined;
   priority?: TaskPriority | undefined;
   startDate?: string | null | undefined;
   dueDate?: string | null | undefined;
+  endDate?: string | null | undefined;
   duration?: number | null | undefined;
+  scheduleMode?: ScheduleMode | undefined;
   isAllDay?: boolean | undefined;
   repeatFlag?: string | null | undefined;
   reminders?: string[] | undefined;
   tags?: string[] | undefined;
   items?: SubTaskItem[] | undefined;
+  parentTaskId?: string | null | undefined;
+  isPinned?: boolean | undefined;
+  isWontDo?: boolean | undefined;
+  attachments?: TaskAttachment[] | undefined;
+  comments?: TaskComment[] | undefined;
+  activities?: TaskActivity[] | undefined;
+  focusStats?: { totalPomodoros: number; totalFocusSeconds: number } | undefined;
 }
 
 /**
@@ -1327,12 +1374,15 @@ export async function updateTaskDetails(
   const updatedTask: TaskEntity = {
     ...task,
     ...(updates.title !== undefined ? { title: updates.title.trim() } : {}),
+    ...(updates.projectId !== undefined ? { projectId: updates.projectId } : {}),
     ...(descVal !== undefined ? { desc: descVal ?? undefined, content: descVal ?? undefined } : {}),
     ...(updates.content !== undefined ? { content: updates.content ?? undefined, desc: updates.content ?? undefined } : {}),
     ...(updates.priority !== undefined ? { priority: updates.priority } : {}),
     ...(updates.startDate !== undefined ? { startDate: updates.startDate } : {}),
     ...(updates.dueDate !== undefined ? { dueDate: updates.dueDate } : {}),
+    ...(updates.endDate !== undefined ? { endDate: updates.endDate } : {}),
     ...(updates.duration !== undefined ? { duration: updates.duration } : {}),
+    ...(updates.scheduleMode !== undefined ? { scheduleMode: updates.scheduleMode } : {}),
     ...(updates.isAllDay !== undefined
       ? { isAllDay: updates.isAllDay, allDay: updates.isAllDay }
       : {}),
@@ -1340,6 +1390,13 @@ export async function updateTaskDetails(
     ...(updates.reminders !== undefined ? { reminders: updates.reminders } : {}),
     ...(updates.tags !== undefined ? { tags: updates.tags } : {}),
     ...(updates.items !== undefined ? { items: updates.items } : {}),
+    ...(updates.parentTaskId !== undefined ? { parentTaskId: updates.parentTaskId } : {}),
+    ...(updates.isPinned !== undefined ? { isPinned: updates.isPinned } : {}),
+    ...(updates.isWontDo !== undefined ? { isWontDo: updates.isWontDo } : {}),
+    ...(updates.attachments !== undefined ? { attachments: updates.attachments } : {}),
+    ...(updates.comments !== undefined ? { comments: updates.comments } : {}),
+    ...(updates.activities !== undefined ? { activities: updates.activities } : {}),
+    ...(updates.focusStats !== undefined ? { focusStats: updates.focusStats } : {}),
     version: task.version + 1,
     updatedAt: timestamp,
     localStatus: nextLocalStatus
@@ -1354,18 +1411,28 @@ export async function updateTaskDetails(
 
   const keys: (keyof UpdateTaskDetailsInput)[] = [
     'title',
+    'projectId',
     'desc',
     'description',
     'content',
     'priority',
     'startDate',
     'dueDate',
+    'endDate',
     'duration',
+    'scheduleMode',
     'isAllDay',
     'repeatFlag',
     'reminders',
     'tags',
-    'items'
+    'items',
+    'parentTaskId',
+    'isPinned',
+    'isWontDo',
+    'attachments',
+    'comments',
+    'activities',
+    'focusStats'
   ];
 
   for (const k of keys) {
@@ -1492,4 +1559,158 @@ export async function reorderTask(
 
   await store.saveTaskWithMutation(updatedTask, mutation);
   return updatedTask;
+}
+
+/**
+ * Creates a true deep copy of an existing task with all details, tags, priority,
+ * schedule and checklist items duplicated into a new active task.
+ */
+export async function duplicateTask(
+  store: AtomicTaskStore,
+  taskId: string,
+  deps: TaskServiceDeps
+): Promise<TaskEntity> {
+  const source = await store.getTask(taskId);
+  if (!source) {
+    throw new TaskNotFoundError(taskId);
+  }
+
+  const duplicatedItems: SubTaskItem[] = (source.items ?? []).map((item, idx) => ({
+    ...item,
+    id: `item-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 6)}`,
+    isCompleted: false,
+    completedAt: null
+  }));
+
+  const copyInput: CreateTaskInput = {
+    title: `${source.title} (کپی)`,
+    projectId: source.projectId,
+    desc: source.desc ?? source.content,
+    priority: source.priority,
+    isAllDay: source.isAllDay,
+    startDate: source.startDate,
+    dueDate: source.dueDate,
+    endDate: source.endDate,
+    duration: source.duration,
+    scheduleMode: source.scheduleMode,
+    timeZone: source.timeZone,
+    repeatFlag: source.repeatFlag,
+    reminders: source.reminders ? [...source.reminders] : [],
+    tags: source.tags ? [...source.tags] : [],
+    items: duplicatedItems,
+    parentTaskId: source.parentTaskId,
+    isPinned: source.isPinned
+  };
+
+  return createTask(copyInput, { ...deps, store });
+}
+
+/**
+ * Creates an independent full TaskEntity linked to a parent task via parentTaskId.
+ */
+export async function createSubtask(
+  store: AtomicTaskStore,
+  parentTaskId: string,
+  input: CreateTaskInput,
+  deps: TaskServiceDeps
+): Promise<TaskEntity> {
+  const parent = await store.getTask(parentTaskId);
+  if (!parent) {
+    throw new TaskNotFoundError(parentTaskId);
+  }
+
+  return createTask(
+    {
+      ...input,
+      projectId: input.projectId ?? parent.projectId,
+      parentTaskId
+    },
+    { ...deps, store }
+  );
+}
+
+/**
+ * Lists all active subtasks belonging to a specific parent task.
+ */
+export async function listSubtasks(
+  store: AtomicTaskStore,
+  parentTaskId: string
+): Promise<TaskEntity[]> {
+  const allTasks = await store.listTasks();
+  return allTasks.filter(
+    (t) => t.parentTaskId === parentTaskId && t.deletedAt == null
+  );
+}
+
+/**
+ * Detects whether setting targetParentId as the parent of taskId would cause a circular cycle.
+ */
+export async function detectCircularParent(
+  store: AtomicTaskStore,
+  taskId: string,
+  targetParentId: string
+): Promise<boolean> {
+  if (taskId === targetParentId) {
+    return true;
+  }
+
+  let currentId: string | null | undefined = targetParentId;
+  const visited = new Set<string>();
+
+  while (currentId) {
+    if (visited.has(currentId)) {
+      return true;
+    }
+    visited.add(currentId);
+
+    if (currentId === taskId) {
+      return true;
+    }
+
+    const parentTask = await store.getTask(currentId);
+    if (!parentTask || !parentTask.parentTaskId) {
+      break;
+    }
+    currentId = parentTask.parentTaskId;
+  }
+
+  return false;
+}
+
+/**
+ * Cascades status (Completed, Won't Do, or Reopen) downward to all active subtasks.
+ */
+export async function cascadeTaskStatus(
+  store: AtomicTaskStore,
+  parentTaskId: string,
+  status: 'COMPLETED' | 'WONT_DO' | 'REOPEN',
+  deps: TaskServiceDeps
+): Promise<TaskEntity[]> {
+  const subtasks = await listSubtasks(store, parentTaskId);
+  const updatedSubtasks: TaskEntity[] = [];
+
+  for (const subtask of subtasks) {
+    let updated: TaskEntity;
+    if (status === 'COMPLETED') {
+      updated = await completeTask(subtask.id, { ...deps, store });
+    } else if (status === 'REOPEN') {
+      updated = await reopenTask(subtask.id, { ...deps, store });
+    } else {
+      const currentTags = subtask.tags ?? [];
+      const nextTags = currentTags.includes('wont-do')
+        ? currentTags
+        : [...currentTags, 'wont-do'];
+      updated = await updateTaskDetails(
+        store,
+        subtask.id,
+        { isWontDo: true, tags: nextTags },
+        deps
+      );
+    }
+    updatedSubtasks.push(updated);
+    const nested = await cascadeTaskStatus(store, subtask.id, status, deps);
+    updatedSubtasks.push(...nested);
+  }
+
+  return updatedSubtasks;
 }

@@ -1,13 +1,23 @@
 export type { AuthCredentials, AuthResponse, AuthUser } from './auth.js';
 export type {
   LocalStatus,
+  ScheduleMode,
   SubTaskItem,
+  TaskActivity,
+  TaskAttachment,
+  TaskComment,
   TaskDeliveryStatus,
   TaskEntity,
   TaskKind,
   TaskPriority
 } from './task.js';
-export { isTaskCompleted } from './task.js';
+export {
+  PRIORITY_HIGH,
+  PRIORITY_LOW,
+  PRIORITY_MEDIUM,
+  PRIORITY_NONE,
+  isTaskCompleted
+} from './task.js';
 export type {
   EntityType,
   FieldTimestampMap,

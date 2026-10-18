@@ -52,7 +52,8 @@ export function TaskContextMenu({
 
   if (!isOpen) return null;
 
-  const isPinned = task.tags?.includes('pinned') ?? false;
+  const isPinned = task.isPinned ?? task.tags?.includes('pinned') ?? false;
+  const isWontDo = task.isWontDo ?? task.tags?.includes('wont-do') ?? false;
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -147,11 +148,11 @@ export function TaskContextMenu({
             role="menuitem"
             onClick={() => {
               onMarkWontDo?.();
-              triggerToast("Marked as Won't Do");
+              triggerToast(isWontDo ? "Cleared Won't Do" : "Marked as Won't Do");
             }}
           >
             <span className={styles.itemIcon}>☒</span>
-            <span className={styles.itemLabel}>Won't Do</span>
+            <span className={styles.itemLabel}>{isWontDo ? "Clear Won't Do" : "Won't Do"}</span>
           </button>
 
           <div

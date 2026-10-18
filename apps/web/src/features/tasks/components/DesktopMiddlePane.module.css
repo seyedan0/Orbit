@@ -254,6 +254,17 @@
   font-size: 0.75rem;
 }
 
+.checklistBadge {
+  font-size: 0.72rem;
+  color: #64748b;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .taskSubtitle {
   font-size: 0.75rem;
   color: #6b7280;
