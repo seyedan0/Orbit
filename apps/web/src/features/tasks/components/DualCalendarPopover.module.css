@@ -1,0 +1,370 @@
+/* ==========================================================================
+   Dual Calendar & Reminder Popover Styles
+   ========================================================================== */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.popoverCard {
+  width: 320px;
+  background-color: #ffffff;
+  color: #1f2937;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-family: system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
+  animation: popIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.96) translateY(-6px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Segmented Tabs (Date / Duration) */
+.segmentedTabs {
+  display: flex;
+  background-color: #f3f4f6;
+  border-radius: 9999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.tabBtn {
+  flex: 1;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tabBtnActive {
+  background-color: #ffffff;
+  color: #111827;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Quick Date Shortcuts Row */
+.shortcutsRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.shortcutBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.shortcutBtn:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.shortcutIcon {
+  font-size: 1.15rem;
+}
+
+.shortcutLabel {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+/* Month and Year Header */
+.calendarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 4px;
+}
+
+.monthYearTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.navControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.navBtn {
+  background: transparent;
+  border: none;
+  color: #4b5563;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.navBtn:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+/* Weekday Row (S, S, M, T, W, T, F) */
+.weekdayRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.weekdayCell {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+}
+
+/* Dual Calendar Grid */
+.daysGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.dayCell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 2px;
+  font-variant-numeric: tabular-nums;
+  transition: all 0.15s ease;
+}
+
+.dayCell:hover {
+  background-color: #f3f4f6;
+}
+
+.gregorianDay {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1;
+}
+
+.jalaliDay {
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: #9ca3af;
+  line-height: 1;
+}
+
+.jalaliMonthStartBadge {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #ea580c; /* Distinct orange for start of Jalali month */
+  line-height: 1;
+}
+
+/* Other month days */
+.otherMonthCell .gregorianDay,
+.otherMonthCell .jalaliDay {
+  color: #d1d5db;
+}
+
+/* Today cell indicator */
+.todayCell {
+  border: 1px solid #0d3b45;
+}
+
+/* Selected cell */
+.selectedCell {
+  background-color: #0d3b45 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(13, 59, 69, 0.4);
+}
+
+.selectedCell .gregorianDay,
+.selectedCell .jalaliDay {
+  color: #ffffff !important;
+}
+
+.selectedCell .jalaliMonthStartBadge {
+  color: #fed7aa !important;
+}
+
+/* Expandable Scheduling Rows */
+.schedulingSection {
+  border-top: 1px solid #f3f4f6;
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.scheduleRowWrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.scheduleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 6px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.scheduleRow:hover {
+  background-color: #f9fafb;
+}
+
+.scheduleRowLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.scheduleIcon {
+  font-size: 0.95rem;
+}
+
+.scheduleRowRight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.chevron {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.scheduleDropdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 8px 10px 8px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  margin-bottom: 4px;
+}
+
+.timeChoice {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.timeChoice:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.choiceActive {
+  background-color: #0d3b45;
+  color: #ffffff;
+  border-color: #0d3b45;
+}
+
+/* Footer Buttons */
+.footerButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.btnOk {
+  padding: 8px 14px;
+  background-color: #0d3b45;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btnOk:hover {
+  background-color: #08272e;
+}
+
+.btnClear {
+  padding: 8px 14px;
+  background-color: #ffffff;
+  color: #4b5563;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btnClear:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}

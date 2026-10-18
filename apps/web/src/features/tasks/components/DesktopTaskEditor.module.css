@@ -1,0 +1,438 @@
+/* ==========================================================================
+   Desktop Task Editor (Right Pane) Styles
+   ========================================================================== */
+
+.emptyEditorPane {
+  flex: 1;
+  height: 100%;
+  min-height: 100vh;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+}
+
+.editorPane {
+  flex: 1;
+  height: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+  position: relative;
+  overflow-y: auto;
+}
+
+/* Top Toolbar */
+.topToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.statusToggleBtn {
+  background: transparent;
+  border: none;
+  font-size: 1.15rem;
+  color: #4b5563;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.statusToggleBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.statusChecked {
+  color: #10b981;
+}
+
+.statusBox {
+  color: #6b7280;
+}
+
+.statusNote {
+  color: #0d3b45;
+}
+
+.verticalDivider {
+  width: 1px;
+  height: 16px;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.datePickerBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: #4b5563;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.datePickerBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #111827;
+}
+
+.calendarIcon {
+  font-size: 0.95rem;
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.priorityFlagBtn {
+  background: transparent;
+  border: none;
+  font-size: 1.15rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: transform 0.12s ease;
+}
+
+.priorityFlagBtn:hover {
+  transform: scale(1.15);
+}
+
+/* Editor Body */
+.editorBody {
+  flex: 1;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.titleInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  outline: none;
+  font-family: inherit;
+  padding: 4px 0;
+}
+
+.titleInput::placeholder {
+  color: #9ca3af;
+}
+
+.checklistModeBtn {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.checklistModeBtn:hover,
+.checklistActive {
+  color: #0d3b45;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.descriptionInput {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #374151;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+  padding: 0;
+}
+
+.descriptionInput::placeholder {
+  color: #9ca3af;
+}
+
+/* Checklist Section */
+.checklistSection {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.newChecklistRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.emptyCheckbox {
+  font-size: 1.1rem;
+  color: #9ca3af;
+}
+
+.newChecklistInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  color: #1f2937;
+  font-family: inherit;
+  padding: 4px 0;
+}
+
+.newChecklistInput::placeholder {
+  color: #9ca3af;
+}
+
+.checklistDivider {
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.15);
+  margin: 2px 0 8px 0;
+}
+
+.checklistItemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.checklistItemRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background-color 0.12s ease;
+}
+
+.checklistItemRow:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.itemCheckboxBtn {
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  color: #4b5563;
+  cursor: pointer;
+  padding: 0;
+}
+
+.itemTitleInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  color: #1f2937;
+  font-family: inherit;
+}
+
+.itemCompleted .itemTitleInput {
+  text-decoration: line-through;
+  color: #9ca3af;
+}
+
+.itemDeleteBtn {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  font-size: 0.8rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.checklistItemRow:hover .itemDeleteBtn {
+  opacity: 1;
+}
+
+/* Comments Section */
+.commentsSection {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.commentsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.closeCommentsBtn {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+}
+
+.commentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.commentItem {
+  padding: 6px 8px;
+  background: #ffffff;
+  border-radius: 6px;
+}
+
+.commentText {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #1f2937;
+}
+
+.commentDate {
+  font-size: 0.68rem;
+  color: #9ca3af;
+}
+
+.commentInput {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 0.82rem;
+  outline: none;
+}
+
+/* Bottom Detail Footer */
+.bottomFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+}
+
+.footerLeft {
+  position: relative;
+}
+
+.folderBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #4b5563;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.folderBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #111827;
+}
+
+.folderIcon {
+  font-size: 0.95rem;
+}
+
+.folderDropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 6px;
+  width: 140px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px -2px rgba(0, 0, 0, 0.2);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 900;
+}
+
+.folderChoice {
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  font-size: 0.82rem;
+  color: #374151;
+  text-align: left;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.folderChoice:hover {
+  background-color: #f3f4f6;
+}
+
+.footerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.footerActionBtn {
+  background: transparent;
+  border: none;
+  font-size: 1.05rem;
+  color: #4b5563;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.footerActionBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #111827;
+}
