@@ -8,21 +8,31 @@ import {
   toPersianDigits
 } from '../../../core/calendar/jalali';
 import {
-  getCalendarMonthTitle,
-  getCalendarDayTitle,
+  getCalendarHeaderTitle,
   navigateMonth,
   navigateWeek,
   navigateDay,
   navigateAgenda,
+  navigateYear,
+  navigateMultiDay,
+  navigateMultiWeek,
   rescheduleDatePreservingTime,
   rescheduleTaskToHour,
+  shiftTaskDuration,
+  resizeTaskSpan,
   type CalendarType,
-  type CalendarViewMode
+  type CalendarViewMode,
+  type CalendarSettings
 } from '../calendar-utils';
 import { MonthView } from '../components/MonthView';
 import { WeekView } from '../components/WeekView';
 import { DayView } from '../components/DayView';
+import { YearView } from '../components/YearView';
 import { AgendaView } from '../components/AgendaView';
+import { MultiDayView } from '../components/MultiDayView';
+import { MultiWeekView } from '../components/MultiWeekView';
+import { CalendarFloatingBar } from '../components/CalendarFloatingBar';
+import { CalendarSettingsPopover } from '../components/CalendarSettingsPopover';
 import {
   CalendarSidePanel,
   type CalendarFilterState
@@ -66,6 +76,13 @@ export const CalendarPage: FC<CalendarPageProps> = ({
   const [actionError, setActionError] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<TaskEntity | null>(null);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(true);
+  const [settings, setSettings] = useState<CalendarSettings>({
+    weekStartDay: 6, // Saturday
+    showWeekNumbers: true,
+    showCompletedTasks: true,
+    showSecondaryCalendar: true
+  });
+
   const [filterState, setFilterState] = useState<CalendarFilterState>({
     showAll: true,
     selectedProjects: [],
@@ -98,13 +115,17 @@ export const CalendarPage: FC<CalendarPageProps> = ({
     void reload();
   }, [reload]);
 
-  const headerTitle =
-    viewMode === 'day'
-      ? getCalendarDayTitle(currentDate, calendarType)
-      : getCalendarMonthTitle(currentDate, calendarType);
+  const headerTitle = getCalendarHeaderTitle(
+    currentDate,
+    viewMode,
+    calendarType,
+    3
+  );
 
   const handlePrev = () => {
-    if (viewMode === 'month') {
+    if (viewMode === 'year') {
+      setCurrentDate((prev) => navigateYear(prev, -1, calendarType));
+    } else if (viewMode === 'month') {
       setCurrentDate((prev) => navigateMonth(prev, -1, calendarType));
     } else if (viewMode === 'week') {
       setCurrentDate((prev) => navigateWeek(prev, -1));
@@ -112,11 +133,17 @@ export const CalendarPage: FC<CalendarPageProps> = ({
       setCurrentDate((prev) => navigateDay(prev, -1));
     } else if (viewMode === 'agenda') {
       setCurrentDate((prev) => navigateAgenda(prev, -1));
+    } else if (viewMode === 'multi-day') {
+      setCurrentDate((prev) => navigateMultiDay(prev, -1, 3));
+    } else if (viewMode === 'multi-week') {
+      setCurrentDate((prev) => navigateMultiWeek(prev, -1, 2));
     }
   };
 
   const handleNext = () => {
-    if (viewMode === 'month') {
+    if (viewMode === 'year') {
+      setCurrentDate((prev) => navigateYear(prev, 1, calendarType));
+    } else if (viewMode === 'month') {
       setCurrentDate((prev) => navigateMonth(prev, 1, calendarType));
     } else if (viewMode === 'week') {
       setCurrentDate((prev) => navigateWeek(prev, 1));
@@ -124,12 +151,20 @@ export const CalendarPage: FC<CalendarPageProps> = ({
       setCurrentDate((prev) => navigateDay(prev, 1));
     } else if (viewMode === 'agenda') {
       setCurrentDate((prev) => navigateAgenda(prev, 1));
+    } else if (viewMode === 'multi-day') {
+      setCurrentDate((prev) => navigateMultiDay(prev, 1, 3));
+    } else if (viewMode === 'multi-week') {
+      setCurrentDate((prev) => navigateMultiWeek(prev, 1, 2));
     }
   };
 
   const displayedTasks = useMemo(() => {
-    if (filterState.showAll) return tasks;
-    return tasks.filter((t) => {
+    let list = tasks;
+    if (!settings.showCompletedTasks) {
+      list = list.filter((t) => t.completedAt == null);
+    }
+    if (filterState.showAll) return list;
+    return list.filter((t) => {
       if (t.deletedAt != null) return false;
       const matchProject =
         filterState.selectedProjects.length === 0 ||
@@ -143,7 +178,7 @@ export const CalendarPage: FC<CalendarPageProps> = ({
 
       return matchProject && matchTag;
     });
-  }, [tasks, filterState]);
+  }, [tasks, filterState, settings.showCompletedTasks]);
 
   const handleToday = () => {
     const now = new Date();
@@ -235,6 +270,90 @@ export const CalendarPage: FC<CalendarPageProps> = ({
     }
   };
 
+  const handleShiftTaskSpan = async (taskId: string, targetStartDate: Date) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    setActionError(null);
+
+    const previousTasks = tasks;
+    const nowIso = new Date().toISOString();
+    const shifted = shiftTaskDuration(task, targetStartDate);
+
+    setTasks((current) =>
+      current.map((t) => {
+        if (t.id !== taskId) return t;
+        return {
+          ...t,
+          startDate: shifted.startDate,
+          dueDate: shifted.dueDate,
+          updatedAt: nowIso
+        };
+      })
+    );
+
+    try {
+      await rescheduleTask(
+        store,
+        taskId,
+        {
+          startDate: shifted.startDate,
+          dueDate: shifted.dueDate
+        },
+        { userId: session?.userId ?? 'user-default' }
+      );
+      await reload();
+    } catch (err) {
+      setTasks(previousTasks);
+      setActionError(
+        err instanceof Error ? err.message : 'خطا در جابه‌جایی بازه زمانی تسک'
+      );
+    }
+  };
+
+  const handleResizeTaskSpan = async (
+    taskId: string,
+    edge: 'start' | 'end',
+    targetDate: Date
+  ) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    setActionError(null);
+
+    const previousTasks = tasks;
+    const nowIso = new Date().toISOString();
+    const resized = resizeTaskSpan(task, edge, targetDate);
+
+    setTasks((current) =>
+      current.map((t) => {
+        if (t.id !== taskId) return t;
+        return {
+          ...t,
+          startDate: resized.startDate,
+          dueDate: resized.dueDate,
+          updatedAt: nowIso
+        };
+      })
+    );
+
+    try {
+      await rescheduleTask(
+        store,
+        taskId,
+        {
+          startDate: resized.startDate,
+          dueDate: resized.dueDate
+        },
+        { userId: session?.userId ?? 'user-default' }
+      );
+      await reload();
+    } catch (err) {
+      setTasks(previousTasks);
+      setActionError(
+        err instanceof Error ? err.message : 'خطا در تغییر مرز بازه زمانی تسک'
+      );
+    }
+  };
+
   const handleRescheduleDayHour = async (
     taskId: string,
     hour: number,
@@ -268,7 +387,6 @@ export const CalendarPage: FC<CalendarPageProps> = ({
       newDuration = durationMinutes;
     }
 
-    // Optimistic update (<50ms)
     setTasks((current) =>
       current.map((t) => {
         if (t.id !== taskId) return t;
@@ -333,7 +451,6 @@ export const CalendarPage: FC<CalendarPageProps> = ({
       }
     }
 
-    // Optimistic update (<50ms)
     setTasks((current) =>
       current.map((t) => {
         if (t.id !== taskId) return t;
@@ -490,9 +607,26 @@ export const CalendarPage: FC<CalendarPageProps> = ({
         </div>
 
         <div className={styles.rightControls}>
-          {/* View Mode Toggle */}
+          {/* View Mode Dropdown */}
+          <select
+            className={styles.viewSelectDropdown}
+            value={viewMode}
+            onChange={(e) => setViewMode(e.target.value as CalendarViewMode)}
+            aria-label="انتخاب نمای تقویم"
+            data-testid="view-select-dropdown"
+          >
+            <option value="month">ماه (Month)</option>
+            <option value="week">هفته (Week)</option>
+            <option value="day">روز (Day)</option>
+            <option value="year">سال (Year)</option>
+            <option value="agenda">دستورکار (Agenda)</option>
+            <option value="multi-day">۳ روزه (Multi-Day)</option>
+            <option value="multi-week">۲ هفته‌ای (Multi-Week)</option>
+          </select>
+
+          {/* View Mode Toggle Group for Desktop Quick Access */}
           <div
-            className={styles.toggleGroup}
+            className={`${styles.toggleGroup} ${styles.toggleGroupDesktop}`}
             role="group"
             aria-label="نوع نمایش"
           >
@@ -528,6 +662,17 @@ export const CalendarPage: FC<CalendarPageProps> = ({
               data-testid="view-month-btn"
             >
               ماه
+            </button>
+            <button
+              type="button"
+              className={`${styles.toggleBtn} ${
+                viewMode === 'year' ? styles.toggleBtnActive : ''
+              }`}
+              onClick={() => setViewMode('year')}
+              aria-pressed={viewMode === 'year'}
+              data-testid="view-year-btn"
+            >
+              سال
             </button>
             <button
               type="button"
@@ -571,6 +716,12 @@ export const CalendarPage: FC<CalendarPageProps> = ({
               میلادی
             </button>
           </div>
+
+          {/* Settings Popover */}
+          <CalendarSettingsPopover
+            settings={settings}
+            onSettingsChange={setSettings}
+          />
 
           {/* Toggle Side Panel Button */}
           <button
@@ -621,7 +772,10 @@ export const CalendarPage: FC<CalendarPageProps> = ({
               onToggleCompletion={handleToggleCompletion}
               onAddTask={(date, isoDate) => handleOpenAddTaskModal(date, isoDate)}
               onRescheduleTask={handleRescheduleMonth}
+              onShiftTaskSpan={handleShiftTaskSpan}
+              onResizeTaskSpan={handleResizeTaskSpan}
               onSelectTask={(task) => setSelectedTask(task)}
+              settings={settings}
             />
           )}
 
@@ -631,7 +785,14 @@ export const CalendarPage: FC<CalendarPageProps> = ({
               calendarType={calendarType}
               tasks={displayedTasks}
               onToggleCompletion={handleToggleCompletion}
-              onAddTask={(date, isoDate) => handleOpenAddTaskModal(date, isoDate)}
+              onAddTask={(date, isoDate, hour) =>
+                handleOpenAddTaskModal(date, isoDate, hour)
+              }
+              onRescheduleTask={handleRescheduleMonth}
+              onShiftTaskSpan={handleShiftTaskSpan}
+              onResizeTaskSpan={handleResizeTaskSpan}
+              onSelectTask={(task) => setSelectedTask(task)}
+              settings={settings}
             />
           )}
 
@@ -649,6 +810,24 @@ export const CalendarPage: FC<CalendarPageProps> = ({
             />
           )}
 
+          {viewMode === 'year' && (
+            <YearView
+              currentDate={currentDate}
+              calendarType={calendarType}
+              tasks={displayedTasks}
+              onSelectDate={(d) => {
+                setSelectedDate(d);
+                setCurrentDate(d);
+              }}
+              onDrillDown={(d) => {
+                setSelectedDate(d);
+                setCurrentDate(d);
+                setViewMode('day');
+              }}
+              settings={settings}
+            />
+          )}
+
           {viewMode === 'agenda' && (
             <AgendaView
               currentDate={currentDate}
@@ -656,6 +835,41 @@ export const CalendarPage: FC<CalendarPageProps> = ({
               tasks={displayedTasks}
               onToggleCompletion={handleToggleCompletion}
               onAddTask={(date, isoDate) => handleOpenAddTaskModal(date, isoDate)}
+            />
+          )}
+
+          {viewMode === 'multi-day' && (
+            <MultiDayView
+              currentDate={currentDate}
+              calendarType={calendarType}
+              tasks={displayedTasks}
+              daysCount={3}
+              onToggleCompletion={handleToggleCompletion}
+              onAddTask={(date, isoDate) => handleOpenAddTaskModal(date, isoDate)}
+              onRescheduleTask={handleRescheduleMonth}
+              onShiftTaskSpan={handleShiftTaskSpan}
+              onSelectTask={(task) => setSelectedTask(task)}
+              settings={settings}
+            />
+          )}
+
+          {viewMode === 'multi-week' && (
+            <MultiWeekView
+              currentDate={currentDate}
+              calendarType={calendarType}
+              tasks={displayedTasks}
+              weeksCount={2}
+              selectedDate={selectedDate}
+              onSelectDate={(d) => {
+                setSelectedDate(d);
+                setCurrentDate(d);
+              }}
+              onToggleCompletion={handleToggleCompletion}
+              onAddTask={(date, isoDate) => handleOpenAddTaskModal(date, isoDate)}
+              onRescheduleTask={handleRescheduleMonth}
+              onShiftTaskSpan={handleShiftTaskSpan}
+              onSelectTask={(task) => setSelectedTask(task)}
+              settings={settings}
             />
           )}
         </div>
@@ -676,6 +890,12 @@ export const CalendarPage: FC<CalendarPageProps> = ({
           onClose={() => setIsSidePanelOpen(false)}
         />
       </div>
+
+      {/* Synchronized Floating Dock for 7 Calendar Views */}
+      <CalendarFloatingBar
+        activeView={viewMode}
+        onViewChange={(v) => setViewMode(v)}
+      />
 
       {/* Quick Task Creation Modal */}
       {isModalOpen && selectedDay && (

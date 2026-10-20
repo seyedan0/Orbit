@@ -232,3 +232,176 @@
 .priorityP3 {
   border-inline-start: 3px solid var(--priority-low);
 }
+
+/* ==========================================================================
+   Multi-Day Snake Ribbon Styles (Duration Spanning)
+   ========================================================================== */
+
+.monthWeeksContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+}
+
+.weekRow {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border-radius: var(--radius-sm);
+  min-height: 110px;
+  flex: 1;
+}
+
+.weekDaysRowGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+  flex: 1;
+}
+
+.ribbonsSpacer {
+  width: 100%;
+  pointer-events: none;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+.ribbonsTrack {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px 0.35rem;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.ribbonItem {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #ffffff;
+  height: 22px;
+  position: relative;
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.ribbonItem:active {
+  cursor: grabbing;
+}
+
+.ribbonItem:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 6px var(--accent-glow);
+}
+
+/* Snake Edge States */
+.ribbonRoundedStart {
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.ribbonFlatStart {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 2px dashed rgba(255, 255, 255, 0.6);
+  padding-left: 0.3rem;
+}
+
+.ribbonRoundedEnd {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.ribbonFlatEnd {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: 2px dashed rgba(255, 255, 255, 0.6);
+  padding-right: 0.3rem;
+}
+
+/* Past Days Fading */
+.ribbonPast {
+  opacity: 0.45;
+  filter: saturate(0.65);
+}
+
+.ribbonTodayOrFuture {
+  opacity: 1;
+}
+
+.ribbonTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ribbonContinuationLeft {
+  font-size: 0.7rem;
+  opacity: 0.8;
+  margin-right: 2px;
+}
+
+.ribbonContinuationRight {
+  font-size: 0.7rem;
+  opacity: 0.8;
+  margin-left: 2px;
+}
+
+/* Resize Handles */
+.ribbonResizeHandleLeft,
+.ribbonResizeHandleRight {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+  opacity: 0;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+  z-index: 3;
+}
+
+.ribbonResizeHandleLeft {
+  left: 0;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.ribbonResizeHandleRight {
+  right: 0;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.ribbonItem:hover .ribbonResizeHandleLeft,
+.ribbonItem:hover .ribbonResizeHandleRight {
+  opacity: 0.85;
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Secondary Dual-Calendar Date Label */
+.secondaryDateBadge {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+.dayCellPast {
+  opacity: 0.48;
+}
+

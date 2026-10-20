@@ -6,3 +6,16 @@ dist/
 !.env.example
 coverage/
 .turbo/
+scratch/
+
+# ProjectFlow (pf) Toolkit & Control State
+.project-control/
+BOOTSTRAP_INTAKE.md
+scripts/
+ui/
+templates/
+.cursorrules
+CLAUDE.md
+.agents/rules/project-flow.md
+.agents/skills/project-flow/
+.agents/skills/pf-*

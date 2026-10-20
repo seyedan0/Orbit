@@ -10,6 +10,28 @@
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
+  padding-bottom: 72px; /* clearance for floating dock */
+  position: relative;
+}
+
+.viewSelectDropdown {
+  display: none;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  font-size: 0.825rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.viewSelectDropdown:focus,
+.viewSelectDropdown:hover {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 8px var(--accent-glow);
 }
 
 .calendarToolbar {
@@ -352,6 +374,16 @@
 .modalSubmitBtn:hover {
   background: var(--accent-primary-hover);
   box-shadow: var(--shadow-glow);
+}
+
+@media (max-width: 900px) {
+  .toggleGroupDesktop {
+    display: none;
+  }
+
+  .viewSelectDropdown {
+    display: block;
+  }
 }
 
 @media (max-width: 768px) {

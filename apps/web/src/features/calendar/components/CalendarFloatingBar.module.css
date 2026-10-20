@@ -1,0 +1,68 @@
+/* ==========================================================================
+   Dark Green Task UI - CalendarFloatingBar (Synchronized Floating Dock)
+   Orbit Productivity Application
+   ========================================================================== */
+
+.floatingDockContainer {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.65rem;
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.7), 0 0 16px -4px var(--accent-glow);
+  z-index: 50;
+  transition: all 0.2s ease;
+}
+
+.dockItemBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.dockItemBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.dockItemBtnActive {
+  background: var(--accent-subtle) !important;
+  color: var(--accent-primary-hover) !important;
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 10px -2px var(--accent-glow);
+}
+
+.dockIcon {
+  font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .floatingDockContainer {
+    bottom: 16px;
+    padding: 0.3rem 0.45rem;
+    max-width: 95vw;
+    overflow-x: auto;
+  }
+
+  .dockItemBtn {
+    padding: 0.3rem 0.55rem;
+    font-size: 0.72rem;
+  }
+}
