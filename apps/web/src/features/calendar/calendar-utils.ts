@@ -9,7 +9,6 @@ import {
   getJalaliMonthLength,
   getPersianWeekday,
   jalaliToDate,
-  jalaliToIso,
   toPersianDigits
 } from '../../core/calendar/jalali';
 import { getLocalDateKey } from '../tasks/services/task-service';
@@ -218,8 +217,8 @@ export function isTaskOnDate(task: TaskEntity, targetDate: Date): boolean {
 
   // Direct date prefix match (e.g. '2026-10-05')
   const isoDatePrefix = scheduledIso.slice(0, 10);
-  const targetIsoPrefix = targetDate.toISOString().slice(0, 10);
-  if (isoDatePrefix === targetIsoPrefix) return true;
+  const targetKey = getLocalDateKey(targetDate);
+  if (isoDatePrefix === targetKey) return true;
 
   // Timezone-aware comparison
   const targetTz = task.timeZone;
@@ -329,6 +328,31 @@ export function getJalaliWeekNumber(date: Date): number {
 }
 
 /**
+ * Normalizes a date to UTC midnight ISO string (YYYY-MM-DDT00:00:00.000Z)
+ * matching its local calendar date components.
+ */
+export function toDayUtcIso(date: Date): string {
+  return new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0)
+  ).toISOString();
+}
+
+/**
+ * Checks if two dates refer to the exact same local calendar day (Year, Month, Day).
+ */
+export function isSameCalendarDay(
+  a: Date | null | undefined,
+  b: Date | null | undefined
+): boolean {
+  if (!a || !b) return false;
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+/**
  * Computes all day cells and headers for Month view, including leading and trailing days and week numbers.
  */
 export function getMonthViewDays(
@@ -361,7 +385,7 @@ export function getMonthViewDays(
       const startDay = prevMonthLength - startWeekday + 1;
       for (let d = startDay; d <= prevMonthLength; d++) {
         const date = jalaliToDate(prevYear, prevMonth, d, 12, 0, 0);
-        const isoDate = jalaliToIso(prevYear, prevMonth, d, 0, 0, true);
+        const isoDate = toDayUtcIso(date);
         const isToday =
           todayJalali.year === prevYear &&
           todayJalali.month === prevMonth &&
@@ -383,7 +407,7 @@ export function getMonthViewDays(
     // Current month days
     for (let d = 1; d <= daysInMonth; d++) {
       const date = jalaliToDate(j.year, j.month, d, 12, 0, 0);
-      const isoDate = jalaliToIso(j.year, j.month, d, 0, 0, true);
+      const isoDate = toDayUtcIso(date);
       const isToday =
         todayJalali.year === j.year &&
         todayJalali.month === j.month &&
@@ -414,7 +438,7 @@ export function getMonthViewDays(
       }
       for (let d = 1; d <= trailingCount; d++) {
         const date = jalaliToDate(nextYear, nextMonth, d, 12, 0, 0);
-        const isoDate = jalaliToIso(nextYear, nextMonth, d, 0, 0, true);
+        const isoDate = toDayUtcIso(date);
         const isToday =
           todayJalali.year === nextYear &&
           todayJalali.month === nextMonth &&
@@ -584,7 +608,7 @@ export function getWeekViewDays(
 
       items.push({
         date,
-        isoDate: jalaliToIso(jd.year, jd.month, jd.day, 0, 0, true),
+        isoDate: toDayUtcIso(date),
         dayNumber: toPersianDigits(jd.day),
         dayNum: jd.day,
         monthName: PERSIAN_MONTH_NAMES[jd.month - 1] ?? '',
@@ -683,7 +707,7 @@ export function getAgendaDayGroups(
       const jd = dateToJalali(d);
       dayLabel = `${toPersianDigits(jd.day)} ${PERSIAN_MONTH_NAMES[jd.month - 1]} ${toPersianDigits(jd.year)}`;
       weekdayName = PERSIAN_WEEKDAY_NAMES[getPersianWeekday(d)] ?? '';
-      isoDate = jalaliToIso(jd.year, jd.month, jd.day, 0, 0, true);
+      isoDate = toDayUtcIso(d);
     } else {
       dayLabel = `${GREGORIAN_MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
       weekdayName = GREGORIAN_WEEKDAY_NAMES[d.getDay()] ?? '';
@@ -1056,7 +1080,7 @@ export function getYearViewMonths(
         const startDay = prevMonthLen - startWeekday + 1;
         for (let d = startDay; d <= prevMonthLen; d++) {
           const date = jalaliToDate(prevYear, prevMonth, d, 12, 0, 0);
-          const isoDate = jalaliToIso(prevYear, prevMonth, d, 0, 0, true);
+          const isoDate = toDayUtcIso(date);
           days.push({
             date,
             isoDate,
@@ -1073,7 +1097,7 @@ export function getYearViewMonths(
       // Current month days
       for (let d = 1; d <= monthLength; d++) {
         const date = jalaliToDate(year, month, d, 12, 0, 0);
-        const isoDate = jalaliToIso(year, month, d, 0, 0, true);
+        const isoDate = toDayUtcIso(date);
         const isToday =
           today.getFullYear() === date.getFullYear() &&
           today.getMonth() === date.getMonth() &&
@@ -1119,7 +1143,7 @@ export function getYearViewMonths(
         }
         for (let d = 1; d <= trailingCount; d++) {
           const date = jalaliToDate(nextYear, nextMonth, d, 12, 0, 0);
-          const isoDate = jalaliToIso(nextYear, nextMonth, d, 0, 0, true);
+          const isoDate = toDayUtcIso(date);
           days.push({
             date,
             isoDate,
@@ -1295,7 +1319,7 @@ export function getMultiDayItems(
       const jd = dateToJalali(date);
       items.push({
         date,
-        isoDate: jalaliToIso(jd.year, jd.month, jd.day, 0, 0, true),
+        isoDate: toDayUtcIso(date),
         dayNumber: toPersianDigits(jd.day),
         dayNum: jd.day,
         monthName: PERSIAN_MONTH_NAMES[jd.month - 1] ?? '',

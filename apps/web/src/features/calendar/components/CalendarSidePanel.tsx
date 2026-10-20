@@ -3,6 +3,7 @@ import { useMemo, useState, type FC } from 'react';
 import {
   getMonthViewDays,
   navigateMonth,
+  isSameCalendarDay,
   type CalendarType
 } from '../calendar-utils';
 import {
@@ -160,8 +161,6 @@ export const CalendarSidePanel: FC<CalendarSidePanelProps> = ({
 
   if (!isOpen) return null;
 
-  const selIsoPrefix = selectedDate.toISOString().slice(0, 10);
-
   return (
     <aside
       className={styles.sidePanelContainer}
@@ -235,7 +234,7 @@ export const CalendarSidePanel: FC<CalendarSidePanelProps> = ({
               );
             }
 
-            const isSelected = item.isoDate.slice(0, 10) === selIsoPrefix;
+            const isSelected = isSameCalendarDay(selectedDate, item.date);
 
             return (
               <button

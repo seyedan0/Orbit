@@ -3,6 +3,7 @@ import type { FC } from 'react';
 import {
   getMultiWeekRows,
   isSingleDayTaskOnDate,
+  isSameCalendarDay,
   type CalendarSettings,
   type CalendarType,
   type TaskRibbonSegment
@@ -99,70 +100,6 @@ export const MultiWeekView: FC<MultiWeekViewProps> = ({
             className={styles.weekRow}
             data-testid={`multi-week-row-${rowIdx}`}
           >
-            {/* Multi-Day Ribbons Track */}
-            {row.multiDaySegments.length > 0 && (
-              <div
-                className={styles.ribbonsTrack}
-                style={{
-                  gridTemplateRows: `repeat(${row.maxSlots}, 22px)`
-                }}
-              >
-                {row.multiDaySegments.map((seg: TaskRibbonSegment) => {
-                  const isTaskCompleted = seg.task.completedAt != null;
-                  if (!showCompleted && isTaskCompleted) return null;
-
-                  return (
-                    <div
-                      key={`multi-week-ribbon-${seg.taskId}-${rowIdx}`}
-                      className={`${styles.ribbonItem} ${
-                        seg.isStartOfTask
-                          ? styles.ribbonRoundedStart
-                          : styles.ribbonFlatStart
-                      } ${
-                        seg.isEndOfTask
-                          ? styles.ribbonRoundedEnd
-                          : styles.ribbonFlatEnd
-                      } ${
-                        seg.isPast
-                          ? styles.ribbonPast
-                          : styles.ribbonTodayOrFuture
-                      }`}
-                      style={{
-                        gridColumn: `${seg.startColIndex + 1} / span ${seg.colSpan}`,
-                        gridRow: seg.slotIndex + 1,
-                        backgroundColor: seg.color
-                      }}
-                      draggable={true}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectTask?.(seg.task);
-                      }}
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData('text/plain', seg.taskId);
-                        e.dataTransfer.setData(
-                          'application/json',
-                          JSON.stringify({
-                            action: 'RIBBON_MOVE',
-                            taskId: seg.taskId
-                          })
-                        );
-                        e.dataTransfer.effectAllowed = 'move';
-                      }}
-                      title={seg.taskTitle}
-                    >
-                      {!seg.isStartOfTask && (
-                        <span className={styles.ribbonContinuationLeft}>◂</span>
-                      )}
-                      <span className={styles.ribbonTitle}>{seg.taskTitle}</span>
-                      {!seg.isEndOfTask && (
-                        <span className={styles.ribbonContinuationRight}>▸</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
             {/* Days in Row */}
             <div className={styles.weekDaysRowGrid}>
               {row.days.map((item, colIdx) => {
@@ -173,10 +110,7 @@ export const MultiWeekView: FC<MultiWeekViewProps> = ({
                   ? dayTasks
                   : dayTasks.filter((t) => t.completedAt == null);
 
-                const isSelected =
-                  selectedDate != null &&
-                  selectedDate.toISOString().slice(0, 10) ===
-                    item.isoDate.slice(0, 10);
+                const isSelected = isSameCalendarDay(selectedDate, item.date);
                 const isPast =
                   new Date(item.date).getTime() < todayMidnight.getTime();
 
@@ -251,6 +185,15 @@ export const MultiWeekView: FC<MultiWeekViewProps> = ({
                       </button>
                     </div>
 
+                    {/* Spacer for multi-day ribbons overlay */}
+                    {row.maxSlots > 0 && (
+                      <div
+                        className={styles.ribbonsSpacer}
+                        style={{ height: `${row.maxSlots * 24}px` }}
+                        aria-hidden="true"
+                      />
+                    )}
+
                     {filteredTasks.length > 0 && (
                       <div className={styles.dayTasksList}>
                         {filteredTasks.map((task) => (
@@ -284,6 +227,70 @@ export const MultiWeekView: FC<MultiWeekViewProps> = ({
                 );
               })}
             </div>
+
+            {/* Multi-Day Ribbons Track Overlay */}
+            {row.multiDaySegments.length > 0 && (
+              <div
+                className={styles.ribbonsTrack}
+                style={{
+                  gridTemplateRows: `repeat(${row.maxSlots}, 22px)`
+                }}
+              >
+                {row.multiDaySegments.map((seg: TaskRibbonSegment) => {
+                  const isTaskCompleted = seg.task.completedAt != null;
+                  if (!showCompleted && isTaskCompleted) return null;
+
+                  return (
+                    <div
+                      key={`multi-week-ribbon-${seg.taskId}-${rowIdx}`}
+                      className={`${styles.ribbonItem} ${
+                        seg.isStartOfTask
+                          ? styles.ribbonRoundedStart
+                          : styles.ribbonFlatStart
+                      } ${
+                        seg.isEndOfTask
+                          ? styles.ribbonRoundedEnd
+                          : styles.ribbonFlatEnd
+                      } ${
+                        seg.isPast
+                          ? styles.ribbonPast
+                          : styles.ribbonTodayOrFuture
+                      }`}
+                      style={{
+                        gridColumn: `${seg.startColIndex + 1} / span ${seg.colSpan}`,
+                        gridRow: seg.slotIndex + 1,
+                        backgroundColor: seg.color
+                      }}
+                      draggable={true}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectTask?.(seg.task);
+                      }}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', seg.taskId);
+                        e.dataTransfer.setData(
+                          'application/json',
+                          JSON.stringify({
+                            action: 'RIBBON_MOVE',
+                            taskId: seg.taskId
+                          })
+                        );
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      title={seg.taskTitle}
+                    >
+                      {!seg.isStartOfTask && (
+                        <span className={styles.ribbonContinuationLeft}>◂</span>
+                      )}
+                      <span className={styles.ribbonTitle}>{seg.taskTitle}</span>
+                      {!seg.isEndOfTask && (
+                        <span className={styles.ribbonContinuationRight}>▸</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -96,6 +96,55 @@ export const WeekView: FC<WeekViewProps> = ({
         </span>
       </div>
 
+      {/* Week Day Headers Row (Saturday to Friday) */}
+      <div className={styles.weekDayHeadersGrid} role="row">
+        {weekDays.map((col, idx) => (
+          <div
+            key={`header-${col.isoDate}`}
+            className={`${styles.columnHeader} ${
+              col.isToday ? styles.todayColumnHeader : ''
+            }`}
+          >
+            <div className={styles.headerTopRow}>
+              <span
+                className={styles.weekdayTitle}
+                data-testid={`week-weekday-title-${idx}`}
+              >
+                {col.weekdayName}
+              </span>
+              <button
+                type="button"
+                className={styles.addTaskBtn}
+                onClick={() => onAddTask?.(col.date, col.isoDate)}
+                aria-label={`افزودن تسک در ${col.weekdayName}`}
+                data-testid={`week-add-task-btn-${idx}`}
+                title="افزودن تسک"
+              >
+                +
+              </button>
+            </div>
+            <div>
+              <span
+                className={`${styles.dateBadge} ${
+                  col.isToday ? styles.todayDateBadge : ''
+                }`}
+                data-testid={`week-date-badge-${idx}`}
+              >
+                {col.dateLabel}
+              </span>
+              {showSecondary && col.secondaryDateLabel && (
+                <span
+                  className={styles.secondaryDateBadge}
+                  title="تاریخ ثانویه"
+                >
+                  ({col.secondaryDateLabel})
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Top Pinned All-Day & Multi-Day Snake Ribbon Section */}
       {multiDaySegments.length > 0 && (
         <div
@@ -278,44 +327,6 @@ export const WeekView: FC<WeekViewProps> = ({
                 }
               }}
             >
-              {/* Column Header */}
-              <div className={styles.columnHeader}>
-                <div className={styles.headerTopRow}>
-                  <span
-                    className={styles.weekdayTitle}
-                    data-testid={`week-weekday-title-${idx}`}
-                  >
-                    {col.weekdayName}
-                  </span>
-                  <button
-                    type="button"
-                    className={styles.addTaskBtn}
-                    onClick={() => onAddTask?.(col.date, col.isoDate)}
-                    aria-label={`افزودن تسک در ${col.weekdayName}`}
-                    data-testid={`week-add-task-btn-${idx}`}
-                    title="افزودن تسک"
-                  >
-                    +
-                  </button>
-                </div>
-                <div>
-                  <span
-                    className={styles.dateBadge}
-                    data-testid={`week-date-badge-${idx}`}
-                  >
-                    {col.dateLabel}
-                  </span>
-                  {showSecondary && col.secondaryDateLabel && (
-                    <span
-                      className={styles.secondaryDateBadge}
-                      title="تاریخ ثانویه"
-                    >
-                      ({col.secondaryDateLabel})
-                    </span>
-                  )}
-                </div>
-              </div>
-
               {/* Column Tasks Body */}
               <div
                 className={styles.columnTasksList}

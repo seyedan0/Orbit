@@ -15,6 +15,7 @@
 }
 
 .viewSelectDropdown {
+  display: none;
   background: var(--bg-surface-2);
   border: 1px solid var(--border-default);
   color: var(--text-primary);
@@ -373,6 +374,16 @@
 .modalSubmitBtn:hover {
   background: var(--accent-primary-hover);
   box-shadow: var(--shadow-glow);
+}
+
+@media (max-width: 900px) {
+  .toggleGroupDesktop {
+    display: none;
+  }
+
+  .viewSelectDropdown {
+    display: block;
+  }
 }
 
 @media (max-width: 768px) {

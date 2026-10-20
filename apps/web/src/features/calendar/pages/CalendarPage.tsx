@@ -626,7 +626,7 @@ export const CalendarPage: FC<CalendarPageProps> = ({
 
           {/* View Mode Toggle Group for Desktop Quick Access */}
           <div
-            className={styles.toggleGroup}
+            className={`${styles.toggleGroup} ${styles.toggleGroupDesktop}`}
             role="group"
             aria-label="نوع نمایش"
           >

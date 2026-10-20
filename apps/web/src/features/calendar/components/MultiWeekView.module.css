@@ -71,17 +71,27 @@
   flex: 1;
 }
 
+.ribbonsSpacer {
+  width: 100%;
+  pointer-events: none;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
 .ribbonsTrack {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  right: 0;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.2rem 0.35rem;
-  margin-bottom: 0.25rem;
-  padding: 0 0.15rem;
-  position: relative;
-  z-index: 2;
+  gap: 2px 0.35rem;
+  z-index: 5;
+  pointer-events: none;
 }
 
 .ribbonItem {
+  pointer-events: auto;
   display: flex;
   align-items: center;
   gap: 0.35rem;

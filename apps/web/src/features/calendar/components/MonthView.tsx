@@ -4,6 +4,7 @@ import {
   getMonthViewDays,
   groupDaysIntoWeekRows,
   isSingleDayTaskOnDate,
+  isSameCalendarDay,
   type CalendarSettings,
   type CalendarType,
   type TaskRibbonSegment
@@ -82,119 +83,6 @@ export const MonthView: FC<MonthViewProps> = ({
       <div className={styles.monthWeeksContainer} role="grid" aria-label="روزهای ماه">
         {weekRows.map((row, rowIdx) => (
           <div key={`week-row-${rowIdx}`} className={styles.weekRow}>
-            {/* Multi-Day Snake Ribbon Track */}
-            {row.multiDaySegments.length > 0 && (
-              <div
-                className={styles.ribbonsTrack}
-                style={{
-                  gridTemplateRows: `repeat(${row.maxSlots}, 22px)`
-                }}
-                data-testid={`ribbon-track-week-${rowIdx}`}
-              >
-                {row.multiDaySegments.map((seg: TaskRibbonSegment) => {
-                  const isTaskCompleted = seg.task.completedAt != null;
-                  if (!showCompleted && isTaskCompleted) return null;
-
-                  return (
-                    <div
-                      key={`ribbon-${seg.taskId}-${rowIdx}`}
-                      className={`${styles.ribbonItem} ${
-                        seg.isStartOfTask
-                          ? styles.ribbonRoundedStart
-                          : styles.ribbonFlatStart
-                      } ${
-                        seg.isEndOfTask
-                          ? styles.ribbonRoundedEnd
-                          : styles.ribbonFlatEnd
-                      } ${
-                        seg.isPast
-                          ? styles.ribbonPast
-                          : styles.ribbonTodayOrFuture
-                      } ${isTaskCompleted ? styles.taskCompleted : ''}`}
-                      style={{
-                        gridColumn: `${seg.startColIndex + 1} / span ${seg.colSpan}`,
-                        gridRow: seg.slotIndex + 1,
-                        backgroundColor: seg.color
-                      }}
-                      draggable={true}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectTask?.(seg.task);
-                      }}
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData('text/plain', seg.taskId);
-                        e.dataTransfer.setData(
-                          'application/json',
-                          JSON.stringify({
-                            action: 'RIBBON_MOVE',
-                            taskId: seg.taskId
-                          })
-                        );
-                        e.dataTransfer.effectAllowed = 'move';
-                      }}
-                      data-testid={`ribbon-segment-${seg.taskId}-${rowIdx}`}
-                      title={`${seg.taskTitle} (${seg.task.startDate?.slice(0, 10)} - ${seg.task.dueDate?.slice(0, 10)})`}
-                    >
-                      {/* Left Resize Handle */}
-                      <span
-                        className={styles.ribbonResizeHandleLeft}
-                        draggable={true}
-                        data-testid={`ribbon-resize-start-${seg.taskId}`}
-                        title="تغییر تاریخ شروع"
-                        onDragStart={(e) => {
-                          e.stopPropagation();
-                          e.dataTransfer.setData('text/plain', seg.taskId);
-                          e.dataTransfer.setData(
-                            'application/json',
-                            JSON.stringify({
-                              action: 'RIBBON_RESIZE_START',
-                              taskId: seg.taskId
-                            })
-                          );
-                          e.dataTransfer.effectAllowed = 'move';
-                        }}
-                      />
-
-                      {!seg.isStartOfTask && (
-                        <span className={styles.ribbonContinuationLeft}>◂</span>
-                      )}
-
-                      <span
-                        className={styles.ribbonTitle}
-                        data-testid={`ribbon-title-${seg.taskId}`}
-                      >
-                        {seg.taskTitle}
-                      </span>
-
-                      {!seg.isEndOfTask && (
-                        <span className={styles.ribbonContinuationRight}>▸</span>
-                      )}
-
-                      {/* Right Resize Handle */}
-                      <span
-                        className={styles.ribbonResizeHandleRight}
-                        draggable={true}
-                        data-testid={`ribbon-resize-end-${seg.taskId}`}
-                        title="تغییر تاریخ پایان"
-                        onDragStart={(e) => {
-                          e.stopPropagation();
-                          e.dataTransfer.setData('text/plain', seg.taskId);
-                          e.dataTransfer.setData(
-                            'application/json',
-                            JSON.stringify({
-                              action: 'RIBBON_RESIZE_END',
-                              taskId: seg.taskId
-                            })
-                          );
-                          e.dataTransfer.effectAllowed = 'move';
-                        }}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
             {/* 7 Days in Week Row */}
             <div className={styles.weekDaysRowGrid}>
               {row.days.map((item, colIdx) => {
@@ -206,10 +94,7 @@ export const MonthView: FC<MonthViewProps> = ({
                   : dayTasks.filter((t) => t.completedAt == null);
 
                 const isDragOver = dragOverIsoDate === item.isoDate;
-                const isSelected =
-                  selectedDate != null &&
-                  selectedDate.toISOString().slice(0, 10) ===
-                    item.isoDate.slice(0, 10);
+                const isSelected = isSameCalendarDay(selectedDate, item.date);
 
                 const isPast =
                   new Date(item.date).getTime() < todayMidnight.getTime();
@@ -322,6 +207,15 @@ export const MonthView: FC<MonthViewProps> = ({
                       </button>
                     </div>
 
+                    {/* Spacer reserving height for multi-day ribbons overlay */}
+                    {row.maxSlots > 0 && (
+                      <div
+                        className={styles.ribbonsSpacer}
+                        style={{ height: `${row.maxSlots * 24}px` }}
+                        aria-hidden="true"
+                      />
+                    )}
+
                     {/* Single-Day Tasks List for Day */}
                     {filteredDayTasks.length > 0 && (
                       <div
@@ -390,6 +284,119 @@ export const MonthView: FC<MonthViewProps> = ({
                 );
               })}
             </div>
+
+            {/* Multi-Day Snake Ribbon Track Overlay */}
+            {row.multiDaySegments.length > 0 && (
+              <div
+                className={styles.ribbonsTrack}
+                style={{
+                  gridTemplateRows: `repeat(${row.maxSlots}, 22px)`
+                }}
+                data-testid={`ribbon-track-week-${rowIdx}`}
+              >
+                {row.multiDaySegments.map((seg: TaskRibbonSegment) => {
+                  const isTaskCompleted = seg.task.completedAt != null;
+                  if (!showCompleted && isTaskCompleted) return null;
+
+                  return (
+                    <div
+                      key={`ribbon-${seg.taskId}-${rowIdx}`}
+                      className={`${styles.ribbonItem} ${
+                        seg.isStartOfTask
+                          ? styles.ribbonRoundedStart
+                          : styles.ribbonFlatStart
+                      } ${
+                        seg.isEndOfTask
+                          ? styles.ribbonRoundedEnd
+                          : styles.ribbonFlatEnd
+                      } ${
+                        seg.isPast
+                          ? styles.ribbonPast
+                          : styles.ribbonTodayOrFuture
+                      } ${isTaskCompleted ? styles.taskCompleted : ''}`}
+                      style={{
+                        gridColumn: `${seg.startColIndex + 1} / span ${seg.colSpan}`,
+                        gridRow: seg.slotIndex + 1,
+                        backgroundColor: seg.color
+                      }}
+                      draggable={true}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectTask?.(seg.task);
+                      }}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', seg.taskId);
+                        e.dataTransfer.setData(
+                          'application/json',
+                          JSON.stringify({
+                            action: 'RIBBON_MOVE',
+                            taskId: seg.taskId
+                          })
+                        );
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      data-testid={`ribbon-segment-${seg.taskId}-${rowIdx}`}
+                      title={`${seg.taskTitle} (${seg.task.startDate?.slice(0, 10)} - ${seg.task.dueDate?.slice(0, 10)})`}
+                    >
+                      {/* Left Resize Handle */}
+                      <span
+                        className={styles.ribbonResizeHandleLeft}
+                        draggable={true}
+                        data-testid={`ribbon-resize-start-${seg.taskId}`}
+                        title="تغییر تاریخ شروع"
+                        onDragStart={(e) => {
+                          e.stopPropagation();
+                          e.dataTransfer.setData('text/plain', seg.taskId);
+                          e.dataTransfer.setData(
+                            'application/json',
+                            JSON.stringify({
+                              action: 'RIBBON_RESIZE_START',
+                              taskId: seg.taskId
+                            })
+                          );
+                          e.dataTransfer.effectAllowed = 'move';
+                        }}
+                      />
+
+                      {!seg.isStartOfTask && (
+                        <span className={styles.ribbonContinuationLeft}>◂</span>
+                      )}
+
+                      <span
+                        className={styles.ribbonTitle}
+                        data-testid={`ribbon-title-${seg.taskId}`}
+                      >
+                        {seg.taskTitle}
+                      </span>
+
+                      {!seg.isEndOfTask && (
+                        <span className={styles.ribbonContinuationRight}>▸</span>
+                      )}
+
+                      {/* Right Resize Handle */}
+                      <span
+                        className={styles.ribbonResizeHandleRight}
+                        draggable={true}
+                        data-testid={`ribbon-resize-end-${seg.taskId}`}
+                        title="تغییر تاریخ پایان"
+                        onDragStart={(e) => {
+                          e.stopPropagation();
+                          e.dataTransfer.setData('text/plain', seg.taskId);
+                          e.dataTransfer.setData(
+                            'application/json',
+                            JSON.stringify({
+                              action: 'RIBBON_RESIZE_END',
+                              taskId: seg.taskId
+                            })
+                          );
+                          e.dataTransfer.effectAllowed = 'move';
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         ))}
       </div>
